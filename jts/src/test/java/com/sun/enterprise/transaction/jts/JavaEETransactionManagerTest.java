@@ -36,6 +36,7 @@ import org.omnifish.transact.jta.transaction.JavaEETransactionManagerImpl;
 import org.omnifish.transact.jta.transaction.JavaEETransactionManagerSimplifiedDelegate;
 import org.omnifish.transact.jta.transaction.TransactionSynchronizationRegistryImpl;
 import org.omnifish.transact.jta.transaction.UserTransactionImpl;
+import org.omnifish.transact.jts.JavaEETransactionManagerJTSDelegate;
 
 import com.sun.enterprise.resource.ClientSecurityInfo;
 import com.sun.enterprise.resource.ResourceHandle;

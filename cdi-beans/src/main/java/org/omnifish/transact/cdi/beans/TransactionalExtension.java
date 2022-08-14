@@ -21,11 +21,11 @@ import org.omnifish.transact.jta.transaction.JavaEETransactionManagerSimplifiedD
 import org.omnifish.transact.jta.transaction.TransactionManagerImpl;
 import org.omnifish.transact.jta.transaction.TransactionSynchronizationRegistryImpl;
 import org.omnifish.transact.jta.transaction.UserTransactionImpl;
+import org.omnifish.transact.jts.JavaEETransactionManagerJTSDelegate;
+import org.omnifish.transact.jts.ResourceRecoveryManagerImpl;
 
 import com.sun.enterprise.transaction.impl.InvocationManagerImpl;
 import com.sun.enterprise.transaction.impl.TransactionServiceConfigImpl;
-import com.sun.enterprise.transaction.jts.JavaEETransactionManagerJTSDelegate;
-import com.sun.enterprise.transaction.jts.ResourceRecoveryManagerImpl;
 
 import jakarta.enterprise.event.Observes;
 import jakarta.enterprise.inject.spi.BeanManager;

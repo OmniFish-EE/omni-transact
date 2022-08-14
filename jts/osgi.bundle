@@ -16,9 +16,9 @@
 
 
 -exportcontents: \
-                        com.sun.jts.jta; \
-                        com.sun.enterprise.transaction.jts.recovery; \
-                        com.sun.jts.utils.RecoveryHooks; version=${project.osgi.version}
+                        org.omnifish.transact.jts.jta; \
+                        org.omnifish.transact.jts.recovery; \
+                        org.omnifish.transact.jts.utils.RecoveryHooks; version=${project.osgi.version}
 Import-Package: \
                         com.sun.corba.ee.impl.txpoa;resolution:=optional, \
                         com.sun.corba.ee.spi.costransactions;resolution:=optional, \
