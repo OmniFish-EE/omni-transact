@@ -16,57 +16,51 @@
 
 package com.sun.jts.CosTransactions;
 
-import javax.transaction.xa.Xid;
+import static javax.transaction.xa.XAException.XAER_NOTA;
+import static javax.transaction.xa.XAException.XAER_PROTO;
+import static javax.transaction.xa.XAException.XAER_RMERR;
+
+import javax.naming.InitialContext;
+import javax.naming.NamingException;
 import javax.transaction.xa.XAException;
 import javax.transaction.xa.XAResource;
+import javax.transaction.xa.Xid;
 
-import jakarta.resource.spi.XATerminator;
-
-import org.omg.CosTransactions.Vote;
 import org.omg.CosTransactions.HeuristicMixed;
+import org.omg.CosTransactions.Vote;
 
 import com.sun.enterprise.transaction.api.TransactionImport;
 
-import javax.naming.Context;
-import javax.naming.InitialContext;
-import javax.naming.NamingException;
+import jakarta.resource.spi.XATerminator;
 
 /**
  * This is used for transaction completion and crash recovery flows.
  *
  * @version 1.0
- * @author  Ram Jeyaraman
+ * @author Ram Jeyaraman
  */
 public class XATerminatorImpl implements XATerminator {
 
-    private static void check(Xid xid) throws XAException {
-        // check if xid is valid
-        if (xid == null || xid.getFormatId() == 0 ||
-                xid.getBranchQualifier() == null ||
-                xid.getGlobalTransactionId() == null) {
-            throw new XAException(XAException.XAER_NOTA);
-        }
-    }
+    static private final TransactionImport transactionImportManager = getTransactionImportManager();
 
     /**
      * Commits the global transaction specified by xid.
      *
      * @param xid A global transaction identifier
      *
-     * @param onePhase If true, the resource manager should use a one-phase
-     * commit protocol to commit the work done on behalf of xid.
+     * @param onePhase If true, the resource manager should use a one-phase commit protocol to commit the work done on
+     * behalf of xid.
      *
-     * @exception XAException An error has occurred. Possible XAExceptions
-     * are XA_HEURHAZ, XA_HEURCOM, XA_HEURRB, XA_HEURMIX, XAER_RMERR,
-     * XAER_RMFAIL, XAER_NOTA, XAER_INVAL, or XAER_PROTO.
+     * @exception XAException An error has occurred. Possible XAExceptions are XA_HEURHAZ, XA_HEURCOM, XA_HEURRB,
+     * XA_HEURMIX, XAER_RMERR, XAER_RMFAIL, XAER_NOTA, XAER_INVAL, or XAER_PROTO.
      *
-     * <P>If the resource manager did not commit the transaction and the
-     *  parameter onePhase is set to true, the resource manager may throw
-     *  one of the XA_RB* exceptions. Upon return, the resource manager has
-     *  rolled back the branch's work and has released all held resources.
+     * <P>
+     * If the resource manager did not commit the transaction and the parameter onePhase is set to true, the resource
+     * manager may throw one of the XA_RB* exceptions. Upon return, the resource manager has rolled back the branch's work
+     * and has released all held resources.
      */
+    @Override
     public void commit(Xid xid, boolean onePhase) throws XAException {
-
         check(xid); // check if xid is valid
 
         GlobalTID tid = new GlobalTID(xid);
@@ -76,33 +70,30 @@ public class XATerminatorImpl implements XATerminator {
             // executed with the transaction context of the transaction
             // that is being committed as specified in
             // in method javax.Synchronization.beforeCompletion
-           try {
+            try {
                 recreate(xid, 0);
             } catch (Throwable e) {
                 // failed check for concurrent activity
-                XAException xaExc = new XAException(XAException.XAER_PROTO);
+                XAException xaExc = new XAException(XAER_PROTO);
                 xaExc.initCause(e);
                 throw xaExc;
             }
-        } else {
-         // check for concurrrent activity
-             if (RecoveryManager.readAndUpdateTxMap(tid) == false) {
-                throw new XAException(XAException.XAER_PROTO);
-             }
+        } else if (!RecoveryManager.readAndUpdateTxMap(tid)) {
+            // check for concurrrent activity
+            throw new XAException(XAER_PROTO);
         }
 
         boolean exceptionFlag = false;
-        int errorCode = XAException.XAER_PROTO;
+        int errorCode = XAER_PROTO;
         try {
             // First of all make sure it has been recovered if necessary
             RecoveryManager.waitForRecovery();
 
             // Look up the Coordinator for the transaction.
-            TopCoordinator coord = (TopCoordinator)
-                                    RecoveryManager.getCoordinator(tid);
+            TopCoordinator coord = (TopCoordinator) RecoveryManager.getCoordinator(tid);
 
             if (coord == null) { // error to receive commit more than once
-                errorCode = XAException.XAER_PROTO;
+                errorCode = XAER_PROTO;
                 throw new XAException(errorCode);
             }
 
@@ -139,21 +130,21 @@ public class XATerminatorImpl implements XATerminator {
         } finally {
             if (onePhase) {
                 // Complete full transactional context created for
-        // beforeCompletion calls in prepare phase of one phase commit.
+                // beforeCompletion calls in prepare phase of one phase commit.
                 try {
                     release(xid);
                 } catch (Throwable t) {
                     if (!exceptionFlag) {
-                        XAException xaExc = new XAException(XAException.XAER_PROTO);
+                        XAException xaExc = new XAException(XAER_PROTO);
                         xaExc.initCause(t);
-                       throw xaExc;
+                        throw xaExc;
                     }
                 }
             } else {
                 Thread thread = RecoveryManager.removeFromTxMap(tid);
                 if (thread == null || (thread != Thread.currentThread())) { // error
                     if (!exceptionFlag) { // no exception yet
-                        throw new XAException(XAException.XAER_RMERR);
+                        throw new XAException(XAER_RMERR);
                     }
                 }
             }
@@ -161,37 +152,32 @@ public class XATerminatorImpl implements XATerminator {
     }
 
     /**
-     * Tells the resource manager to forget about a heuristically
-     * completed transaction branch.
+     * Tells the resource manager to forget about a heuristically completed transaction branch.
      *
      * @param xid A global transaction identifier.
      *
-     * @exception XAException An error has occurred. Possible exception
-     * values are XAER_RMERR, XAER_RMFAIL, XAER_NOTA, XAER_INVAL, or
-     * XAER_PROTO.
+     * @exception XAException An error has occurred. Possible exception values are XAER_RMERR, XAER_RMFAIL, XAER_NOTA,
+     * XAER_INVAL, or XAER_PROTO.
      */
-    public void forget(Xid xid) throws XAException {}
+    @Override
+    public void forget(Xid xid) throws XAException {
+    }
 
     /**
-     * Ask the resource manager to prepare for a transaction commit
-     * of the transaction specified in xid.
+     * Ask the resource manager to prepare for a transaction commit of the transaction specified in xid.
      *
      * @param xid A global transaction identifier.
      *
-     * @exception XAException An error has occurred. Possible exception
-     * values are: XA_RB*, XAER_RMERR, XAER_RMFAIL, XAER_NOTA, XAER_INVAL,
-     * or XAER_PROTO.
+     * @exception XAException An error has occurred. Possible exception values are: XA_RB*, XAER_RMERR, XAER_RMFAIL,
+     * XAER_NOTA, XAER_INVAL, or XAER_PROTO.
      *
-     * @return A value indicating the resource manager's vote on the
-     * outcome of the transaction. The possible values are: XA_RDONLY
-     * or XA_OK. These constants are defined in
-     * <code> javax.transaction.xa.XATerminator</code> interface.
-     * If the resource manager wants to roll back the
-     * transaction, it should do so by raising an appropriate XAException
-     * in the prepare method.
+     * @return A value indicating the resource manager's vote on the outcome of the transaction. The possible values are:
+     * XA_RDONLY or XA_OK. These constants are defined in <code> javax.transaction.xa.XATerminator</code> interface. If the
+     * resource manager wants to roll back the transaction, it should do so by raising an appropriate XAException in the
+     * prepare method.
      */
+    @Override
     public int prepare(Xid xid) throws XAException {
-
         check(xid); // check if xid is valid
 
         GlobalTID tid = new GlobalTID(xid);
@@ -203,24 +189,23 @@ public class XATerminatorImpl implements XATerminator {
             // in method javax.Synchronization.beforeCompletion
             recreate(xid, 0);
         } catch (Throwable e) {
-        // failed check for concurrent activity for transaction tid.
-            XAException xaExc = new XAException(XAException.XAER_PROTO);
+            // failed check for concurrent activity for transaction tid.
+            XAException xaExc = new XAException(XAER_PROTO);
             xaExc.initCause(e);
             throw xaExc;
         }
 
         boolean exceptionFlag = false;
-        int errorCode = XAException.XAER_PROTO;
+        int errorCode = XAER_PROTO;
         try {
             // First of all make sure it has been recovered if necessary
             RecoveryManager.waitForRecovery();
 
             // Look up the Coordinator for the transaction.
-            TopCoordinator coord = (TopCoordinator)
-                                    RecoveryManager.getCoordinator(tid);
+            TopCoordinator coord = (TopCoordinator) RecoveryManager.getCoordinator(tid);
 
             if (coord == null) { // error to receive prepare more than once
-                errorCode = XAException.XAER_PROTO;
+                errorCode = XAER_PROTO;
                 throw new XAException(errorCode);
             }
 
@@ -248,7 +233,7 @@ public class XATerminatorImpl implements XATerminator {
                 release(xid);
             } catch (Throwable t) {
                 if (!exceptionFlag) {
-                    errorCode = XAException.XAER_PROTO;
+                    errorCode = XAER_PROTO;
                     XAException xaExc = new XAException(errorCode);
                     xaExc.initCause(t);
                     throw xaExc;
@@ -259,71 +244,63 @@ public class XATerminatorImpl implements XATerminator {
     }
 
     /**
-     * Obtains a list of prepared transaction branches from a resource
-     * manager. The transaction manager calls this method during recovery
-     * to obtain the list of transaction branches that are currently in
-     * prepared or heuristically completed states.
+     * Obtains a list of prepared transaction branches from a resource manager. The transaction manager calls this method
+     * during recovery to obtain the list of transaction branches that are currently in prepared or heuristically completed
+     * states.
      *
-     * @param flag One of TMSTARTRSCAN, TMENDRSCAN, TMNOFLAGS. TMNOFLAGS
-     * must be used when no other flags are set in the parameter. These
-     * constants are defined in <code>javax.transaction.xa.XATerminator</code>
-     * interface.
+     * @param flag One of TMSTARTRSCAN, TMENDRSCAN, TMNOFLAGS. TMNOFLAGS must be used when no other flags are set in the
+     * parameter. These constants are defined in <code>javax.transaction.xa.XATerminator</code> interface.
      *
-     * @exception XAException An error has occurred. Possible values are
-     * XAER_RMERR, XAER_RMFAIL, XAER_INVAL, and XAER_PROTO.
+     * @exception XAException An error has occurred. Possible values are XAER_RMERR, XAER_RMFAIL, XAER_INVAL, and
+     * XAER_PROTO.
      *
-     * @return The resource manager returns zero or more XIDs of the
-     * transaction branches that are currently in a prepared or
-     * heuristically completed state. If an error occurs during the
-     * operation, the resource manager should throw the appropriate
-     * XAException.
+     * @return The resource manager returns zero or more XIDs of the transaction branches that are currently in a prepared
+     * or heuristically completed state. If an error occurs during the operation, the resource manager should throw the
+     * appropriate XAException.
      */
+    @Override
     public Xid[] recover(int flag) throws XAException {
-
         // wait for recovery to be completed.
         RecoveryManager.waitForResync();
 
-        return (Xid[]) TimeoutManager.getInDoubtXids();
+        return TimeoutManager.getInDoubtXids();
     }
 
     /**
-     * Informs the resource manager to roll back work done on behalf
-     * of a transaction branch.
+     * Informs the resource manager to roll back work done on behalf of a transaction branch.
      *
      * @param xid A global transaction identifier.
      *
-     * @exception XAException An error has occurred. Possible XAExceptions are
-     * XA_HEURHAZ, XA_HEURCOM, XA_HEURRB, XA_HEURMIX, XAER_RMERR, XAER_RMFAIL,
-     * XAER_NOTA, XAER_INVAL, or XAER_PROTO.
+     * @exception XAException An error has occurred. Possible XAExceptions are XA_HEURHAZ, XA_HEURCOM, XA_HEURRB,
+     * XA_HEURMIX, XAER_RMERR, XAER_RMFAIL, XAER_NOTA, XAER_INVAL, or XAER_PROTO.
      *
-     * <p>If the transaction branch is already marked rollback-only the
-     * resource manager may throw one of the XA_RB* exceptions. Upon return,
-     * the resource manager has rolled back the branch's work and has released
-     * all held resources.
+     * <p>
+     * If the transaction branch is already marked rollback-only the resource manager may throw one of the XA_RB*
+     * exceptions. Upon return, the resource manager has rolled back the branch's work and has released all held resources.
      */
+    @Override
     public void rollback(Xid xid) throws XAException {
-
         check(xid); // check if xid is valid
 
         GlobalTID tid = new GlobalTID(xid);
 
         // check for concurrent activity
-        if (RecoveryManager.readAndUpdateTxMap(tid) == false) {
-            throw new XAException(XAException.XAER_PROTO);
+        if (!RecoveryManager.readAndUpdateTxMap(tid)) {
+            throw new XAException(XAER_PROTO);
         }
 
         boolean exceptionFlag = false;
-        int errorCode = XAException.XAER_PROTO;
+
+        int errorCode = XAER_PROTO;
         try {
             // First of all make sure it has been recovered if necessary
             RecoveryManager.waitForRecovery();
 
             // Look up the Coordinator for the transaction.
-            TopCoordinator coord = (TopCoordinator)
-                                    RecoveryManager.getCoordinator(tid);
+            TopCoordinator coord = (TopCoordinator) RecoveryManager.getCoordinator(tid);
 
             if (coord == null) { // error to receive rollback more than once
-                errorCode = XAException.XAER_PROTO;
+                errorCode = XAER_PROTO;
                 throw new XAException(errorCode);
             }
 
@@ -341,41 +318,43 @@ public class XATerminatorImpl implements XATerminator {
             Thread thread = RecoveryManager.removeFromTxMap(tid);
             if (thread == null || (thread != Thread.currentThread())) { // error
                 if (!exceptionFlag) {
-                    throw new XAException(XAException.XAER_RMERR);
+                    throw new XAException(XAER_RMERR);
                 }
             }
         }
     }
 
-    static private final TransactionImport tim = getTransactionImportManager();
-
-   // no standardized JNDI name exists across as implementations for TM, this is Sun App Server specific.
-    private static final String AS_TXN_MGR_JNDI_NAME = "java:appserver/TransactionManager";
-
-    static private Object jndiLookup(final String jndiName) {
-        Object result = null;
-        try {
-            final Context ctx = new InitialContext();
-            result = ctx.lookup(jndiName);
-        } catch (NamingException e) { }
-        return result;
+    private static void check(Xid xid) throws XAException {
+        // Check if xid is valid
+        if (xid == null || xid.getFormatId() == 0 || xid.getBranchQualifier() == null || xid.getGlobalTransactionId() == null) {
+            throw new XAException(XAER_NOTA);
+        }
     }
 
     static private TransactionImport getTransactionImportManager() {
-        return (TransactionImport)jndiLookup(AS_TXN_MGR_JNDI_NAME);
+        // no standardized JNDI name exists across as implementations for TM, this is Sun App Server specific.
+        return jndiLookup("java:appserver/TransactionManager");
+    }
+
+    static private <T> T jndiLookup(final String jndiName) {
+        T result = null;
+        try {
+            result = InitialContext.doLookup(jndiName);
+        } catch (NamingException e) {
+        }
+
+        return result;
     }
 
     static private void recreate(Xid xid, int timeout) {
-        if (tim != null) {
-            tim.recreate(xid, timeout);
+        if (transactionImportManager != null) {
+            transactionImportManager.recreate(xid, timeout);
         }
     }
 
     static private void release(Xid xid) {
-        if (tim != null) {
-            tim.release(xid);
+        if (transactionImportManager != null) {
+            transactionImportManager.release(xid);
         }
     }
 }
-
-

@@ -25,7 +25,6 @@ package com.sun.enterprise.transaction.jts.api;
 /**
  * Interface to implement by delegated transaction recovery lock
  */
-
 public interface DelegatedTransactionRecoveryFence {
     /**
      * Returns true if the specified instance on the specified path is being recovered after the specified timestamp

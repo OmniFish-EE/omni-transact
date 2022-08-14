@@ -31,24 +31,38 @@
 
 package com.sun.jts.CosTransactions;
 
-import org.omg.CORBA.*;
-import org.omg.PortableServer.*;
-import org.omg.CosTransactions.*;
-
-import org.omg.CosNaming.*;
-import org.omg.CosNaming.NamingContextPackage.*;
-
-import com.sun.jts.trace.*;
-
-import java.util.logging.Logger;
 import java.util.logging.Level;
-import com.sun.logging.LogDomains;
+import java.util.logging.Logger;
+
+import org.omg.CORBA.CompletionStatus;
+import org.omg.CORBA.Context;
+import org.omg.CORBA.ContextList;
+import org.omg.CORBA.ExceptionList;
+import org.omg.CORBA.INTERNAL;
+import org.omg.CORBA.INVALID_TRANSACTION;
+import org.omg.CORBA.NO_PERMISSION;
+import org.omg.CORBA.NVList;
+import org.omg.CORBA.NamedValue;
+import org.omg.CORBA.Request;
+import org.omg.CORBA.SystemException;
+import org.omg.CORBA.TRANSACTION_ROLLEDBACK;
+import org.omg.CosNaming.NameComponent;
+import org.omg.CosNaming.NamingContext;
+import org.omg.CosNaming.NamingContextHelper;
+import org.omg.CosTransactions.Control;
+import org.omg.CosTransactions.Coordinator;
+import org.omg.CosTransactions.PropagationContext;
+import org.omg.CosTransactions.Status;
+import org.omg.CosTransactions.TransactionFactory;
+import org.omg.CosTransactions.TransactionFactoryHelper;
+import org.omg.CosTransactions.TransactionFactoryPOA;
+import org.omg.PortableServer.POA;
+
 import com.sun.jts.utils.LogFormatter;
 
 /**
- * The TransactionFactoryImpl interface is our implementation of the standard
- * TransactionFactory interface. It provides operations to create the objects
- * required to process a transaction.
+ * The TransactionFactoryImpl interface is our implementation of the standard TransactionFactory interface. It provides
+ * operations to create the objects required to process a transaction.
  *
  * @version 0.01
  *
@@ -66,16 +80,17 @@ import com.sun.jts.utils.LogFormatter;
 
 class TransactionFactoryImpl extends TransactionFactoryPOA implements TransactionFactory {
 
-    private static POA poa = null;
-    private TransactionFactory thisRef = null;
+    /* Logger to log transaction messages */
+    static Logger _logger = Logger.getLogger(TransactionFactoryImpl.class.getName());
+
+    private static POA poa;
+    private TransactionFactory thisRef;
 
     static boolean active = true;
 
-    /*Logger to log transaction messages*/
-    static Logger _logger = LogDomains.getLogger(TransactionFactoryImpl.class, LogDomains.TRANSACTION_LOGGER);
+
     /**
-     * Constructor for the TransactionFactoryImpl.  Passes through
-     * to the parent constructor.
+     * Constructor for the TransactionFactoryImpl. Passes through to the parent constructor.
      *
      * @param
      *
@@ -84,7 +99,6 @@ class TransactionFactoryImpl extends TransactionFactoryPOA implements Transactio
      * @see
      */
     TransactionFactoryImpl() {
-
         // Initialise the TimeoutManager and RecoveryManager.
 
         TimeoutManager.initialise();
@@ -92,19 +106,18 @@ class TransactionFactoryImpl extends TransactionFactoryPOA implements Transactio
     }
 
     /**
-     * Creates the Coordinator, Control and Terminator objects for a
-     * new top-level transaction.
+     * Creates the Coordinator, Control and Terminator objects for a new top-level transaction.
      *
-     * @param timeOut  The timeout value for the transaction.
+     * @param timeOut The timeout value for the transaction.
      *
-     * @return  The Control object for the new transaction.
+     * @return The Control object for the new transaction.
      *
-     * @exception SystemException  An error occurred.
+     * @exception SystemException An error occurred.
      *
      * @see
      */
+    @Override
     public Control create(int timeOut) throws SystemException {
-
         Control result = null;
 
         ControlImpl cimpl = localCreate(timeOut);
@@ -114,7 +127,7 @@ class TransactionFactoryImpl extends TransactionFactoryPOA implements Transactio
         }
 
         if (Configuration.isLocalFactory()) {
-            result = (Control) cimpl;
+            result = cimpl;
         } else {
             result = cimpl.object();
         }
@@ -123,24 +136,21 @@ class TransactionFactoryImpl extends TransactionFactoryPOA implements Transactio
     }
 
     /**
-     * Creates the Coordinator, Control and Terminator objects for a
-     * new top-level transaction.
+     * Creates the Coordinator, Control and Terminator objects for a new top-level transaction.
      *
-     * @param timeOut  The timeout value for the transaction.
+     * @param timeOut The timeout value for the transaction.
      *
-     * @return  The local Control object for the new transaction.
+     * @return The local Control object for the new transaction.
      *
-     * @exception SystemException  An error occurred.
+     * @exception SystemException An error occurred.
      *
      * @see
      */
     public ControlImpl localCreate(int timeOut) throws SystemException {
-
         // If the transaction service is not active, throw an exception.
 
         if (!active) {
-            NO_PERMISSION exc =
-                new NO_PERMISSION(0, CompletionStatus.COMPLETED_NO);
+            NO_PERMISSION exc = new NO_PERMISSION(0, CompletionStatus.COMPLETED_NO);
             throw exc;
         }
 
@@ -149,7 +159,7 @@ class TransactionFactoryImpl extends TransactionFactoryPOA implements Transactio
         RecoveryManager.waitForResync(timeOut);
 
         // Create a new top-level Coordinator, and initialise it
-        // with the given time-out value.  If the operation fails,
+        // with the given time-out value. If the operation fails,
         // return a NULL Control
         // object, and whatever exception was raised.
 
@@ -163,28 +173,23 @@ class TransactionFactoryImpl extends TransactionFactoryPOA implements Transactio
             // Create a Terminator object, and initialise it with
             // the Coordinator reference and a flag
             // to indicate that it does not represent a
-            // subtransaction.  If the operation fails,
+            // subtransaction. If the operation fails,
             // return a NULL Control object, and whatever exception was raised.
 
-            terminator = new TerminatorImpl(coordinator,false);
+            terminator = new TerminatorImpl(coordinator, false);
 
             // Create a Control object, and initialise it with the Terminator,
             // Coordinator and global OMGtid. If the operation fails,
             // return a NULL Control object, and whatever exception was raised.
 
             // result = new ControlImpl(terminator, coordinator,
-            //                         new GlobalTID(coordinator.getGlobalTID()),
-            //                          coordinator.getLocalTID());
-            result = new ControlImpl(terminator, coordinator,
-                                     coordinator.getGlobalTid(),
-                                     coordinator.getLocalTID());
-            if(_logger.isLoggable(Level.FINE))
-            {
-                _logger.logp(Level.FINE,"TransactionFactoryImpl","localCreate()",
-                        "Control object :" + result +
-                        " corresponding to this transaction has been created, "+
-                        "GTID is : "+
-                        ((TopCoordinator)coordinator).superInfo.globalTID.toString());
+            // new GlobalTID(coordinator.getGlobalTID()),
+            // coordinator.getLocalTID());
+            result = new ControlImpl(terminator, coordinator, coordinator.getGlobalTid(), coordinator.getLocalTID());
+            if (_logger.isLoggable(Level.FINE)) {
+                _logger.logp(Level.FINE, "TransactionFactoryImpl", "localCreate()",
+                        "Control object :" + result + " corresponding to this transaction has been created, " + "GTID is : "
+                                + coordinator.superInfo.globalTID.toString());
             }
 
         } catch (Throwable exc) {
@@ -196,7 +201,7 @@ class TransactionFactoryImpl extends TransactionFactoryPOA implements Transactio
             }
 
             if (result != null) {
-                ((ControlImpl) result).doFinalize();
+                result.doFinalize();
             }
 
             result = null;
@@ -206,25 +211,21 @@ class TransactionFactoryImpl extends TransactionFactoryPOA implements Transactio
     }
 
     /**
-     * Creates the Coordinator, Control and Terminator objects
-     * for a transaction based on the context passed in.
+     * Creates the Coordinator, Control and Terminator objects for a transaction based on the context passed in.
      *
-     * @param context  The context for the transaction.
+     * @param context The context for the transaction.
      *
-     * @return  The Control object for the new transaction.
+     * @return The Control object for the new transaction.
      *
-     * @exception SystemException  An error occurred.
+     * @exception SystemException An error occurred.
      *
      * @see
      */
-    public Control recreate(PropagationContext context)
-            throws SystemException {
-
+    @Override
+    public Control recreate(PropagationContext context) throws SystemException {
         // If the transaction service is not active, throw an exception.
-
         if (!active) {
-            NO_PERMISSION exc =
-                new NO_PERMISSION(0,CompletionStatus.COMPLETED_NO);
+            NO_PERMISSION exc = new NO_PERMISSION(0, CompletionStatus.COMPLETED_NO);
             throw exc;
         }
 
@@ -238,8 +239,7 @@ class TransactionFactoryImpl extends TransactionFactoryPOA implements Transactio
         // for the given transaction.
 
         GlobalTID globalTID = new GlobalTID(context.current.otid);
-        CoordinatorImpl subordinate =
-            RecoveryManager.getCoordinator(globalTID);
+        CoordinatorImpl subordinate = RecoveryManager.getCoordinator(globalTID);
         Control result = null;
 
         // If there is no local subordinate, but the Coordinator
@@ -247,16 +247,14 @@ class TransactionFactoryImpl extends TransactionFactoryPOA implements Transactio
         // then the Coordinator must have been created by the client using
         // this TransactionFactory, and the transaction it represents
         // must have been rolled back - invoking a method on the Coordinator
-        // at this point should throw OBJECT_NOT_EXIST.  This means that we
+        // at this point should throw OBJECT_NOT_EXIST. This means that we
         // cannot import the transaction, and should throw
         // TRANSACTION_ROLLEDBACK.
 
         ProxyChecker checker = Configuration.getProxyChecker();
-        if (subordinate == null &&
-                !checker.isProxy(context.current.coord)) {
+        if (subordinate == null && !checker.isProxy(context.current.coord)) {
 
-            TRANSACTION_ROLLEDBACK exc =
-                new TRANSACTION_ROLLEDBACK(0, CompletionStatus.COMPLETED_NO);
+            TRANSACTION_ROLLEDBACK exc = new TRANSACTION_ROLLEDBACK(0, CompletionStatus.COMPLETED_NO);
             throw exc;
         }
 
@@ -271,8 +269,8 @@ class TransactionFactoryImpl extends TransactionFactoryPOA implements Transactio
         // If there is no local subordinate, then for each OMGtid
         // in the context, make sure there is a local
         // Coordinator set up in this process - required for
-        // AIX, where we need to ensure every  ancestor has a locally created
-        // transaction.  When we have threading on AIX this will not
+        // AIX, where we need to ensure every ancestor has a locally created
+        // transaction. When we have threading on AIX this will not
         // be absolutely necessary, but will still be desirable.
 
         try {
@@ -281,8 +279,7 @@ class TransactionFactoryImpl extends TransactionFactoryPOA implements Transactio
 
                 if (context.parents.length > 0) {
 
-                    CoordinatorImpl[] newAncestors =
-                        new CoordinatorImpl[context.parents.length];
+                    CoordinatorImpl[] newAncestors = new CoordinatorImpl[context.parents.length];
 
                     // If there are indeed ancestors, go through them
                     // starting at the top-level
@@ -292,10 +289,8 @@ class TransactionFactoryImpl extends TransactionFactoryPOA implements Transactio
 
                         // If a subordinate does not exist, create one.
 
-                        GlobalTID subGlobalTID =
-                            new GlobalTID(context.parents[i].otid);
-                        subordinate =
-                            RecoveryManager.getCoordinator(subGlobalTID);
+                        GlobalTID subGlobalTID = new GlobalTID(context.parents[i].otid);
+                        subordinate = RecoveryManager.getCoordinator(subGlobalTID);
 
                         if (subordinate == null) {
 
@@ -306,12 +301,8 @@ class TransactionFactoryImpl extends TransactionFactoryPOA implements Transactio
                                 // duplicate of the proxy to allow the context
                                 // to be fully destroyed.
 
-                                subordinate = new TopCoordinator(
-                                    context.timeout,
-                                    subGlobalTID,
-                                    (Coordinator) context.parents[i].
-                                        coord._duplicate(),
-                                    true);
+                                subordinate = new TopCoordinator(context.timeout, subGlobalTID,
+                                        (Coordinator) context.parents[i].coord._duplicate(), true);
 
                             } else {
 
@@ -320,28 +311,18 @@ class TransactionFactoryImpl extends TransactionFactoryPOA implements Transactio
                                 // of the proxy to allow the context to be
                                 // fully destroyed.
 
-                                CoordinatorImpl[] subAncestors =
-                                    new CoordinatorImpl[context.parents.length
-                                                        - i - 1];
-                                System.arraycopy(newAncestors, i + 1,
-                                                 subAncestors, 0,
-                                                 context.
-                                                    parents.length - i - 1);
+                                CoordinatorImpl[] subAncestors = new CoordinatorImpl[context.parents.length - i - 1];
+                                System.arraycopy(newAncestors, i + 1, subAncestors, 0, context.parents.length - i - 1);
 
-                                subordinate =
-                                    new SubCoordinator(
-                                        subGlobalTID,
-                                        (Coordinator)context.parents[i].
-                                            coord._duplicate(),
-                                        true,
+                                subordinate = new SubCoordinator(subGlobalTID, (Coordinator) context.parents[i].coord._duplicate(), true,
                                         subAncestors);
 
                                 // Make sure that the parent knows about
                                 // its new child.
 
-                                newAncestors[i+1].addChild(subordinate);
+                                newAncestors[i + 1].addChild(subordinate);
                             }
-                         }
+                        }
 
                         // Replace the Coordinator reference in the sequence
                         // of ancestors with that of the local subordinate,
@@ -356,14 +337,9 @@ class TransactionFactoryImpl extends TransactionFactoryPOA implements Transactio
                     // Use a duplicate of the proxy to allow
                     // the context to be fully destroyed.
 
-                    subordinate =
-                        new SubCoordinator(globalTID,
-                                           (Coordinator) context.current.
-                                                coord._duplicate(),
-                                           true,
-                                           newAncestors);
+                    subordinate = new SubCoordinator(globalTID, (Coordinator) context.current.coord._duplicate(), true, newAncestors);
 
-                    //$ This flag was set to false.  Surely this subordinate
+                    // $ This flag was set to false. Surely this subordinate
                     // is temporary?
 
                     // Make sure the parent knows about its new child.
@@ -376,15 +352,10 @@ class TransactionFactoryImpl extends TransactionFactoryPOA implements Transactio
                     // Use a duplicate of the proxy to allow the context
                     // to be fully destroyed.
 
-                    subordinate = new TopCoordinator(
-                                    context.timeout,
-                                    globalTID,
-                                    (Coordinator) context.
-                                        current.coord._duplicate(),
-                                    true);
+                    subordinate = new TopCoordinator(context.timeout, globalTID, (Coordinator) context.current.coord._duplicate(), true);
                 }
 
-                //$ This flag was set to false.
+                // $ This flag was set to false.
                 // Surely this subordinate is temporary?
 
             } else {
@@ -399,45 +370,37 @@ class TransactionFactoryImpl extends TransactionFactoryPOA implements Transactio
             // We do not create a local Terminator
 
             if (Configuration.isLocalFactory()) {
-                result = (Control) new ControlImpl(null, subordinate, globalTID,
-                                     subordinate.getLocalTID()
-                                    );
+                result = new ControlImpl(null, subordinate, globalTID, subordinate.getLocalTID());
             } else {
-                result = new ControlImpl(null, subordinate, globalTID,
-                                     subordinate.getLocalTID()
-                                    ).object();
+                result = new ControlImpl(null, subordinate, globalTID, subordinate.getLocalTID()).object();
             }
 
         } catch (Throwable exc) {
 
             // If any exception was thrown during that lot, then we
-            // have failed to create a subordinate.  Do something drastic.
-            _logger.log(Level.SEVERE,"jts.unable_to_create_subordinate_coordinator");
-             String msg = LogFormatter.getLocalizedMessage(_logger,
-                                       "jts.unable_to_create_subordinate_coordinator");
-             throw  new org.omg.CORBA.INTERNAL(msg);
+            // have failed to create a subordinate. Do something drastic.
+            _logger.log(Level.SEVERE, "jts.unable_to_create_subordinate_coordinator");
+            String msg = LogFormatter.getLocalizedMessage(_logger, "jts.unable_to_create_subordinate_coordinator");
+            throw new org.omg.CORBA.INTERNAL(msg);
         }
 
         return result;
     }
 
     /**
-     * Creates the Coordinator, Control and Terminator objects
-     * for a transaction based on the Xid object passed in.
+     * Creates the Coordinator, Control and Terminator objects for a transaction based on the Xid object passed in.
      *
-     * @param xid  Xid object containing a transaction context.
+     * @param xid Xid object containing a transaction context.
      *
-     * @return  The Control object for the new transaction.
+     * @return The Control object for the new transaction.
      *
-     * @exception SystemException  An error occurred.
+     * @exception SystemException An error occurred.
      */
-    public Control recreate(GlobalTID tid, int timeout)
-            throws SystemException {
+    public Control recreate(GlobalTID tid, int timeout) throws SystemException {
 
         // If the transaction service is not active, throw an exception.
         if (!active) {
-            NO_PERMISSION exc =
-                new NO_PERMISSION(0, CompletionStatus.COMPLETED_NO);
+            NO_PERMISSION exc = new NO_PERMISSION(0, CompletionStatus.COMPLETED_NO);
             throw exc;
         }
 
@@ -456,8 +419,8 @@ class TransactionFactoryImpl extends TransactionFactoryPOA implements Transactio
         // If there is no local subordinate, then for each OMGtid
         // in the context, make sure there is a local
         // Coordinator set up in this process - required for
-        // AIX, where we need to ensure every  ancestor has a locally created
-        // transaction.  When we have threading on AIX this will not
+        // AIX, where we need to ensure every ancestor has a locally created
+        // transaction. When we have threading on AIX this will not
         // be absolutely necessary, but will still be desirable.
 
         try {
@@ -466,13 +429,10 @@ class TransactionFactoryImpl extends TransactionFactoryPOA implements Transactio
                 // does not already exist, create a top-level subordinate.
                 // Use a duplicate of the proxy to allow the context
                 // to be fully destroyed.
-                subordinate = new TopCoordinator(
-                                timeout, tid, new TxInflowCoordinator(),
-                                true);
+                subordinate = new TopCoordinator(timeout, tid, new TxInflowCoordinator(), true);
             } else {
                 Status status = subordinate.get_status();
-                if ((status != Status.StatusMarkedRollback) &&
-                        (status != Status.StatusActive)) {
+                if ((status != Status.StatusMarkedRollback) && (status != Status.StatusActive)) {
                     throw new INVALID_TRANSACTION("tx completion in-progress");
                 }
                 // If there already is a subordinate, then ensure
@@ -483,20 +443,15 @@ class TransactionFactoryImpl extends TransactionFactoryPOA implements Transactio
             // Create a new Control object for the transaction.
             // We do not create a local Terminator.
             if (Configuration.isLocalFactory()) {
-                result = (Control) new ControlImpl(null, subordinate, tid,
-                                     subordinate.getLocalTID()
-                                    );
+                result = new ControlImpl(null, subordinate, tid, subordinate.getLocalTID());
             } else {
-                result = new ControlImpl(null, subordinate, tid,
-                                     subordinate.getLocalTID()
-                                    ).object();
+                result = new ControlImpl(null, subordinate, tid, subordinate.getLocalTID()).object();
             }
         } catch (Throwable exc) {
             // If any exception was thrown during that lot, then we
             // have failed to create a subordinate.
-             _logger.log(Level.WARNING,"jts.unable_to_create_subordinate_coordinator");
-             String msg = LogFormatter.getLocalizedMessage(_logger,
-                                        "jts.unable_to_create_subordinate_coordinator");
+            _logger.log(Level.WARNING, "jts.unable_to_create_subordinate_coordinator");
+            String msg = LogFormatter.getLocalizedMessage(_logger, "jts.unable_to_create_subordinate_coordinator");
             INTERNAL intExc = new INTERNAL(msg);
             intExc.initCause(exc);
             throw intExc;
@@ -515,7 +470,6 @@ class TransactionFactoryImpl extends TransactionFactoryPOA implements Transactio
      * @see
      */
     static void deactivate() {
-
         active = false;
 
         // Shut down the TimeoutManager and RecoveryManager.
@@ -525,37 +479,36 @@ class TransactionFactoryImpl extends TransactionFactoryPOA implements Transactio
         DelegatedRecoveryManager.shutdown(false);
     }
 
-    /**Returns the CORBA Object which represents this object.
+    /**
+     * Returns the CORBA Object which represents this object.
      *
      * @param
      *
-     * @return  The CORBA object.
+     * @return The CORBA object.
      *
      * @see
      */
     synchronized TransactionFactory object() {
         if (thisRef == null) {
             if (poa == null) {
-                poa = Configuration.getPOA("transient"/*#Frozen*/);
+                poa = Configuration.getPOA("transient"/* #Frozen */);
             }
 
             try {
                 poa.activate_object(this);
-                thisRef = TransactionFactoryHelper.
-                            narrow(poa.servant_to_reference(this));
-                //thisRef = (TransactionFactory)this;
+                thisRef = TransactionFactoryHelper.narrow(poa.servant_to_reference(this));
+                // thisRef = (TransactionFactory)this;
 
                 /*
-                 * ADDED(Ram J) Whenever a TransactionFactory corba object is
-                 * created, put it in the cosnaming service.
+                 * ADDED(Ram J) Whenever a TransactionFactory corba object is created, put it in the cosnaming service.
                  */
 
                 NamingContext namingContext = null;
                 try {
-                    namingContext = NamingContextHelper.narrow(
-                        Configuration.getORB().resolve_initial_references("NameService"/*#Frozen*/));
+                    namingContext = NamingContextHelper
+                            .narrow(Configuration.getORB().resolve_initial_references("NameService"/* #Frozen */));
                 } catch (Exception exc) {
-                    _logger.log(Level.WARNING,"jts.orb_not_running");
+                    _logger.log(Level.WARNING, "jts.orb_not_running");
                     // Return - otherwise it'll just be an NPE reported in the next block
                     return thisRef;
                 }
@@ -565,25 +518,24 @@ class TransactionFactoryImpl extends TransactionFactoryPOA implements Transactio
                     NameComponent path[] = { nc };
                     namingContext.rebind(path, thisRef);
                 } catch (Exception exc) {
-                    _logger.log(Level.WARNING,"jts.cannot_register_with_orb",
-                            "TransactionFactory");
+                    _logger.log(Level.WARNING, "jts.cannot_register_with_orb", "TransactionFactory");
                 }
             } catch (Exception exc) {
-                _logger.log(Level.SEVERE,"jts.create_transactionfactory_object_error");
-                 String msg = LogFormatter.getLocalizedMessage(_logger,
-                                         "jts.create_transactionfactory_object_error");
-                 throw  new org.omg.CORBA.INTERNAL(msg);
+                _logger.log(Level.SEVERE, "jts.create_transactionfactory_object_error");
+                String msg = LogFormatter.getLocalizedMessage(_logger, "jts.create_transactionfactory_object_error");
+                throw new org.omg.CORBA.INTERNAL(msg);
             }
         }
 
         return thisRef;
     }
 
-    /**Returns the TransactionFactoryImpl which serves the given object.
+    /**
+     * Returns the TransactionFactoryImpl which serves the given object.
      *
-     * @param  The CORBA Object.
+     * @param The CORBA Object.
      *
-     * @return  The TransactionFactoryImpl object which serves it.
+     * @return The TransactionFactoryImpl object which serves it.
      *
      * @see
      */
@@ -597,16 +549,15 @@ class TransactionFactoryImpl extends TransactionFactoryPOA implements Transactio
             return result;
         }
 
-        if (factory instanceof TransactionFactoryImpl ) {
+        if (factory instanceof TransactionFactoryImpl) {
             result = (TransactionFactoryImpl) factory;
         } else if (poa != null) {
             try {
                 result = (TransactionFactoryImpl) poa.reference_to_servant(factory);
-                if( result.thisRef == null )
+                if (result.thisRef == null)
                     result.thisRef = factory;
-            } catch( Exception exc ) {
-                _logger.log(Level.WARNING,"jts.cannot_locate_servant",
-                        "TransactionFactory");
+            } catch (Exception exc) {
+                _logger.log(Level.WARNING, "jts.cannot_locate_servant", "TransactionFactory");
             }
         }
 
@@ -614,70 +565,73 @@ class TransactionFactoryImpl extends TransactionFactoryPOA implements Transactio
     }
 
     /*
-     * These methods are there to satisy the compiler. At some point
-     * when we move towards a tie based model, the org.omg.Corba.Object
-     * interface method implementation below shall be discarded.
+     * These methods are there to satisy the compiler. At some point when we move towards a tie based model, the
+     * org.omg.Corba.Object interface method implementation below shall be discarded.
      */
 
+    @Override
     public org.omg.CORBA.Object _duplicate() {
         throw new org.omg.CORBA.NO_IMPLEMENT("This is a locally constrained object.");
     }
 
+    @Override
     public void _release() {
         throw new org.omg.CORBA.NO_IMPLEMENT("This is a locally constrained object.");
     }
 
+    @Override
     public boolean _is_a(String repository_id) {
         throw new org.omg.CORBA.NO_IMPLEMENT("This is a locally constrained object.");
     }
 
+    @Override
     public boolean _is_equivalent(org.omg.CORBA.Object that) {
         throw new org.omg.CORBA.NO_IMPLEMENT("This is a locally constrained object.");
     }
 
+    @Override
     public boolean _non_existent() {
         throw new org.omg.CORBA.NO_IMPLEMENT("This is a locally constrained object.");
     }
 
+    @Override
     public int _hash(int maximum) {
         throw new org.omg.CORBA.NO_IMPLEMENT("This is a locally constrained object.");
     }
 
+    @Override
     public Request _request(String operation) {
         throw new org.omg.CORBA.NO_IMPLEMENT("This is a locally constrained object.");
     }
 
-    public Request _create_request(Context ctx,
-                   String operation,
-                   NVList arg_list,
-                   NamedValue result) {
+    @Override
+    public Request _create_request(Context ctx, String operation, NVList arg_list, NamedValue result) {
         throw new org.omg.CORBA.NO_IMPLEMENT("This is a locally constrained object.");
     }
 
-    public Request _create_request(Context ctx,
-                   String operation,
-                   NVList arg_list,
-                   NamedValue result,
-                   ExceptionList exceptions,
-                   ContextList contexts) {
+    @Override
+    public Request _create_request(Context ctx, String operation, NVList arg_list, NamedValue result, ExceptionList exceptions,
+            ContextList contexts) {
         throw new org.omg.CORBA.NO_IMPLEMENT("This is a locally constrained object.");
     }
 
+    @Override
     public org.omg.CORBA.Object _get_interface_def() {
         throw new org.omg.CORBA.NO_IMPLEMENT("This is a locally constrained object.");
     }
 
+    @Override
     public org.omg.CORBA.Policy _get_policy(int policy_type) {
         throw new org.omg.CORBA.NO_IMPLEMENT("This is a locally constrained object.");
     }
 
+    @Override
     public org.omg.CORBA.DomainManager[] _get_domain_managers() {
         throw new org.omg.CORBA.NO_IMPLEMENT("This is a locally constrained object.");
     }
 
-    public org.omg.CORBA.Object _set_policy_override(
-            org.omg.CORBA.Policy[] policies,
-            org.omg.CORBA.SetOverrideType set_add) {
+    @Override
+    public org.omg.CORBA.Object _set_policy_override(org.omg.CORBA.Policy[] policies, org.omg.CORBA.SetOverrideType set_add) {
         throw new org.omg.CORBA.NO_IMPLEMENT("This is a locally constrained object.");
     }
 }

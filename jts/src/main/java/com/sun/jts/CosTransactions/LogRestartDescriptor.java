@@ -30,7 +30,7 @@
 
 package com.sun.jts.CosTransactions;
 
-import java.io.*;
+import java.io.Serializable;
 
 /**
  * A class containing restart information.
@@ -43,13 +43,13 @@ import java.io.*;
  */
 class LogRestartDescriptor implements Serializable {
     /**
-     *This constant holds the size of the LogRestartDecriptor object.
+     * This constant holds the size of the LogRestartDecriptor object.
      */
     final static int SIZEOF = 12;
 
-    int restartValid      = 0;
+    int restartValid = 0;
     int restartDataLength = 0;
-    int timeStamp         = 0;
+    int timeStamp = 0;
 
     /**
      * Default LogRestartDescriptor constructor.
@@ -60,34 +60,28 @@ class LogRestartDescriptor implements Serializable {
      *
      * @see
      */
-    LogRestartDescriptor() {}
+    LogRestartDescriptor() {
+    }
 
     /**
      * Constructs a LogRestartDescriptor from the given byte array.
      *
-     * @param bytes The array of bytes from which the object is
-     *              to be constructed.
+     * @param bytes The array of bytes from which the object is to be constructed.
      * @param index The index in the array where copy is to start.
      *
      * @return
      *
      * @see
      */
-    LogRestartDescriptor(byte[] bytes, int  index) {
-        restartValid =  (bytes[index++]&255) +
-                        ((bytes[index++]&255) << 8) +
-                        ((bytes[index++]&255) << 16) +
-                        ((bytes[index++]&255) << 24);
+    LogRestartDescriptor(byte[] bytes, int index) {
+        restartValid = (bytes[index++] & 255) + ((bytes[index++] & 255) << 8) + ((bytes[index++] & 255) << 16)
+                + ((bytes[index++] & 255) << 24);
 
-        restartDataLength = (bytes[index++]&255) +
-                            ((bytes[index++]&255) << 8) +
-                            ((bytes[index++]&255) << 16) +
-                            ((bytes[index++]&255) << 24);
+        restartDataLength = (bytes[index++] & 255) + ((bytes[index++] & 255) << 8) + ((bytes[index++] & 255) << 16)
+                + ((bytes[index++] & 255) << 24);
 
-        timeStamp = (bytes[index++]&255) +
-                    ((bytes[index++]&255) << 8) +
-                    ((bytes[index++]&255) << 16) +
-                    ((bytes[index++]&255) << 24);
+        timeStamp = (bytes[index++] & 255) + ((bytes[index++] & 255) << 8) + ((bytes[index++] & 255) << 16)
+                + ((bytes[index++] & 255) << 24);
     }
 
     /**
@@ -96,23 +90,23 @@ class LogRestartDescriptor implements Serializable {
      * @param bytes The array of bytes into which the object is to be copied.
      * @param index The index in the array where copy is to start.
      *
-     * @return  Number of bytes copied.
+     * @return Number of bytes copied.
      *
      * @see
      */
     final int toBytes(byte[] bytes, int index) {
         bytes[index++] = (byte) restartValid;
-        bytes[index++] = (byte)(restartValid >> 8);
-        bytes[index++] = (byte)(restartValid >> 16);
-        bytes[index++] = (byte)(restartValid >> 24);
+        bytes[index++] = (byte) (restartValid >> 8);
+        bytes[index++] = (byte) (restartValid >> 16);
+        bytes[index++] = (byte) (restartValid >> 24);
         bytes[index++] = (byte) restartDataLength;
-        bytes[index++] = (byte)(restartDataLength >> 8);
-        bytes[index++] = (byte)(restartDataLength >> 16);
-        bytes[index++] = (byte)(restartDataLength >> 24);
+        bytes[index++] = (byte) (restartDataLength >> 8);
+        bytes[index++] = (byte) (restartDataLength >> 16);
+        bytes[index++] = (byte) (restartDataLength >> 24);
         bytes[index++] = (byte) timeStamp;
-        bytes[index++] = (byte)(timeStamp >> 8);
-        bytes[index++] = (byte)(timeStamp >> 16);
-        bytes[index++] = (byte)(timeStamp >> 24);
+        bytes[index++] = (byte) (timeStamp >> 8);
+        bytes[index++] = (byte) (timeStamp >> 16);
+        bytes[index++] = (byte) (timeStamp >> 24);
 
         return SIZEOF;
     }
@@ -120,31 +114,28 @@ class LogRestartDescriptor implements Serializable {
     /**
      * Determines whether the target object is equal to the parameter.
      *
-     * @param other  The other LogRestartDescriptor to be compared.
+     * @param other The other LogRestartDescriptor to be compared.
      *
-     * @return  Indicates whether the objects are equal.
+     * @return Indicates whether the objects are equal.
      *
      * @see
      */
     final boolean equals(LogRestartDescriptor other) {
-        return (restartValid      == other.restartValid &&
-                restartDataLength == other.restartDataLength &&
-                timeStamp         == other.timeStamp);
+        return (restartValid == other.restartValid && restartDataLength == other.restartDataLength && timeStamp == other.timeStamp);
     }
 
     /**
-     * This method is called to direct the object to format its state
-     * to a String.
+     * This method is called to direct the object to format its state to a String.
      *
      * @param
      *
-     * @return  The formatted representation of the object.
+     * @return The formatted representation of the object.
      *
      * @see
      */
+    @Override
     public final String toString() {
-        return "LRD(valid="/*#Frozen*/ + restartValid +
-               ",len="/*#Frozen*/ + restartDataLength +
-               ",time="/*#Frozen*/ + timeStamp + ")"/*#Frozen*/;
+        return "LRD(valid="/* #Frozen */ + restartValid + ",len="/* #Frozen */ + restartDataLength + ",time="/* #Frozen */ + timeStamp
+                + ")"/* #Frozen */;
     }
 }

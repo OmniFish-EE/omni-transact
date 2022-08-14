@@ -31,8 +31,7 @@
 package com.sun.jts.CosTransactions;
 
 /**
- * Provides an ORB-neutral interface to support checking whether an object is
- * a proxy.
+ * Provides an ORB-neutral interface to support checking whether an object is a proxy.
  *
  * @version 0.01
  *
@@ -45,9 +44,9 @@ interface ProxyChecker {
     /**
      * Determines whether the given object represents a local or remote object.
      *
-     * @param obj     The potential proxy.
+     * @param obj The potential proxy.
      *
-     * @return  Indicates whether the object is a proxy.
+     * @return Indicates whether the object is a proxy.
      *
      * @see
      */

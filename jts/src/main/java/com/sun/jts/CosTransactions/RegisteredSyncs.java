@@ -31,10 +31,10 @@
 
 package com.sun.jts.CosTransactions;
 
-import com.sun.logging.LogDomains;
+import static java.util.logging.Level.FINEST;
+import static java.util.logging.Level.WARNING;
 
 import java.util.Vector;
-import java.util.logging.Level;
 import java.util.logging.Logger;
 
 import org.omg.CORBA.COMM_FAILURE;
@@ -43,10 +43,9 @@ import org.omg.CosTransactions.Status;
 import org.omg.CosTransactions.Synchronization;
 
 /**
- * The RegisteredSyncs class provides operations that manage a set of
- * Synchronization objects involved in a transaction. In order to avoid
- * sending multiple synchronization requests to the same resource we require
- * some way to perform Synchronization reference comparisons.
+ * The RegisteredSyncs class provides operations that manage a set of Synchronization objects involved in a transaction.
+ * In order to avoid sending multiple synchronization requests to the same resource we require some way to perform
+ * Synchronization reference comparisons.
  *
  * @version 0.01
  *
@@ -67,9 +66,9 @@ class RegisteredSyncs {
     private Vector registered = new Vector();
 
     /*
-        Logger to log transaction messages
-    */
-    static Logger _logger = LogDomains.getLogger(RegisteredSyncs.class, LogDomains.TRANSACTION_LOGGER);
+     * Logger to log transaction messages
+     */
+    static Logger _logger = Logger.getLogger(RegisteredSyncs.class.getName());
 
     /**
      * Default RegisteredSyncs constructor.
@@ -80,17 +79,17 @@ class RegisteredSyncs {
      *
      * @see
      */
-    RegisteredSyncs() {}
+    RegisteredSyncs() {
+    }
 
     /**
-     * Distributes before completion operations to all registered
-     * Synchronization objects.
+     * Distributes before completion operations to all registered Synchronization objects.
      * <p>
      * Returns a boolean to indicate success/failure.
      *
      * @param
      *
-     * @return  Indicates success of the operation.
+     * @return Indicates success of the operation.
      *
      * @see
      */
@@ -98,26 +97,26 @@ class RegisteredSyncs {
 
         boolean result = true;
 
-        for (int i = 0; i < registered.size() && result == true; i++) {
+        for (int i = 0; i < registered.size() && result; i++) {
             Synchronization sync = (Synchronization) registered.elementAt(i);
             try {
-                if (_logger.isLoggable(Level.FINEST)) {
-                    _logger.logp(Level.FINEST, "RegisterdSyncs", "distributeBefore()",
-                        "Before invoking before_completion() on synchronization object " + sync);
+                if (_logger.isLoggable(FINEST)) {
+                    _logger.logp(FINEST, "RegisterdSyncs", "distributeBefore()",
+                            "Before invoking before_completion() on synchronization object " + sync);
                 }
 
                 sync.before_completion();
 
-                if (_logger.isLoggable(Level.FINEST)) {
-                    _logger.logp(Level.FINEST, "RegisterdSyncs", "distributeBefore()",
-                        "After invoking before_completion() on synchronization object " + sync);
+                if (_logger.isLoggable(FINEST)) {
+                    _logger.logp(FINEST, "RegisterdSyncs", "distributeBefore()",
+                            "After invoking before_completion() on synchronization object " + sync);
                 }
             } catch (RuntimeException rex) {
                 // Exception was logged in SynchronizationImpl
                 throw rex;
             } catch (Throwable exc) {
-                _logger.log(Level.WARNING, "jts.exception_in_synchronization_operation",
-                        new java.lang.Object[] { exc.toString(),"before_completion"});
+                _logger.log(WARNING, "jts.exception_in_synchronization_operation",
+                        new java.lang.Object[] { exc.toString(), "before_completion" });
                 result = false;
             }
         }
@@ -126,10 +125,9 @@ class RegisteredSyncs {
     }
 
     /**
-     * Distributes after completion operations to all registered
-     * Synchronization objects.
+     * Distributes after completion operations to all registered Synchronization objects.
      *
-     * @param status  Indicates whether the transaction committed.
+     * @param status Indicates whether the transaction committed.
      *
      * @return
      *
@@ -149,31 +147,28 @@ class RegisteredSyncs {
             }
 
             try {
-                if (_logger.isLoggable(Level.FINEST)) {
-                    _logger.logp(Level.FINEST, "RegisterdSyncs", "distributeAfter()",
-                        "Before invoking after_completion() on synchronization object " + sync);
+                if (_logger.isLoggable(FINEST)) {
+                    _logger.logp(FINEST, "RegisterdSyncs", "distributeAfter()",
+                            "Before invoking after_completion() on synchronization object " + sync);
                 }
 
                 sync.after_completion(status);
 
-                if (_logger.isLoggable(Level.FINEST)) {
-                    _logger.logp(Level.FINEST, "RegisterdSyncs", "distributeAfter()",
-                        "After invoking after_completion() on synchronization object" + sync);
+                if (_logger.isLoggable(FINEST)) {
+                    _logger.logp(FINEST, "RegisterdSyncs", "distributeAfter()",
+                            "After invoking after_completion() on synchronization object" + sync);
                 }
             } catch (Throwable exc) {
                 // Discard any exceptions at this point.
-                if (exc instanceof OBJECT_NOT_EXIST ||
-                        exc instanceof COMM_FAILURE) {
+                if (exc instanceof OBJECT_NOT_EXIST || exc instanceof COMM_FAILURE) {
                     // ignore i.e., no need to log this error (Ram J)
                     // this can happen normally during after_completion flow,
                     // since remote sync objects would go away when the
                     // subordinate cleans up (i.e, the subordinate would have
                     // called afterCompletions locally before going away).
                 } else {
-                    _logger.log(Level.WARNING,
-                            "jts.exception_in_synchronization_operation",
-                            new java.lang.Object[] { exc.toString(),
-                            "after_completion"});
+                    _logger.log(WARNING, "jts.exception_in_synchronization_operation",
+                            new Object[] { exc.toString(), "after_completion" });
                 }
             }
 
@@ -187,10 +182,9 @@ class RegisteredSyncs {
     /**
      * Adds a reference to a Synchronization object to the set.
      * <p>
-     * If there is no such set then a new one is created with the single
-     * Synchronization reference.
+     * If there is no such set then a new one is created with the single Synchronization reference.
      *
-     * @param obj  The Synchronization object to be added.
+     * @param obj The Synchronization object to be added.
      *
      * @return
      *
@@ -220,13 +214,11 @@ class RegisteredSyncs {
      *
      * @param
      *
-     * @return  Indicates whether any objects are registered.
+     * @return Indicates whether any objects are registered.
      *
      * @see
      */
     boolean involved() {
-
-        boolean result = (registered.size() != 0);
-        return result;
+        return registered.size() != 0;
     }
 }

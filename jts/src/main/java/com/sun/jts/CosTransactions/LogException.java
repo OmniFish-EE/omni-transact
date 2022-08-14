@@ -30,16 +30,15 @@
 
 package com.sun.jts.CosTransactions;
 
-import com.sun.enterprise.util.i18n.StringManager;
-
-/**A class which contains exception information for errors in the log.
+/**
+ * A class which contains exception information for errors in the log.
  *
  * @version 0.01
  *
  * @author Simon Holdsworth, IBM Corporation
  *
  * @see
-*/
+ */
 //----------------------------------------------------------------------------
 // CHANGE HISTORY
 //
@@ -48,9 +47,9 @@ import com.sun.enterprise.util.i18n.StringManager;
 //------------------------------------------------------------------------------
 
 class LogException extends Exception {
-    private static final StringManager sm = StringManager.getManager(LogException.class);
 
-    /**Constants which define error codes from the logger classes.
+    /**
+     * Constants which define error codes from the logger classes.
      */
     static final int LOG_SUCCESS = 0;
     static final int LOG_NOT_INITIALISED = 1;
@@ -82,78 +81,62 @@ class LogException extends Exception {
     static final int LOG_READ_ONLY_ACCESS = 27;
     static final int MAX_RESPONSE_VALUE = LOG_READ_ONLY_ACCESS;
 
-    /**Strings which contain error messages from the log.
+    /**
+     * Strings which contain error messages from the log.
      */
-    private static final String[] statusStrings =
-    { "jts.LOG_000_Operation_successful"/*#Frozen*/,
-      "jts.LOG_001_Log_not_initialised"/*#Frozen*/,
-      "jts.LOG_002_Open_failure"/*#Frozen*/,
-      "jts.LOG_003_Read_failure"/*#Frozen*/,
-      "jts.LOG_004_Data_corrupted"/*#Frozen*/,
-      "jts.LOG_005_Invalid_file_descriptor"/*#Frozen*/,
-      "jts.LOG_006_Lock_failure"/*#Frozen*/,
-      "jts.LOG_007_Write_failure"/*#Frozen*/,
-      "jts.LOG_008_Close_failure"/*#Frozen*/,
-      "jts.LOG_009_Too_many_input_buffers"/*#Frozen*/,
-      "jts.LOG_010_Record_too_large"/*#Frozen*/,
-      "jts.LOG_011_No_space_in_filesystem"/*#Frozen*/,
-      "jts.LOG_012_Insufficient_memory"/*#Frozen*/,
-      "jts.LOG_013_Force_failure"/*#Frozen*/,
-      "jts.LOG_014_Invalid_LSN_value"/*#Frozen*/,
-      "jts.LOG_015_New_tail_LSN_too_high"/*#Frozen*/,
-      "jts.LOG_016_New_tail_LSN_too_low"/*#Frozen*/,
-      "jts.LOG_017_Invalid_tail_LSN_value"/*#Frozen*/,
-      "jts.LOG_018_Internal_error"/*#Frozen*/,
-      "jts.LOG_019_No_restart_record_present"/*#Frozen*/,
-      "jts.LOG_020_Invalid_cursor_value"/*#Frozen*/,
-      "jts.LOG_021_End_of_cursor_reached"/*#Frozen*/,
-      "jts.LOG_022_Filesystem_access_failure"/*#Frozen*/,
-      "jts.LOG_023_Invalid_process"/*#Frozen*/,
-      "jts.LOG_024_Log_is_read_only"/*#Frozen*/,
-      "jts.LOG_025_Invalid_record_type_specified"/*#Frozen*/,
-      "jts.LOG_026_Extent_file_open_failure"/*#Frozen*/,
-      "jts.LOG_027_Invalid_write_mode_specified"/*#Frozen*/,
-      "jts.LOG_028_Invalid_status_specified"/*#Frozen*/ };
+    private static final String[] statusStrings = { "jts.LOG_000_Operation_successful"/* #Frozen */,
+            "jts.LOG_001_Log_not_initialised"/* #Frozen */, "jts.LOG_002_Open_failure"/* #Frozen */,
+            "jts.LOG_003_Read_failure"/* #Frozen */, "jts.LOG_004_Data_corrupted"/* #Frozen */,
+            "jts.LOG_005_Invalid_file_descriptor"/* #Frozen */, "jts.LOG_006_Lock_failure"/* #Frozen */,
+            "jts.LOG_007_Write_failure"/* #Frozen */, "jts.LOG_008_Close_failure"/* #Frozen */,
+            "jts.LOG_009_Too_many_input_buffers"/* #Frozen */, "jts.LOG_010_Record_too_large"/* #Frozen */,
+            "jts.LOG_011_No_space_in_filesystem"/* #Frozen */, "jts.LOG_012_Insufficient_memory"/* #Frozen */,
+            "jts.LOG_013_Force_failure"/* #Frozen */, "jts.LOG_014_Invalid_LSN_value"/* #Frozen */,
+            "jts.LOG_015_New_tail_LSN_too_high"/* #Frozen */, "jts.LOG_016_New_tail_LSN_too_low"/* #Frozen */,
+            "jts.LOG_017_Invalid_tail_LSN_value"/* #Frozen */, "jts.LOG_018_Internal_error"/* #Frozen */,
+            "jts.LOG_019_No_restart_record_present"/* #Frozen */, "jts.LOG_020_Invalid_cursor_value"/* #Frozen */,
+            "jts.LOG_021_End_of_cursor_reached"/* #Frozen */, "jts.LOG_022_Filesystem_access_failure"/* #Frozen */,
+            "jts.LOG_023_Invalid_process"/* #Frozen */, "jts.LOG_024_Log_is_read_only"/* #Frozen */,
+            "jts.LOG_025_Invalid_record_type_specified"/* #Frozen */, "jts.LOG_026_Extent_file_open_failure"/* #Frozen */,
+            "jts.LOG_027_Invalid_write_mode_specified"/* #Frozen */, "jts.LOG_028_Invalid_status_specified"/* #Frozen */ };
 
-    /**Instance members
+    /**
+     * Instance members
      */
     int errorCode;
     private int throwPoint;
     private Object extraInfo;
 
-    /**LogException constructor
+    /**
+     * LogException constructor
      *
-     * @param trc   The current trace object to allow exception trace to be made.
-     * @param err   The error code.
+     * @param trc The current trace object to allow exception trace to be made.
+     * @param err The error code.
      * @param point The throw point.
      *
      * @return
      *
      * @see
      */
-    LogException(Object dummy /* COMMENT(Ram J) - used to be trace object */,
-                  int   err,
-                  int   point ) {
+    LogException(Object dummy /* COMMENT(Ram J) - used to be trace object */, int err, int point) {
         super(getMessageFromErrorCode(null, err, point));
         errorCode = err;
         throwPoint = point;
     }
 
-    /**LogException constructor
+    /**
+     * LogException constructor
      *
-     * @param trc    The current trace object to allow exception trace to be made.
-     * @param err    The error code.
-     * @param point  The throw point.
-     * @param extra  Extra information.
+     * @param trc The current trace object to allow exception trace to be made.
+     * @param err The error code.
+     * @param point The throw point.
+     * @param extra Extra information.
      *
      * @return
      *
      * @see
      */
-    LogException(Object dummy /* COMMENT(Ram J) - used to be trace object */,
-                  int    err,
-                  int    point,
-                  Object extra ) {
+    LogException(Object dummy /* COMMENT(Ram J) - used to be trace object */, int err, int point, Object extra) {
         super(getMessageFromErrorCode(null, err, point));
         errorCode = err;
         throwPoint = point;
@@ -168,7 +151,6 @@ class LogException extends Exception {
 
     private static String getMessageFromErrorCode(String extraMsg, int err, int point) {
         String key = statusStrings[err > MAX_RESPONSE_VALUE ? MAX_RESPONSE_VALUE + 1 : err];
-        return sm.getString("jts.log_exception", sm.getString(key), point,
-                 (extraMsg == null) ? "" : extraMsg);
+        return "jts.log_exception" + key + point + ((extraMsg == null) ? "" : extraMsg);
     }
 }

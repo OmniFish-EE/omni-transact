@@ -30,14 +30,13 @@
 
 package com.sun.jts.CosTransactions;
 
-import org.omg.CosTransactions.*;
+import org.omg.CosTransactions.Coordinator;
 
 /**
- * The StaticResource interface provides operations that allow an object to
- * be informed about changes in transaction associations with threads. The
- * operations are guaranteed to be invoked on the thread on which the
- * association is started or ended. This class is an abstract base class so
- * the behavior here is that which is expected from any subclass.
+ * The StaticResource interface provides operations that allow an object to be informed about changes in transaction
+ * associations with threads. The operations are guaranteed to be invoked on the thread on which the association is
+ * started or ended. This class is an abstract base class so the behavior here is that which is expected from any
+ * subclass.
  *
  * @version 0.01
  *
@@ -58,13 +57,11 @@ public abstract class StaticResource {
     /**
      * Informs the object that an association has started.
      * <p>
-     * That is, a thread association has begun on the calling thread for the
-     * transaction represented by the given Coordinator object.
-     * A flag is passed indicating whether this association is
-     * as a result of a begin operation.
+     * That is, a thread association has begun on the calling thread for the transaction represented by the given
+     * Coordinator object. A flag is passed indicating whether this association is as a result of a begin operation.
      *
-     * @param coord  The transaction whose association is starting.
-     * @param begin  Indicates a begin rather than a resume.
+     * @param coord The transaction whose association is starting.
+     * @param begin Indicates a begin rather than a resume.
      *
      * @return
      *
@@ -75,13 +72,12 @@ public abstract class StaticResource {
     /**
      * Informs the object that an association has ended.
      * <p>
-     * That is, a thread association has ended on the calling thread for the
-     * transaction represented by the given Coordinator object.
-     * A flag is passed indicating whether this
-     * association is as a result of the transaction completing.
+     * That is, a thread association has ended on the calling thread for the transaction represented by the given
+     * Coordinator object. A flag is passed indicating whether this association is as a result of the transaction
+     * completing.
      *
-     * @param coord     The transaction whose association is starting.
-     * @param complete  Indicates a commit/rollback rather than a suspend.
+     * @param coord The transaction whose association is starting.
+     * @param complete Indicates a commit/rollback rather than a suspend.
      *
      * @return
      *
@@ -92,8 +88,7 @@ public abstract class StaticResource {
     /**
      * Registers the StaticResource object.
      * <p>
-     * Until this method is called, the StaticResource object will not receive
-     * calls to start/endAssociation.
+     * Until this method is called, the StaticResource object will not receive calls to start/endAssociation.
      *
      * @param
      *

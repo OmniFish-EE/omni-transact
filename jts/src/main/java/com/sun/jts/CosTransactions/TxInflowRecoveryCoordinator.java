@@ -16,27 +16,29 @@
 
 package com.sun.jts.CosTransactions;
 
-import org.omg.CosTransactions.Status;
-import org.omg.CosTransactions.Resource;
 import org.omg.CosTransactions.RecoveryCoordinator;
+import org.omg.CosTransactions.Resource;
+import org.omg.CosTransactions.Status;
 
 /**
  * This used for mimicking a RecoveryCoordinator behavior.
  *
  * @version 1.0
- * @author  Ram Jeyaraman
+ * @author Ram Jeyaraman
  */
-class TxInflowRecoveryCoordinator extends org.omg.CORBA.LocalObject
-        implements RecoveryCoordinator {
+class TxInflowRecoveryCoordinator extends org.omg.CORBA.LocalObject implements RecoveryCoordinator {
+
+    private static final long serialVersionUID = 1L;
 
     /**
-     * Simply returns unknown status. This forces the subordinate to wait
-     * until the superior site completes the pending in-doubt transaction.
+     * Simply returns unknown status. This forces the subordinate to wait until the superior site completes the pending
+     * in-doubt transaction.
      *
      * @param res The Resource to be recovered. This is ignored.
      *
      * @return unknown status
      */
+    @Override
     public Status replay_completion(Resource res) {
         return Status.StatusUnknown;
     }

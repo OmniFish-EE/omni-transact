@@ -30,27 +30,24 @@
 
 package com.sun.jts.CosTransactions;
 
-import java.io.*;
-
-import org.omg.CORBA.*;
-import org.omg.CosTransactions.*;
-import com.sun.corba.ee.spi.presentation.rmi.StubAdapter;
+import org.omg.CosTransactions.Coordinator;
+import org.omg.CosTransactions.RecoveryCoordinator;
+import org.omg.CosTransactions.RecoveryCoordinatorHelper;
+import org.omg.CosTransactions.SubtransactionAwareResource;
+import org.omg.CosTransactions.SubtransactionAwareResourceHelper;
 
 /**
- * The SuperiorInfo interface provides operations that record the local
- * transaction ID, global transaction ID for the superior (client) and the
- * superior Coordinator.
- * As an instance of this class may be accessed from multiple threads within
- * a process, serialisation for thread-safety is necessary in the
- * implementation. The information recorded in an instance of this class
- * needs to be reconstructible in the case of a system failure.
+ * The SuperiorInfo interface provides operations that record the local transaction ID, global transaction ID for the
+ * superior (client) and the superior Coordinator. As an instance of this class may be accessed from multiple threads
+ * within a process, serialisation for thread-safety is necessary in the implementation. The information recorded in an
+ * instance of this class needs to be reconstructible in the case of a system failure.
  *
  * @version 0.01
  *
  * @author Simon Holdsworth, IBM Corporation
  *
  * @see
-*/
+ */
 
 //----------------------------------------------------------------------------
 // CHANGE HISTORY
@@ -63,39 +60,35 @@ class SuperiorInfo {
     /**
      * The local identifier for the transaction.
      */
-    Long localTID = null;
+    Long localTID;
 
     /**
      * The global identifier for the transaction.
      */
-    GlobalTID globalTID = null;
+    GlobalTID globalTID;
 
     /**
      * The reference of the superior Coordinator.
      */
-    Coordinator superior = null;
+    Coordinator superior;
 
     /**
-     * The reference of the RecoveryCoordinator returned on the
-     * register_resource call to the superior Coordinator,
-     * if any.  Note that this member may be directly read,
-     *  but must be set using the setRecovery method in this class.
+     * The reference of the RecoveryCoordinator returned on the register_resource call to the superior Coordinator, if any.
+     * Note that this member may be directly read, but must be set using the setRecovery method in this class.
      */
-    RecoveryCoordinator recovery = null;
+    RecoveryCoordinator recovery;
 
     /**
-     * The reference of the Resource registered on the
-     * register_resource call to the superior Coordinator, if any.
-     * Note that this member may be directly
-     * read, but must be set using the setResource method in this class.
+     * The reference of the Resource registered on the register_resource call to the superior Coordinator, if any. Note that
+     * this member may be directly read, but must be set using the setResource method in this class.
      */
-    SubtransactionAwareResource resource = null;
+    SubtransactionAwareResource resource;
 
-    private CoordinatorLog   logRecord = null;
-    private java.lang.Object logSection = null;
-    private int              resyncRetries = 0;
+    private CoordinatorLog logRecord;
+    private java.lang.Object logSection;
+    private int resyncRetries = 0;
 
-    private final static String LOG_SECTION_NAME = "SI"/*#Frozen*/;
+    private final static String LOG_SECTION_NAME = "SI"/* #Frozen */;
 
     /**
      * Default SuperiorInfo constructor.
@@ -106,28 +99,25 @@ class SuperiorInfo {
      *
      * @see
      */
-    SuperiorInfo() { }
+    SuperiorInfo() {
+    }
 
     /**
-     * Defines the local transaction ID, global ID and superior Coordinator
-     * reference.
+     * Defines the local transaction ID, global ID and superior Coordinator reference.
      * <p>
-     * The CoordinatorLog is used as the basis for recovering the
-     * SuperiorInfo at restart. The SuperiorInfo section in the CoordinatorLog
-     * is created, with the global identifier added to the section.
+     * The CoordinatorLog is used as the basis for recovering the SuperiorInfo at restart. The SuperiorInfo section in the
+     * CoordinatorLog is created, with the global identifier added to the section.
      *
-     * @param localTID   The local identifier for the transaction.
-     * @paran globalTID  The global identifier for the transaction.
-     * @param superior   The superior Coordinator reference (may be null).
-     * @param log        The CoordinatorLog object (may be null).
+     * @param localTID The local identifier for the transaction.
+     * @paran globalTID The global identifier for the transaction.
+     * @param superior The superior Coordinator reference (may be null).
+     * @param log The CoordinatorLog object (may be null).
      *
      * @return
      *
      * @see
      */
-    SuperiorInfo(Long localTID, GlobalTID globalTID,
-                 Coordinator superior, CoordinatorLog log) {
-
+    SuperiorInfo(Long localTID, GlobalTID globalTID, Coordinator superior, CoordinatorLog log) {
         this.localTID = localTID;
         this.globalTID = globalTID;
         this.superior = superior;
@@ -146,7 +136,7 @@ class SuperiorInfo {
 
             // Add the Global Id to the SuperiorInfo section of the log
 
-            log.addData(logSection,globalTID.toBytes());
+            log.addData(logSection, globalTID.toBytes());
         }
     }
 
@@ -163,23 +153,21 @@ class SuperiorInfo {
 
         // Release superior Coordinator references.
 
-        if (superior != null &&
-                !(superior instanceof org.omg.CORBA.LocalObject)) {
+        if (superior != null && !(superior instanceof org.omg.CORBA.LocalObject)) {
             superior._release();
         }
 
-        //$#ifndef OTS_DEFERRED_REGISTRATION
-        //$For deferred registration, the CurrentTransaction
-        //$will release the proxy, so there is no need to do it here.
-        //$For non-deferred registration, the RecoveryCoordinator
-        //$must be destroyed by the subordinate as no-one else will.
+        // $#ifndef OTS_DEFERRED_REGISTRATION
+        // $For deferred registration, the CurrentTransaction
+        // $will release the proxy, so there is no need to do it here.
+        // $For non-deferred registration, the RecoveryCoordinator
+        // $must be destroyed by the subordinate as no-one else will.
 
-        if (recovery != null &&
-                !(recovery instanceof org.omg.CORBA.LocalObject)) {
+        if (recovery != null && !(recovery instanceof org.omg.CORBA.LocalObject)) {
             recovery._release();
         }
 
-        //$#endif /* OTS_DEFERRED_REGISTRATION */
+        // $#endif /* OTS_DEFERRED_REGISTRATION */
 
         localTID = null;
         globalTID = null;
@@ -189,20 +177,16 @@ class SuperiorInfo {
     }
 
     /**
-     * Directs the SuperiorInfo to recover its state after a failure, based on
-     * the given CoordinatorLog object.
+     * Directs the SuperiorInfo to recover its state after a failure, based on the given CoordinatorLog object.
      * <p>
-     * The SuperiorInfo then adds the given Coordinator to the
-     * RecoveryManager mappings.  If the SuperiorInfo has already been defined
-     * or reconstructed, the operation does nothing.
-     * If the state cannot be reconstructed, the
-     * Coordinator is not added.
+     * The SuperiorInfo then adds the given Coordinator to the RecoveryManager mappings. If the SuperiorInfo has already
+     * been defined or reconstructed, the operation does nothing. If the state cannot be reconstructed, the Coordinator is
+     * not added.
      * <p>
-     * The global identifier, local ID, RecoveryCoordinator
-     * and CoordinatorResource object references are restored.
+     * The global identifier, local ID, RecoveryCoordinator and CoordinatorResource object references are restored.
      *
-     * @param log    The CoordinatorLog object for the transaction.
-     * @param coord  The Coordinator object recreated after recovery.
+     * @param log The CoordinatorLog object for the transaction.
+     * @param coord The Coordinator object recreated after recovery.
      *
      * @return
      *
@@ -229,56 +213,48 @@ class SuperiorInfo {
         logRecord = log;
         resyncRetries = 0;
 
-        // Add the Coordinator to the RecoveryManager map.  This is
+        // Add the Coordinator to the RecoveryManager map. This is
         // to allow the recovery of the CoordinatorResource reference,
         // which results in a call to getCoordinator.
 
         RecoveryManager.addCoordinator(globalTID, localTID, coord, 0);
 
-        // Get all objects that were logged.  If this SuperiorInfo represents
+        // Get all objects that were logged. If this SuperiorInfo represents
         // a root TopCoordinator object, then there will be no objects logged.
 
         java.lang.Object[] logObjects = log.getObjects(logSection);
 
         try {
             if (logObjects.length > 1) {
-                if (((org.omg.CORBA.Object) logObjects[0]).
-                        _is_a(RecoveryCoordinatorHelper.id())) {
+                if (((org.omg.CORBA.Object) logObjects[0])._is_a(RecoveryCoordinatorHelper.id())) {
                     // TN - used to be com.sun.CORBA.iiop.CORBAObjectImpl
                     java.lang.Object rcimpl = logObjects[0];
 
                     /*
-                    String[] ids = StubAdapter.getTypeIds(rcimpl);
-                    for (int i = 0; i < ids.length; i++)
-                        if( trc != null )
-                            trc.exit(998).data(i).data(ids[i]).write();
-                    */
+                     * String[] ids = StubAdapter.getTypeIds(rcimpl); for (int i = 0; i < ids.length; i++) if( trc != null )
+                     * trc.exit(998).data(i).data(ids[i]).write();
+                     */
 
                     // TN - used to be com.sun.CORBA.iiop.CORBAObjectImpl
                     java.lang.Object crimpl = logObjects[1];
 
                     /*
-                    ids = StubAdapter.getTypeIds(crimpl);
-                    for( int i = 0; i < ids.length; i++ )
-                        if( trc != null )
-                            trc.exit(998).data(i).data(ids[i]).write();
-                    */
-                    recovery = RecoveryCoordinatorHelper.
-                                narrow((org.omg.CORBA.Object) logObjects[0]);
+                     * ids = StubAdapter.getTypeIds(crimpl); for( int i = 0; i < ids.length; i++ ) if( trc != null )
+                     * trc.exit(998).data(i).data(ids[i]).write();
+                     */
+                    recovery = RecoveryCoordinatorHelper.narrow((org.omg.CORBA.Object) logObjects[0]);
 
-                    resource = SubtransactionAwareResourceHelper.
-                                narrow((org.omg.CORBA.Object) logObjects[1]);
+                    resource = SubtransactionAwareResourceHelper.narrow((org.omg.CORBA.Object) logObjects[1]);
                 } else {
-                    recovery = RecoveryCoordinatorHelper.
-                                narrow((org.omg.CORBA.Object) logObjects[1]);
-                    resource = SubtransactionAwareResourceHelper.
-                                narrow((org.omg.CORBA.Object) logObjects[0]);
+                    recovery = RecoveryCoordinatorHelper.narrow((org.omg.CORBA.Object) logObjects[1]);
+                    resource = SubtransactionAwareResourceHelper.narrow((org.omg.CORBA.Object) logObjects[0]);
                 }
             } else {
                 recovery = null;
                 resource = null;
             }
-        } catch (Throwable exc) {}
+        } catch (Throwable exc) {
+        }
     }
 
     // same as reconstruct method: added for delegated recovery support
@@ -303,63 +279,54 @@ class SuperiorInfo {
         logRecord = log;
         resyncRetries = 0;
 
-        // Add the Coordinator to the RecoveryManager map.  This is
+        // Add the Coordinator to the RecoveryManager map. This is
         // to allow the recovery of the CoordinatorResource reference,
         // which results in a call to getCoordinator.
 
         DelegatedRecoveryManager.addCoordinator(globalTID, localTID, coord, 0, logPath);
 
-        // Get all objects that were logged.  If this SuperiorInfo represents
+        // Get all objects that were logged. If this SuperiorInfo represents
         // a root TopCoordinator object, then there will be no objects logged.
 
         java.lang.Object[] logObjects = log.getObjects(logSection);
 
         try {
             if (logObjects.length > 1) {
-                if (((org.omg.CORBA.Object) logObjects[0]).
-                        _is_a(RecoveryCoordinatorHelper.id())) {
+                if (((org.omg.CORBA.Object) logObjects[0])._is_a(RecoveryCoordinatorHelper.id())) {
                     // TN - used to be com.sun.CORBA.iiop.CORBAObjectImpl
                     java.lang.Object rcimpl = logObjects[0];
 
                     /*
-                    String[] ids = StubAdapter.getTypeIds(rcimpl);
-                    for (int i = 0; i < ids.length; i++)
-                        if( trc != null )
-                            trc.exit(998).data(i).data(ids[i]).write();
-                    */
+                     * String[] ids = StubAdapter.getTypeIds(rcimpl); for (int i = 0; i < ids.length; i++) if( trc != null )
+                     * trc.exit(998).data(i).data(ids[i]).write();
+                     */
 
                     // TN - used to be com.sun.CORBA.iiop.CORBAObjectImpl
                     java.lang.Object crimpl = logObjects[1];
 
                     /*
-                    ids = StubAdapter.getTypeIds(crimpl);
-                    for( int i = 0; i < ids.length; i++ )
-                        if( trc != null )
-                            trc.exit(998).data(i).data(ids[i]).write();
-                    */
-                    recovery = RecoveryCoordinatorHelper.
-                                narrow((org.omg.CORBA.Object) logObjects[0]);
+                     * ids = StubAdapter.getTypeIds(crimpl); for( int i = 0; i < ids.length; i++ ) if( trc != null )
+                     * trc.exit(998).data(i).data(ids[i]).write();
+                     */
+                    recovery = RecoveryCoordinatorHelper.narrow((org.omg.CORBA.Object) logObjects[0]);
 
-                    resource = SubtransactionAwareResourceHelper.
-                                narrow((org.omg.CORBA.Object) logObjects[1]);
+                    resource = SubtransactionAwareResourceHelper.narrow((org.omg.CORBA.Object) logObjects[1]);
                 } else {
-                    recovery = RecoveryCoordinatorHelper.
-                                narrow((org.omg.CORBA.Object) logObjects[1]);
-                    resource = SubtransactionAwareResourceHelper.
-                                narrow((org.omg.CORBA.Object) logObjects[0]);
+                    recovery = RecoveryCoordinatorHelper.narrow((org.omg.CORBA.Object) logObjects[1]);
+                    resource = SubtransactionAwareResourceHelper.narrow((org.omg.CORBA.Object) logObjects[0]);
                 }
             } else {
                 recovery = null;
                 resource = null;
             }
-        } catch (Throwable exc) {}
+        } catch (Throwable exc) {
+        }
     }
-
 
     /**
      * Records the RecoveryCoordinator for the transaction.
      *
-     * @param rec  The RecoveryCoordinator from the superior.
+     * @param rec The RecoveryCoordinator from the superior.
      *
      * @return
      *
@@ -381,7 +348,7 @@ class SuperiorInfo {
     /**
      * Records the CoordinatorResource for the transaction.
      *
-     * @param res  The CoordinatorResource registered with the superior.
+     * @param res The CoordinatorResource registered with the superior.
      *
      * @return
      *
@@ -405,7 +372,7 @@ class SuperiorInfo {
      *
      * @param
      *
-     * @return  The number of retries so far.
+     * @return The number of retries so far.
      *
      * @see
      */

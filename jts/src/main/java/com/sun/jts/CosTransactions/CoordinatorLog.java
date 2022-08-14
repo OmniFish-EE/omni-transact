@@ -30,40 +30,41 @@
 
 package com.sun.jts.CosTransactions;
 
-// Import required classes.
-
-import java.util.*;
-import java.io.*;
-
-import org.omg.CORBA.*;
-
-import java.io.DataOutputStream;
+import java.io.ByteArrayInputStream;
+import java.io.ByteArrayOutputStream;
 import java.io.DataInputStream;
-import java.util.logging.Logger;
+import java.io.DataOutputStream;
+import java.io.IOException;
+// Import required classes.
+import java.util.Enumeration;
+import java.util.Hashtable;
+import java.util.Stack;
+import java.util.Vector;
 import java.util.logging.Level;
-import com.sun.logging.LogDomains;
+import java.util.logging.Logger;
+
+import org.omg.CORBA.MARSHAL;
+import org.omg.CORBA.ORB;
+
 import com.sun.jts.utils.LogFormatter;
 
-/**The CoordinatorLog interface provides operations to record transaction-
- * specific information that needs to be persistently stored at a particular
- * point in time, and subsequently restored.
+/**
+ * The CoordinatorLog interface provides operations to record transaction- specific information that needs to be
+ * persistently stored at a particular point in time, and subsequently restored.
  * <p>
- * The CoordinatorLog contains an attribute value which is the local transaction
- * identifier associated with the transaction operating on the log. The
- * CoordinatorLog maintains the LSN of the last log record written for the
- * transaction, and a flag indicating whether rewrite is required for a
- * keypoint.
+ * The CoordinatorLog contains an attribute value which is the local transaction identifier associated with the
+ * transaction operating on the log. The CoordinatorLog maintains the LSN of the last log record written for the
+ * transaction, and a flag indicating whether rewrite is required for a keypoint.
  * <p>
- * As an instance of this class may be accessed from multiple threads within
- * a process, serialisation for thread-safety and locking during keypoint is
- * necessary.
+ * As an instance of this class may be accessed from multiple threads within a process, serialisation for thread-safety
+ * and locking during keypoint is necessary.
  *
  * @version 0.01
  *
  * @author Simon Holdsworth, IBM Corporation
  *
  * @see
-*/
+ */
 //----------------------------------------------------------------------------
 // CHANGE HISTORY
 //
@@ -78,35 +79,30 @@ class CoordinatorLog extends java.lang.Object implements LogUpcallTarget {
     private static final String defaultstring = "DEFAULT_LOG";
 
     /**
-    // Since muliple logs have to coexist as part of delegated recovery
-    // support, static data can not be maintained. Now this data is stored
-    // per log location
-    private static LogFile logFile        = null;
-    private static Log log                = null;
-    private static Hashtable activeLogs   = new Hashtable();
-    private static Hashtable keypointLogs = new Hashtable();
-    private static int tranCount          = 0;
-    private static int keypointTrigger    = 100;
-    private static boolean keypointInProgress = false;
-    private static java.lang.Object keypointLock = new java.lang.Object();
-    private static java.lang.Object keypointStateLock = new java.lang.Object();
-   **/
-    private static int keypointTrigger    = 100;
+     * // Since muliple logs have to coexist as part of delegated recovery // support, static data can not be maintained.
+     * Now this data is stored // per log location private static LogFile logFile = null; private static Log log = null;
+     * private static Hashtable activeLogs = new Hashtable(); private static Hashtable keypointLogs = new Hashtable();
+     * private static int tranCount = 0; private static int keypointTrigger = 100; private static boolean keypointInProgress
+     * = false; private static java.lang.Object keypointLock = new java.lang.Object(); private static java.lang.Object
+     * keypointStateLock = new java.lang.Object();
+     **/
+    private static int keypointTrigger = 100;
     private static Hashtable logStateHoldertable = new Hashtable();
     private static final java.lang.Object NULL_ENTRY = new java.lang.Object();
 
     private Hashtable sectionMapping = null;
-    private boolean rewriteRequired  = false;
+    private boolean rewriteRequired = false;
     private boolean writeDone = false;
 
     private String logPath = null;
 
     /*
-        Logger to log transaction messages
+     * Logger to log transaction messages
      */
-    static Logger _logger = LogDomains.getLogger(CoordinatorLog.class, LogDomains.TRANSACTION_LOGGER);
+    static Logger _logger = Logger.getLogger(CoordinatorLog.class.getName());
 
-    /**The local transaction identifier for the transaction this object is logging.
+    /**
+     * The local transaction identifier for the transaction this object is logging.
      */
     Long localTID = null;
     CoordinatorLogStateHolder logStateHolder = null;
@@ -115,44 +111,43 @@ class CoordinatorLog extends java.lang.Object implements LogUpcallTarget {
     // Static variables to handle byte array formatting.
 
     private ByteArrayOutputStream byteOutput = new ByteArrayOutputStream(2000);
-    private DataOutputStream      dataOutput = new DataOutputStream(byteOutput);
-
+    private DataOutputStream dataOutput = new DataOutputStream(byteOutput);
 
     // All the methods which take "String logPath" as parameter are same as the
     // ones with out that parameter. These methods are added for delegated
     // recovery support
     /**
-     * Get the state for the given log location.
-     * If the state does not exists, creates the state and retuns, otherwise existing
-     * state is returned.
+     * Get the state for the given log location. If the state does not exists, creates the state and retuns, otherwise
+     * existing state is returned.
      *
-     * @param str  log location.
+     * @param str log location.
      *
-     * @return  state for the given log location.
+     * @return state for the given log location.
      *
      * @see
      */
     static private CoordinatorLogStateHolder getStateHolder(String str) {
         synchronized (logStateHoldertable) {
-            CoordinatorLogStateHolder logStateHolder = (CoordinatorLogStateHolder)logStateHoldertable.get(str);
+            CoordinatorLogStateHolder logStateHolder = (CoordinatorLogStateHolder) logStateHoldertable.get(str);
             if (logStateHolder == null) {
-                logStateHolder =  new CoordinatorLogStateHolder();
-                logStateHolder.logFile        = null;
-                logStateHolder.log            = null;
-                logStateHolder.activeLogs   = new Hashtable();
+                logStateHolder = new CoordinatorLogStateHolder();
+                logStateHolder.logFile = null;
+                logStateHolder.log = null;
+                logStateHolder.activeLogs = new Hashtable();
                 logStateHolder.keypointLogs = new Hashtable();
-                logStateHolder.tranCount          = 0;
+                logStateHolder.tranCount = 0;
                 logStateHolder.keypointInProgress = false;
                 // logStateHolder.keypointLock = new java.lang.Object();
                 logStateHolder.keypointLock = new RWLock();
                 logStateHolder.keypointStateLock = new java.lang.Object();
-                logStateHoldertable.put(str,logStateHolder);
+                logStateHoldertable.put(str, logStateHolder);
             }
             return logStateHolder;
         }
     }
 
-    /**Default CoordinatorLog constructor.
+    /**
+     * Default CoordinatorLog constructor.
      *
      * @param
      *
@@ -165,7 +160,6 @@ class CoordinatorLog extends java.lang.Object implements LogUpcallTarget {
         sectionMapping = new Hashtable();
         logStateHolder = defaultLogStateHolder;
 
-
         // Do not inform the metaclass about the existence of this object yet, as it
         // does not have a transaction identifier.
 
@@ -177,13 +171,13 @@ class CoordinatorLog extends java.lang.Object implements LogUpcallTarget {
         logStateHolder = getStateHolder(logPath);
         this.logPath = logPath;
 
-
         // Do not inform the metaclass about the existence of this object yet, as it
         // does not have a transaction identifier.
 
     }
 
-    /**Default CoordinatorLog destructor.
+    /**
+     * Default CoordinatorLog destructor.
      *
      * @param
      *
@@ -195,14 +189,14 @@ class CoordinatorLog extends java.lang.Object implements LogUpcallTarget {
 
         // Clear up the section mapping.
 
-        if( sectionMapping != null ) {
+        if (sectionMapping != null) {
             Enumeration sections = sectionMapping.elements();
             // the traditional way of iterating through the enumeration
             // using sections.hasMoreElements was showing up as a
-            // hot spot during performance tests.    Arun 9/27/99
+            // hot spot during performance tests. Arun 9/27/99
             int sz = sectionMapping.size();
             while (sz-- > 0) {
-                CoordinatorLogSection section = (CoordinatorLogSection)sections.nextElement();
+                CoordinatorLogSection section = (CoordinatorLogSection) sections.nextElement();
                 section.reUse();
             }
             sectionMapping.clear();
@@ -211,16 +205,12 @@ class CoordinatorLog extends java.lang.Object implements LogUpcallTarget {
     }
 
     /**
-     * reUse method is called explicitly to clean up
-     * and return this instance to the pool
+     * reUse method is called explicitly to clean up and return this instance to the pool
      *
-     * Note: the implementation of the cache does not ensure
-     *       that when an object is re-used there are no
-     *         outstanding references to that object. However, the
-     *         risk involved is minimal since reUse() replaces the
-     *         existing call to finalize(). The existing call to
-     *         finalize also does not ensure that there are no
-     *         outstanding references to the object being finalized.
+     * Note: the implementation of the cache does not ensure that when an object is re-used there are no outstanding
+     * references to that object. However, the risk involved is minimal since reUse() replaces the existing call to
+     * finalize(). The existing call to finalize also does not ensure that there are no outstanding references to the object
+     * being finalized.
      *
      *
      * @param
@@ -229,20 +219,20 @@ class CoordinatorLog extends java.lang.Object implements LogUpcallTarget {
      *
      * @see
      */
-    synchronized private void reUse() {            // Arun 9/27/99
+    synchronized private void reUse() { // Arun 9/27/99
 
         // Clear up the section mapping.
 
-        if( sectionMapping != null ) {
+        if (sectionMapping != null) {
             Enumeration sections = sectionMapping.elements();
             int sz = sectionMapping.size();
             while (sz-- > 0) {
-                CoordinatorLogSection section = (CoordinatorLogSection)sections.nextElement();
+                CoordinatorLogSection section = (CoordinatorLogSection) sections.nextElement();
                 section.reUse();
             }
             sectionMapping.clear();
         }
-        rewriteRequired  = false;
+        rewriteRequired = false;
         writeDone = false;
         localTID = null;
 
@@ -257,16 +247,16 @@ class CoordinatorLog extends java.lang.Object implements LogUpcallTarget {
 
         // Clear up the section mapping.
 
-        if( sectionMapping != null ) {
+        if (sectionMapping != null) {
             Enumeration sections = sectionMapping.elements();
             int sz = sectionMapping.size();
             while (sz-- > 0) {
-                CoordinatorLogSection section = (CoordinatorLogSection)sections.nextElement();
+                CoordinatorLogSection section = (CoordinatorLogSection) sections.nextElement();
                 section.reUse();
             }
             sectionMapping.clear();
         }
-        rewriteRequired  = false;
+        rewriteRequired = false;
         writeDone = false;
         localTID = null;
 
@@ -277,46 +267,42 @@ class CoordinatorLog extends java.lang.Object implements LogUpcallTarget {
 
     }
 
-    /**Creates and initialises a new CoordinatorLog object, with the given local
-     * transaction identifier.
+    /**
+     * Creates and initialises a new CoordinatorLog object, with the given local transaction identifier.
      * <p>
-     * If the local transaction identifier is non-NULL,
-     * the CoordinatorLog adds itself to the static list of instances.
+     * If the local transaction identifier is non-NULL, the CoordinatorLog adds itself to the static list of instances.
      *
-     * @param localTID  The local transaction identifier.
+     * @param localTID The local transaction identifier.
      *
      * @return
      *
      * @see
      */
-    CoordinatorLog( Long localTID ) {
+    CoordinatorLog(Long localTID) {
 
         // Set up the local transaction identifier; if it is not NULL, inform the
         // metaclass of the object's existence.
 
         this.localTID = localTID;
-        if( localTID.longValue() != 0 )
-            addLog(localTID,this);
+        if (localTID.longValue() != 0)
+            addLog(localTID, this);
 
     }
 
     /**
-     * Creates a subsection in the CoordinatorLog in which to store related
-     * objects and data.
+     * Creates a subsection in the CoordinatorLog in which to store related objects and data.
      * <p>
-     * The object that is returned is used to identify the section on subsequent
-     * calls.
+     * The object that is returned is used to identify the section on subsequent calls.
      * <p>
-     * If the section has already been created, the object for the existing
-     * section is returned.
+     * If the section has already been created, the object for the existing section is returned.
      *
-     * @param sectionName  The name of the section.
+     * @param sectionName The name of the section.
      *
-     * @return  An object representing the section.
+     * @return An object representing the section.
      *
      * @see
      */
-    synchronized java.lang.Object createSection( String sectionName ) {
+    synchronized java.lang.Object createSection(String sectionName) {
 
         CoordinatorLogSection result = null;
 
@@ -332,43 +318,42 @@ class CoordinatorLog extends java.lang.Object implements LogUpcallTarget {
             // get a new section object from the cache Arun 9/27/99
             result = SectionPool.getCoordinatorLogSection(sectionName);
             // Add the new section information to the map.
-            sectionMapping.put(sectionName,result);
+            sectionMapping.put(sectionName, result);
 
         }
 
         return result;
     }
 
-    /**Adds the given object to the sequence of those in the given section.
+    /**
+     * Adds the given object to the sequence of those in the given section.
      * <p>
-     * The objects are stored in the order that they are added to the sequence.
-     * No checking is done for duplicates.
+     * The objects are stored in the order that they are added to the sequence. No checking is done for duplicates.
      *
-     * @param sectionObj  The object representing the section.
-     * @param obj         The object to be added.
+     * @param sectionObj The object representing the section.
+     * @param obj The object to be added.
      *
-     * @return  Indicates success of the operation.
+     * @return Indicates success of the operation.
      *
      * @see
      */
 
-    synchronized boolean addObject( java.lang.Object sectionObj,
-        org.omg.CORBA.Object obj ) {
+    synchronized boolean addObject(java.lang.Object sectionObj, org.omg.CORBA.Object obj) {
 
         boolean result = true;
 
         // Determine if section is valid
 
-        if( sectionObj != null ) {
-            CoordinatorLogSection section = (CoordinatorLogSection)sectionObj;
+        if (sectionObj != null) {
+            CoordinatorLogSection section = (CoordinatorLogSection) sectionObj;
 
             // Add header length to unwritten data length if section has currently has no
             // unwritten information.
 
-            section.unwrittenEmpty = false;        // Arun 9/27/99
+            section.unwrittenEmpty = false; // Arun 9/27/99
 
-            if( section.unwrittenObjects == null )
-                section.unwrittenObjects = new Vector(10,10);
+            if (section.unwrittenObjects == null)
+                section.unwrittenObjects = new Vector(10, 10);
 
             // Convert the object reference to string value
 
@@ -380,17 +365,17 @@ class CoordinatorLog extends java.lang.Object implements LogUpcallTarget {
 
                 section.unwrittenObjects.addElement(objRefStr);
 
-                //$Write logrecord if threshold is exceeded
-                //$
-                //$     if( unwrittenLength >= LOG_THRESHOLD )
-                //$       try
-                //$         { formatLogRecords(false); }
-                //$       catch( IOException exc )
-                //$         {
-                //$         if( trc != null ) trc.error(ERR_WRITE).data(exc).write();
-                //$         result = false;
-                //$         }
-            } catch( Throwable exc ) {
+                // $Write logrecord if threshold is exceeded
+                // $
+                // $ if( unwrittenLength >= LOG_THRESHOLD )
+                // $ try
+                // $ { formatLogRecords(false); }
+                // $ catch( IOException exc )
+                // $ {
+                // $ if( trc != null ) trc.error(ERR_WRITE).data(exc).write();
+                // $ result = false;
+                // $ }
+            } catch (Throwable exc) {
                 result = false;
             }
         } else {
@@ -400,58 +385,56 @@ class CoordinatorLog extends java.lang.Object implements LogUpcallTarget {
         return result;
     }
 
-    /**Adds the given opaque data structure to the sequence of those in the
-     * given section.
+    /**
+     * Adds the given opaque data structure to the sequence of those in the given section.
      * <p>
-     * The data structures are stored in the order that they are added to the
-     * sequence. No checking is done for duplicates.
+     * The data structures are stored in the order that they are added to the sequence. No checking is done for duplicates.
      *
-     * @param sectionObj  The object representing the section.
-     * @param data        The data to be added.
+     * @param sectionObj The object representing the section.
+     * @param data The data to be added.
      *
-     * @return  Indicates success of the operation.
+     * @return Indicates success of the operation.
      *
      * @see
      */
 
-    synchronized boolean addData( java.lang.Object sectionObj,
-        byte[] data ) {
+    synchronized boolean addData(java.lang.Object sectionObj, byte[] data) {
 
         boolean result = true;
         byte[] dataCopy;
 
         // Determine if section is valid
 
-        if( sectionObj != null ) {
-            CoordinatorLogSection section = (CoordinatorLogSection)sectionObj;
+        if (sectionObj != null) {
+            CoordinatorLogSection section = (CoordinatorLogSection) sectionObj;
 
             // Add header length to unwritten data length if section has currently has no
             // unwritten information.
 
-            section.unwrittenEmpty = false;        // Arun 9/27/99
+            section.unwrittenEmpty = false; // Arun 9/27/99
 
-            if( section.unwrittenData == null )
-                section.unwrittenData = new Vector(4,4);
+            if (section.unwrittenData == null)
+                section.unwrittenData = new Vector(4, 4);
 
             // Make a copy of the data to add to the unwritten data queue.
 
             dataCopy = new byte[data.length];
-            System.arraycopy(data,0,dataCopy,0,data.length);
+            System.arraycopy(data, 0, dataCopy, 0, data.length);
 
             // Add data item (sequence of octets) to section and update counts
 
             section.unwrittenData.addElement(dataCopy);
 
-            //$Write logrecord if threshold is exceeded
+            // $Write logrecord if threshold is exceeded
 
-            //$   if( unwrittenLength >= LOG_THRESHOLD )
-            //$     try
-            //$       { formatLogRecords(false); }
-            //$     catch( IOException exc )
-            //$       {
-            //$       if( trc != null ) trc.error(ERR_WRITE).data(exc).write();
-            //$       result = false;
-            //$       }
+            // $ if( unwrittenLength >= LOG_THRESHOLD )
+            // $ try
+            // $ { formatLogRecords(false); }
+            // $ catch( IOException exc )
+            // $ {
+            // $ if( trc != null ) trc.error(ERR_WRITE).data(exc).write();
+            // $ result = false;
+            // $ }
         } else {
             result = false;
         }
@@ -459,55 +442,50 @@ class CoordinatorLog extends java.lang.Object implements LogUpcallTarget {
         return result;
     }
 
-    /**Write the contents of the CoordinatorLog to persistent storage.
+    /**
+     * Write the contents of the CoordinatorLog to persistent storage.
      * <p>
-     * If the force parameter is set, this requires that all information defined
-     * to the CoordinatorLog that has not already been written be recorded before
-     * the operation returns.
+     * If the force parameter is set, this requires that all information defined to the CoordinatorLog that has not already
+     * been written be recorded before the operation returns.
      * <p>
-     * If rewrite is required, all information whether previously written or not
-     * is recorded.
+     * If rewrite is required, all information whether previously written or not is recorded.
      * <p>
-     * The log record should include the LSN of the previous record
-     * written for the same transaction, if any, otherwise it is NULL. Further
-     * information may be added to the CoordinatorLog after it has been forced,
-     * and will be separately written in a subsequent log record, whose LSN will
-     * point to the current one.
+     * The log record should include the LSN of the previous record written for the same transaction, if any, otherwise it
+     * is NULL. Further information may be added to the CoordinatorLog after it has been forced, and will be separately
+     * written in a subsequent log record, whose LSN will point to the current one.
      * <p>
-     * This operation discharges the CoordinatorLog's requirement to rewrite. The
-     * keypoint lock must be obtained from the metaclass before checking whether
-     * a rewrite is required, and released after the write is complete.
+     * This operation discharges the CoordinatorLog's requirement to rewrite. The keypoint lock must be obtained from the
+     * metaclass before checking whether a rewrite is required, and released after the write is complete.
      *
-     * @param force  Indicates whether the log data should be forced before this
-     *               method returns.
+     * @param force Indicates whether the log data should be forced before this method returns.
      *
-     * @return  Indicates success of the operation.
+     * @return Indicates success of the operation.
      *
      * @see
      */
-    boolean write( boolean force ) {
+    boolean write(boolean force) {
 
         // Format the log records with a forced write.
 
         boolean result = true;
         try {
             result = formatLogRecords(force);
-        } catch( IOException exc ) {
+        } catch (IOException exc) {
             result = false;
         }
 
         return result;
     }
 
-    /**Informs the CoordinatorLog object that it must rewrite its entire state
-     * the next time it writes a log record.
+    /**
+     * Informs the CoordinatorLog object that it must rewrite its entire state the next time it writes a log record.
      * <p>
-     * If the CoordinatorLog has state that has previously been written, it records
-     * the requirement to rewrite, otherwise it does not record the requirement.
+     * If the CoordinatorLog has state that has previously been written, it records the requirement to rewrite, otherwise it
+     * does not record the requirement.
      *
      * @param
      *
-     * @return  Indicates success of the operation.
+     * @return Indicates success of the operation.
      *
      * @see
      */
@@ -516,29 +494,29 @@ class CoordinatorLog extends java.lang.Object implements LogUpcallTarget {
 
         // Record the fact that a rewrite is required if a write has been done.
 
-        if( writeDone )
+        if (writeDone)
             rewriteRequired = true;
 
         return result;
     }
 
-    /**Rewrites the contents of the CoordinatorLog to persistent storage.
+    /**
+     * Rewrites the contents of the CoordinatorLog to persistent storage.
      * <p>
-     * This requires that all information defined to the CoordinatorLog that has
-     * already been written be re-written (unforced) to the log.
+     * This requires that all information defined to the CoordinatorLog that has already been written be re-written
+     * (unforced) to the log.
      * <p>
      * The CoordinatorLog also writes any unwritten state at this point.
      * <p>
-     * The log record will contain a NULL LSN to indicate that no previous records
-     * for this transaction should be used for recovery. If no state has previously
-     * been written, the CoordinatorLog does nothing at this point and waits for
-     * a subsequent force operation.
+     * The log record will contain a NULL LSN to indicate that no previous records for this transaction should be used for
+     * recovery. If no state has previously been written, the CoordinatorLog does nothing at this point and waits for a
+     * subsequent force operation.
      * <p>
      * This operation discharges the CoordinatorLog's requirement to rewrite.
      *
      * @param
      *
-     * @return  Indicates success of the operation.
+     * @return Indicates success of the operation.
      *
      * @see
      */
@@ -550,10 +528,10 @@ class CoordinatorLog extends java.lang.Object implements LogUpcallTarget {
         // If a rewrite is required, format a log record with all the CoordinatorLog
         // data, with a non-forced write.
 
-        if( rewriteRequired )
+        if (rewriteRequired)
             try {
                 result = formatLogRecords(false);
-            } catch( IOException exc ) {
+            } catch (IOException exc) {
                 result = false;
             }
 
@@ -563,22 +541,20 @@ class CoordinatorLog extends java.lang.Object implements LogUpcallTarget {
     /**
      * Requests that the object reconstructs its state from the given stream.
      * <p>
-     * There may be more than one if the CoordinatorLog elects to write to the
-     * log before it is asked to force the transaction state.
+     * There may be more than one if the CoordinatorLog elects to write to the log before it is asked to force the
+     * transaction state.
      * <p>
-     * This operation is invoked when there are log records that need to
-     * be recovered. The CoordinatorLog should reconstruct the sequences of
-     * objects and data from each of the sections so that they can be queried by
-     * the callers that set them up.
+     * This operation is invoked when there are log records that need to be recovered. The CoordinatorLog should reconstruct
+     * the sequences of objects and data from each of the sections so that they can be queried by the callers that set them
+     * up.
      *
-     * @param data  The data to be used to create the CoordinatorLog object.
+     * @param data The data to be used to create the CoordinatorLog object.
      *
-     * @return  Indicates success of the operation.
+     * @return Indicates success of the operation.
      *
      * @see
      */
-    private boolean reconstruct( DataInputStream dataInput )
-        throws IOException {
+    private boolean reconstruct(DataInputStream dataInput) throws IOException {
 
         boolean result = true;
 
@@ -586,10 +562,9 @@ class CoordinatorLog extends java.lang.Object implements LogUpcallTarget {
 
         int numSections = dataInput.readUnsignedShort();
 
-
         // Reconstruct each of the sections in the log record
 
-        while( --numSections >= 0 ) {
+        while (--numSections >= 0) {
 
             // Get the section name, number of objects and number of data items from the
             // log record passed in.
@@ -598,7 +573,7 @@ class CoordinatorLog extends java.lang.Object implements LogUpcallTarget {
 
             // If the section name length is zero, then it contains no data, so skip it.
 
-            if( length > 0 ) {
+            if (length > 0) {
 
                 int numObjects = dataInput.readUnsignedShort();
                 int numData = dataInput.readUnsignedShort();
@@ -621,7 +596,7 @@ class CoordinatorLog extends java.lang.Object implements LogUpcallTarget {
                     section.writtenObjects = new Vector(numObjects, 10);
                 }
 
-                for( int i = 0; i < numObjects; i++ ) {
+                for (int i = 0; i < numObjects; i++) {
 
                     // Get the size of the object reference and allocate a buffer to make a copy
                     // of it.
@@ -644,7 +619,7 @@ class CoordinatorLog extends java.lang.Object implements LogUpcallTarget {
                     section.writtenData = new Vector(numData, 4);
                 }
 
-                for( int i = 0; i < numData; i++ ) {
+                for (int i = 0; i < numData; i++) {
 
                     // Get the size of the data item and allocate a buffer to make a copy of it.
 
@@ -663,15 +638,16 @@ class CoordinatorLog extends java.lang.Object implements LogUpcallTarget {
         return result;
     }
 
-    /**Returns a sequence containing all of the objects in the given section.
+    /**
+     * Returns a sequence containing all of the objects in the given section.
      *
-     * @param sectionObj  The object representing the section.
+     * @param sectionObj The object representing the section.
      *
-     * @return  The objects.
+     * @return The objects.
      *
      * @see
      */
-    java.lang.Object[] getObjects( java.lang.Object sectionObj ) {
+    java.lang.Object[] getObjects(java.lang.Object sectionObj) {
         java.lang.Object[] result = null;
 
         // Check that the section identifier is valid.
@@ -679,16 +655,16 @@ class CoordinatorLog extends java.lang.Object implements LogUpcallTarget {
         // to an actual object reference and adding it to the sequence returned from
         // this method.
 
-        if( sectionObj != null ) {
+        if (sectionObj != null) {
 
-            CoordinatorLogSection section = (CoordinatorLogSection)sectionObj;
+            CoordinatorLogSection section = (CoordinatorLogSection) sectionObj;
 
             int unwrittenSize = 0;
-            if( section.unwrittenObjects != null )
+            if (section.unwrittenObjects != null)
                 unwrittenSize = section.unwrittenObjects.size();
 
             int writtenSize = 0;
-            if( section.writtenObjects != null )
+            if (section.writtenObjects != null)
                 writtenSize = section.writtenObjects.size();
 
             result = new java.lang.Object[unwrittenSize + writtenSize];
@@ -700,32 +676,30 @@ class CoordinatorLog extends java.lang.Object implements LogUpcallTarget {
 
             // Go through the written objects.
 
-            for( int i = 0; i < writtenSize; i++ ) {
+            for (int i = 0; i < writtenSize; i++) {
 
                 org.omg.CORBA.Object obj = null;
-                String refStr = (String)section.writtenObjects.elementAt(i);
+                String refStr = (String) section.writtenObjects.elementAt(i);
 
                 // Try ten times to convert the reference to a string.
 
                 int retries = STRING_TO_REF_RETRIES;
                 boolean discard = false;
-                while( obj == null && retries-- > 0 && !discard ) {
+                while (obj == null && retries-- > 0 && !discard) {
                     try {
                         obj = orb.string_to_object(refStr);
-                    } catch( MARSHAL exc ) {
+                    } catch (MARSHAL exc) {
                         // The MARSHAL exception indicates that the ImplHelper for the object has not been
                         // started, so try again after two seconds.
 
                         try {
                             Thread.sleep(2000);
-                        } catch( InterruptedException ex2 ) {
-                            _logger.log(Level.WARNING,
-                                "jts.wait_for_resync_complete_interrupted");
-                            String msg = LogFormatter.getLocalizedMessage(_logger,
-                                "jts.wait_for_resync_complete_interrupted");
-                            throw  new org.omg.CORBA.INTERNAL(msg);
+                        } catch (InterruptedException ex2) {
+                            _logger.log(Level.WARNING, "jts.wait_for_resync_complete_interrupted");
+                            String msg = LogFormatter.getLocalizedMessage(_logger, "jts.wait_for_resync_complete_interrupted");
+                            throw new org.omg.CORBA.INTERNAL(msg);
                         }
-                    } catch( Throwable exc ) {
+                    } catch (Throwable exc) {
                         // Any other exception indicates that the reference is invalid, so just discard it.
 
                         discard = true;
@@ -734,33 +708,31 @@ class CoordinatorLog extends java.lang.Object implements LogUpcallTarget {
 
                 // Add the valid object to the list.
 
-                if( !discard ){
-                    if( obj != null ){
+                if (!discard) {
+                    if (obj != null) {
                         result[currObject++] = obj;
-                    }
-                    else {
-                        _logger.log(Level.SEVERE,
-                            "jts.unable_to_convert_object_reference_to_string_in_recovery");
+                    } else {
+                        _logger.log(Level.SEVERE, "jts.unable_to_convert_object_reference_to_string_in_recovery");
 
                         String msg = LogFormatter.getLocalizedMessage(_logger,
-                            "jts.unable_to_convert_object_reference_to_string_in_recovery");
+                                "jts.unable_to_convert_object_reference_to_string_in_recovery");
 
-                        throw  new org.omg.CORBA.INTERNAL(msg);
+                        throw new org.omg.CORBA.INTERNAL(msg);
                     }
                 }
             }
 
-            // Now get the unwritten objects.  We do not need to do all the above error
+            // Now get the unwritten objects. We do not need to do all the above error
             // checking as these objects have not been recovered from the log.
 
-            for( int i = 0; i < unwrittenSize; i++ ) {
+            for (int i = 0; i < unwrittenSize; i++) {
                 try {
 
                     // Add the valid object to the list.
 
-                    org.omg.CORBA.Object obj = orb.string_to_object((String)section.unwrittenObjects.elementAt(i));
+                    org.omg.CORBA.Object obj = orb.string_to_object((String) section.unwrittenObjects.elementAt(i));
                     result[currObject++] = obj;
-                } catch( Throwable exc ) {
+                } catch (Throwable exc) {
                     // If the object resulting from the string is invalid, then don't add it to
                     // the list.
                 }
@@ -770,16 +742,17 @@ class CoordinatorLog extends java.lang.Object implements LogUpcallTarget {
         return result;
     }
 
-    /**Returns a sequence containing all of the opaque data in the given section.
+    /**
+     * Returns a sequence containing all of the opaque data in the given section.
      *
-     * @param sectionObj  The object representing the section.
+     * @param sectionObj The object representing the section.
      *
-     * @return  The data.
+     * @return The data.
      *
      * @see
      */
 
-    byte[][] getData( java.lang.Object sectionObj ) {
+    byte[][] getData(java.lang.Object sectionObj) {
 
         byte[][] result = null;
 
@@ -787,42 +760,41 @@ class CoordinatorLog extends java.lang.Object implements LogUpcallTarget {
         // Browse through the Queues of data items, adding each to the sequence
         // returned from this method.
 
-        if( sectionObj != null ) {
-            CoordinatorLogSection section = (CoordinatorLogSection)sectionObj;
+        if (sectionObj != null) {
+            CoordinatorLogSection section = (CoordinatorLogSection) sectionObj;
 
             int unwrittenSize = 0;
-            if( section.unwrittenData != null )
+            if (section.unwrittenData != null)
                 unwrittenSize = section.unwrittenData.size();
 
             int writtenSize = 0;
-            if( section.writtenData != null )
+            if (section.writtenData != null)
                 writtenSize = section.writtenData.size();
 
-            result = new byte[unwrittenSize+writtenSize][];
+            result = new byte[unwrittenSize + writtenSize][];
 
-            if( unwrittenSize > 0 )
+            if (unwrittenSize > 0)
                 section.unwrittenData.copyInto(result);
 
-            for( int i = 0; i < writtenSize; i++ )
-                result[unwrittenSize++] = (byte[])section.writtenData.elementAt(i);
+            for (int i = 0; i < writtenSize; i++)
+                result[unwrittenSize++] = (byte[]) section.writtenData.elementAt(i);
         }
 
         return result;
     }
 
-
-    /**Sets the local identifier for the CoordinatorLog object.
+    /**
+     * Sets the local identifier for the CoordinatorLog object.
      * <p>
-     * If the local identifier was previously 0, the CoordinatorLog object is
-     * added to the static list.
+     * If the local identifier was previously 0, the CoordinatorLog object is added to the static list.
      *
-     * @param localTID  The new local identifier.
+     * @param localTID The new local identifier.
      *
      * @return
      *
      * @see
      */
-    synchronized void setLocalTID( Long localTID ) {
+    synchronized void setLocalTID(Long localTID) {
 
         // Check whether the local identifier is currently NULL.
 
@@ -831,12 +803,12 @@ class CoordinatorLog extends java.lang.Object implements LogUpcallTarget {
         // Set the local identifier, and add the object to the metaclass if required.
 
         this.localTID = localTID;
-        if( addToMetaclass )
-            addLog(localTID,this);
+        if (addToMetaclass)
+            addLog(localTID, this);
 
     }
 
-    synchronized void setLocalTID( Long localTID, String logPath ) {
+    synchronized void setLocalTID(Long localTID, String logPath) {
 
         // Check whether the local identifier is currently NULL.
 
@@ -845,39 +817,34 @@ class CoordinatorLog extends java.lang.Object implements LogUpcallTarget {
         // Set the local identifier, and add the object to the metaclass if required.
 
         this.localTID = localTID;
-        if( addToMetaclass )
-            addLog(localTID,this, logPath);
+        if (addToMetaclass)
+            addLog(localTID, this, logPath);
 
     }
 
-    /**Formats the information in a single section of the Coordinatorlog into a
-     * stream.
+    /**
+     * Formats the information in a single section of the Coordinatorlog into a stream.
      * <p>
-     * This internal method does not need to be synchronized.
-     * If the rewrite flag is not set, only information that has not already been
-     * written is formatted, otherwise all information is formatted.
+     * This internal method does not need to be synchronized. If the rewrite flag is not set, only information that has not
+     * already been written is formatted, otherwise all information is formatted.
      *
-     * @param section     The section.
-     * @param rewrite     Indicates if the record is being rewritten.
-     * @param dataOutput  The stream to which to data is output.
+     * @param section The section.
+     * @param rewrite Indicates if the record is being rewritten.
+     * @param dataOutput The stream to which to data is output.
      *
      * @return
      *
-     * @exception IOException  The format failed.
+     * @exception IOException The format failed.
      *
      * @see
      */
-    private void formatSection( CoordinatorLogSection section,
-        boolean               rewrite,
-        DataOutputStream      dataOutput )
-            throws IOException {
+    private void formatSection(CoordinatorLogSection section, boolean rewrite, DataOutputStream dataOutput) throws IOException {
         // No formatting is done if the section is empty, and if rewrite is required,
         // the written section is also empty.
         // Note that we still need to write something out to satisfy the number of
         // sections originally written, so we write out a name length of zero.
 
-        if( section.unwrittenEmpty &&
-            (!rewrite || section.writtenEmpty) ) {
+        if (section.unwrittenEmpty && (!rewrite || section.writtenEmpty)) {
             dataOutput.writeShort(0);
             return;
         }
@@ -891,10 +858,9 @@ class CoordinatorLog extends java.lang.Object implements LogUpcallTarget {
 
         int unwrittenObjectsSize = 0;
         int writtenObjectsSize = 0;
-        if( section.unwrittenObjects != null )
+        if (section.unwrittenObjects != null)
             unwrittenObjectsSize = section.unwrittenObjects.size();
-        if( rewrite &&
-            section.writtenObjects != null )
+        if (rewrite && section.writtenObjects != null)
             writtenObjectsSize = section.writtenObjects.size();
 
         dataOutput.writeShort(unwrittenObjectsSize + writtenObjectsSize);
@@ -904,10 +870,9 @@ class CoordinatorLog extends java.lang.Object implements LogUpcallTarget {
 
         int unwrittenDataSize = 0;
         int writtenDataSize = 0;
-        if( section.unwrittenData != null )
+        if (section.unwrittenData != null)
             unwrittenDataSize = section.unwrittenData.size();
-        if( rewrite &&
-            section.writtenData != null )
+        if (rewrite && section.writtenData != null)
             writtenDataSize = section.writtenData.size();
 
         dataOutput.writeShort(unwrittenDataSize + writtenDataSize);
@@ -918,8 +883,8 @@ class CoordinatorLog extends java.lang.Object implements LogUpcallTarget {
 
         // If rewrite is required, first write the already-written object references
 
-        for( int i = 0; i < writtenObjectsSize; i++ ) {
-            String objRefStr = (String)section.writtenObjects.elementAt(i);
+        for (int i = 0; i < writtenObjectsSize; i++) {
+            String objRefStr = (String) section.writtenObjects.elementAt(i);
             dataOutput.writeShort(objRefStr.length());
             dataOutput.writeBytes(objRefStr);
         }
@@ -927,25 +892,25 @@ class CoordinatorLog extends java.lang.Object implements LogUpcallTarget {
         // Next place length of each stringified object reference and the stringified
         // object reference into the buffer. Move each from unwritten to written queue
 
-        for( int i = 0; i < unwrittenObjectsSize; i++ ) {
-            String objRefStr = (String)section.unwrittenObjects.elementAt(i);
+        for (int i = 0; i < unwrittenObjectsSize; i++) {
+            String objRefStr = (String) section.unwrittenObjects.elementAt(i);
             dataOutput.writeShort(objRefStr.length());
             dataOutput.writeBytes(objRefStr);
 
-            if( section.writtenObjects == null )
-                section.writtenObjects = new Vector(unwrittenObjectsSize,10);
+            if (section.writtenObjects == null)
+                section.writtenObjects = new Vector(unwrittenObjectsSize, 10);
 
             section.writtenObjects.addElement(objRefStr);
         }
 
-        if( unwrittenObjectsSize > 0 )
+        if (unwrittenObjectsSize > 0)
             section.unwrittenObjects.removeAllElements();
 
         // Now we process the data items.
         // If rewrite is required, first write the already-written data items.
 
-        for( int i = 0; i < writtenDataSize; i++ ) {
-            byte[] dataItem = (byte[])section.writtenData.elementAt(i);
+        for (int i = 0; i < writtenDataSize; i++) {
+            byte[] dataItem = (byte[]) section.writtenData.elementAt(i);
             dataOutput.writeShort(dataItem.length);
             dataOutput.write(dataItem);
         }
@@ -953,45 +918,44 @@ class CoordinatorLog extends java.lang.Object implements LogUpcallTarget {
         // Next place length of each stringified object reference and the stringified
         // object reference into the buffer. Move each from unwritten to written queue
 
-        for( int i = 0; i < unwrittenDataSize; i++ ) {
-            byte[] dataItem = (byte[])section.unwrittenData.elementAt(i);
+        for (int i = 0; i < unwrittenDataSize; i++) {
+            byte[] dataItem = (byte[]) section.unwrittenData.elementAt(i);
             dataOutput.writeShort(dataItem.length);
             dataOutput.write(dataItem);
 
-            if( section.writtenData == null )
-                section.writtenData = new Vector(unwrittenDataSize,4);
+            if (section.writtenData == null)
+                section.writtenData = new Vector(unwrittenDataSize, 4);
 
             section.writtenData.addElement(dataItem);
         }
-        if( unwrittenDataSize > 0 )
+        if (unwrittenDataSize > 0)
             section.unwrittenData.removeAllElements();
 
-        // Set unwritten_empty to TRUE and written_empty to FALSE since everything    //
-        // has moved from the unwritten to the written queues.                        //
+        // Set unwritten_empty to TRUE and written_empty to FALSE since everything //
+        // has moved from the unwritten to the written queues. //
 
         section.unwrittenEmpty = true;
         section.writtenEmpty = false;
 
     }
 
-    /**Formats the information in all sections of the CoordinatorLog.
+    /**
+     * Formats the information in all sections of the CoordinatorLog.
      * <p>
      * The formatted information is written to the log.
      * <p>
-     * This internal method does not need to be synchronized.
-     * If the rewrite flag is not set, only information that has not already been
-     * written is formatted, otherwise all information is formatted.
+     * This internal method does not need to be synchronized. If the rewrite flag is not set, only information that has not
+     * already been written is formatted, otherwise all information is formatted.
      *
-     * @param forced  Forced/unforced write indicator.
+     * @param forced Forced/unforced write indicator.
      *
-     * @return  Indicates success of the operation.
+     * @return Indicates success of the operation.
      *
-     * @exception IOException  The format failed.
+     * @exception IOException The format failed.
      *
      * @see
      */
-    private boolean formatLogRecords( boolean forced )
-        throws IOException {
+    private boolean formatLogRecords(boolean forced) throws IOException {
 
         // If there is no LogFile for this transaction, and one cannot be obtained
         // from the metaclass, then no formatting can be done.
@@ -1000,22 +964,22 @@ class CoordinatorLog extends java.lang.Object implements LogUpcallTarget {
             openLog();
         else
             openLog(logPath);
-        if( logStateHolder.logFile == null ) {
+        if (logStateHolder.logFile == null) {
             return false;
         }
 
         // In order to check whether rewrite is required, we must first obtain the
         // keypoint lock to ensure that the metaclass is not in the process of
         // informing us that a rewrite is required.
-        //$We must not wait for the keypoint lock while holding our own lock so
-        //$release it now.
+        // $We must not wait for the keypoint lock while holding our own lock so
+        // $release it now.
 
         boolean result = false;
         try {
             logStateHolder.keypointLock.acquireReadLock();
             // Once we have the keypoint lock, it is OK to obtain our own.
 
-            synchronized( this ) {
+            synchronized (this) {
 
                 // Place the tid in the buffer.
 
@@ -1030,18 +994,15 @@ class CoordinatorLog extends java.lang.Object implements LogUpcallTarget {
                 // through the CoordinatorLog filling in the buffer for each entry.
 
                 Enumeration sections = sectionMapping.elements();
-                int sz = sectionMapping.size();        // Arun 9/27/99
-                while (sz-- > 0) {            // Arun 9/27/99
-                    formatSection((CoordinatorLogSection)sections.nextElement(),
-                        rewriteRequired,dataOutput);
+                int sz = sectionMapping.size(); // Arun 9/27/99
+                while (sz-- > 0) { // Arun 9/27/99
+                    formatSection((CoordinatorLogSection) sections.nextElement(), rewriteRequired, dataOutput);
                 }
 
                 // Write the buffer to the LogFile.
 
-                result = logStateHolder.logFile.write( forced ? LogFile.FORCED : LogFile.UNFORCED,
-                    byteOutput.toByteArray(),
-                    rewriteRequired ? LogFile.REWRITE : LogFile.NORMAL,
-                        null );
+                result = logStateHolder.logFile.write(forced ? LogFile.FORCED : LogFile.UNFORCED, byteOutput.toByteArray(),
+                        rewriteRequired ? LogFile.REWRITE : LogFile.NORMAL, null);
 
                 rewriteRequired = false;
                 writeDone = true;
@@ -1053,7 +1014,8 @@ class CoordinatorLog extends java.lang.Object implements LogUpcallTarget {
         return result;
     }
 
-    /**Provides static initialisation of the CoordinatorLog class.
+    /**
+     * Provides static initialisation of the CoordinatorLog class.
      *
      * @param
      *
@@ -1067,20 +1029,22 @@ class CoordinatorLog extends java.lang.Object implements LogUpcallTarget {
 
         String keypointCountEnv = Configuration.getPropertyValue(Configuration.KEYPOINT_COUNT);
         keypointTrigger = LOG_DEF_KEY_TRIGGER;
-        if( keypointCountEnv != null )
+        if (keypointCountEnv != null)
             try {
                 keypointTrigger = Integer.parseInt(keypointCountEnv);
-            } catch( Throwable e ) {}
+            } catch (Throwable e) {
+            }
 
     }
 
-    /**Opens the log file for all CoordinatorLogs in this process.
+    /**
+     * Opens the log file for all CoordinatorLogs in this process.
      * <p>
      * If the log has already been opened, the operation uses the opened LogFile.
      *
      * @param
      *
-     * @return  Indicates success of the operation.
+     * @return Indicates success of the operation.
      *
      * @see
      */
@@ -1091,35 +1055,29 @@ class CoordinatorLog extends java.lang.Object implements LogUpcallTarget {
 
         // If the log has been opened, there is nothing to do.
 
-        if( logStateHolder.log == null ) {
+        if (logStateHolder.log == null) {
             logStateHolder.log = new Log();
-            if( !logStateHolder.log.initialise() ) {
+            if (!logStateHolder.log.initialise()) {
                 logStateHolder.log = null;
-                _logger.log(Level.SEVERE,"jts.cannot_initialise_log");
-                String msg = LogFormatter.getLocalizedMessage(_logger,
-                    "jts.cannot_initialise_log");
-                throw  new org.omg.CORBA.INTERNAL(msg);
+                _logger.log(Level.SEVERE, "jts.cannot_initialise_log");
+                String msg = LogFormatter.getLocalizedMessage(_logger, "jts.cannot_initialise_log");
+                throw new org.omg.CORBA.INTERNAL(msg);
             }
         }
 
-
-        // Open the Log and set the logfile object reference.  If there is no
+        // Open the Log and set the logfile object reference. If there is no
         // ImplementationDef object available, then we cannot determine the log file
-
 
         // name, so the log cannot be opened.
         // Note that this does not preclude the log file being opened at some later
         // time.
 
         String serverName = null;
-        if( logStateHolder.log != null &&
-            logStateHolder.logFile == null &&
-            (serverName = Configuration.getServerName()) != null ) {
+        if (logStateHolder.log != null && logStateHolder.logFile == null && (serverName = Configuration.getServerName()) != null) {
 
             // get a coordinator log object from cache instead
-            // of instantiating a new one        Arun 9/27/99
-            logStateHolder.logFile = logStateHolder.log.open(serverName,
-                CoordinatorLogPool.getCoordinatorLog());
+            // of instantiating a new one Arun 9/27/99
+            logStateHolder.logFile = logStateHolder.log.open(serverName, CoordinatorLogPool.getCoordinatorLog());
 
             Configuration.setLogFile(logStateHolder.logFile);
         }
@@ -1129,13 +1087,14 @@ class CoordinatorLog extends java.lang.Object implements LogUpcallTarget {
         return result;
     }
 
-    /**Opens the log file for all CoordinatorLogs in this process.
+    /**
+     * Opens the log file for all CoordinatorLogs in this process.
      * <p>
      * If the log has already been opened, the operation uses the opened LogFile.
      *
      * @param
      *
-     * @return  Indicates success of the operation.
+     * @return Indicates success of the operation.
      *
      * @see
      */
@@ -1146,21 +1105,18 @@ class CoordinatorLog extends java.lang.Object implements LogUpcallTarget {
 
         // If the log has been opened, there is nothing to do.
 
-        if( logStateHolder.log == null ) {
+        if (logStateHolder.log == null) {
             logStateHolder.log = new Log(logPath);
-            if( !logStateHolder.log.initialise() ) {
+            if (!logStateHolder.log.initialise()) {
                 logStateHolder.log = null;
-                _logger.log(Level.SEVERE,"jts.cannot_initialise_log");
-                String msg = LogFormatter.getLocalizedMessage(_logger,
-                    "jts.cannot_initialise_log");
-                throw  new org.omg.CORBA.INTERNAL(msg);
+                _logger.log(Level.SEVERE, "jts.cannot_initialise_log");
+                String msg = LogFormatter.getLocalizedMessage(_logger, "jts.cannot_initialise_log");
+                throw new org.omg.CORBA.INTERNAL(msg);
             }
         }
 
-
-        // Open the Log and set the logfile object reference.  If there is no
+        // Open the Log and set the logfile object reference. If there is no
         // ImplementationDef object available, then we cannot determine the log file
-
 
         // name, so the log cannot be opened.
         // Note that this does not preclude the log file being opened at some later
@@ -1168,15 +1124,13 @@ class CoordinatorLog extends java.lang.Object implements LogUpcallTarget {
 
         String serverName = null;
         // Always reopen logFile for a delegated recovery: do not check for logStateHolder.logFile == null
-        if( logStateHolder.log != null &&
-            (serverName = Configuration.getServerName(logPath)) != null ) {
+        if (logStateHolder.log != null && (serverName = Configuration.getServerName(logPath)) != null) {
 
             // get a coordinator log object from cache instead
-            // of instantiating a new one        Arun 9/27/99
-            logStateHolder.logFile = logStateHolder.log.open(serverName,
-                CoordinatorLogPool.getCoordinatorLog(logPath));
+            // of instantiating a new one Arun 9/27/99
+            logStateHolder.logFile = logStateHolder.log.open(serverName, CoordinatorLogPool.getCoordinatorLog(logPath));
 
-            Configuration.setLogFile(logPath,logStateHolder.logFile);
+            Configuration.setLogFile(logPath, logStateHolder.logFile);
         }
 
         result = (logStateHolder.logFile != null);
@@ -1184,12 +1138,12 @@ class CoordinatorLog extends java.lang.Object implements LogUpcallTarget {
         return result;
     }
 
-    /**Process the log to build a sequence of CoordinatorLog objects which
-     * represent all logged transactions.
+    /**
+     * Process the log to build a sequence of CoordinatorLog objects which represent all logged transactions.
      *
      * @param
      *
-     * @return  The CoordinatorLog objects, or null if there are none.
+     * @return The CoordinatorLog objects, or null if there are none.
      *
      * @see
      */
@@ -1198,35 +1152,35 @@ class CoordinatorLog extends java.lang.Object implements LogUpcallTarget {
         Vector logRecords = null;
         Enumeration coordLogs = null;
 
-        // Initialise the Log.  If the log cannot be opened, return an empty
+        // Initialise the Log. If the log cannot be opened, return an empty
         // sequence, with whatever exception the open returned.
 
-        if( openLog() ) {
+        if (openLog()) {
             CoordinatorLogStateHolder logStateHolder = defaultLogStateHolder;
 
-            // Get the log records returned from the log and browse through them.  Take
+            // Get the log records returned from the log and browse through them. Take
             // Take the sequence of log records returned from the LogFile and convert
             // them into the sequence of CoordinatorLog objects that are returned from
             // this method.
 
             logRecords = logStateHolder.logFile.getLogRecords();
-            for( int i = 0; i < logRecords.size(); i++ ) {
+            for (int i = 0; i < logRecords.size(); i++) {
 
                 // Get tid value from the log record. Get the CoordinatorLog reference if
                 // it exists in map, else create a new CoordinatorLog object; it will
                 // added to the map when we set the transaction id.
 
-                byte[] buffer = (byte[])logRecords.elementAt(i);
+                byte[] buffer = (byte[]) logRecords.elementAt(i);
                 ByteArrayInputStream byteInput = new ByteArrayInputStream(buffer);
                 DataInputStream dataInput = new DataInputStream(byteInput);
 
                 try {
                     Long localTID = dataInput.readLong();
-                    CoordinatorLog coordLog = (CoordinatorLog)logStateHolder.activeLogs.get(localTID);
-                    if( coordLog == null ) {
+                    CoordinatorLog coordLog = (CoordinatorLog) logStateHolder.activeLogs.get(localTID);
+                    if (coordLog == null) {
 
                         // get a coordinator log object from cache instead
-                        // of instantiating a new one        Arun 9/27/99
+                        // of instantiating a new one Arun 9/27/99
                         coordLog = CoordinatorLogPool.getCoordinatorLog();
 
                         coordLog.setLocalTID(localTID);
@@ -1235,7 +1189,7 @@ class CoordinatorLog extends java.lang.Object implements LogUpcallTarget {
                     // Reconstruct the CoordinatorLog information from the log record.
 
                     coordLog.reconstruct(dataInput);
-                } catch( IOException exc ) {
+                } catch (IOException exc) {
                 }
             }
 
@@ -1249,16 +1203,15 @@ class CoordinatorLog extends java.lang.Object implements LogUpcallTarget {
         else
             coordLogs = new Hashtable().elements();
 
-
         return coordLogs;
     }
 
-    /**Process the log to build a sequence of CoordinatorLog objects which
-     * represent all logged transactions.
+    /**
+     * Process the log to build a sequence of CoordinatorLog objects which represent all logged transactions.
      *
      * @param
      *
-     * @return  The CoordinatorLog objects, or null if there are none.
+     * @return The CoordinatorLog objects, or null if there are none.
      *
      * @see
      */
@@ -1267,35 +1220,35 @@ class CoordinatorLog extends java.lang.Object implements LogUpcallTarget {
         Vector logRecords = null;
         Enumeration coordLogs = null;
 
-        // Initialise the Log.  If the log cannot be opened, return an empty
+        // Initialise the Log. If the log cannot be opened, return an empty
         // sequence, with whatever exception the open returned.
 
-        if( openLog(logPath) ) {
+        if (openLog(logPath)) {
             CoordinatorLogStateHolder logStateHolder = getStateHolder(logPath);
 
-            // Get the log records returned from the log and browse through them.  Take
+            // Get the log records returned from the log and browse through them. Take
             // Take the sequence of log records returned from the LogFile and convert
             // them into the sequence of CoordinatorLog objects that are returned from
             // this method.
 
             logRecords = logStateHolder.logFile.getLogRecords();
-            for( int i = 0; i < logRecords.size(); i++ ) {
+            for (int i = 0; i < logRecords.size(); i++) {
 
                 // Get tid value from the log record. Get the CoordinatorLog reference if
                 // it exists in map, else create a new CoordinatorLog object; it will
                 // added to the map when we set the transaction id.
 
-                byte[] buffer = (byte[])logRecords.elementAt(i);
+                byte[] buffer = (byte[]) logRecords.elementAt(i);
                 ByteArrayInputStream byteInput = new ByteArrayInputStream(buffer);
                 DataInputStream dataInput = new DataInputStream(byteInput);
 
                 try {
                     Long localTID = dataInput.readLong();
-                    CoordinatorLog coordLog = (CoordinatorLog)logStateHolder.activeLogs.get(localTID);
-                    if( coordLog == null ) {
+                    CoordinatorLog coordLog = (CoordinatorLog) logStateHolder.activeLogs.get(localTID);
+                    if (coordLog == null) {
 
                         // get a coordinator log object from cache instead
-                        // of instantiating a new one        Arun 9/27/99
+                        // of instantiating a new one Arun 9/27/99
                         coordLog = CoordinatorLogPool.getCoordinatorLog(logPath);
 
                         coordLog.setLocalTID(localTID, logPath);
@@ -1304,7 +1257,7 @@ class CoordinatorLog extends java.lang.Object implements LogUpcallTarget {
                     // Reconstruct the CoordinatorLog information from the log record.
 
                     coordLog.reconstruct(dataInput);
-                } catch( IOException exc ) {
+                } catch (IOException exc) {
                 }
             }
 
@@ -1318,52 +1271,49 @@ class CoordinatorLog extends java.lang.Object implements LogUpcallTarget {
         else
             coordLogs = new Hashtable().elements();
 
-
         return coordLogs;
     }
 
-
-    /**Remembers the mapping between the local transaction identifier and the
-     * CoordinatorLog object.
+    /**
+     * Remembers the mapping between the local transaction identifier and the CoordinatorLog object.
      *
-     * @param localTID  The local transaction identifier.
-     * @param clog      The CoordinatorLog object.
+     * @param localTID The local transaction identifier.
+     * @param clog The CoordinatorLog object.
      *
-     * @return  Indicates success of the operation.
+     * @return Indicates success of the operation.
      *
      * @see
      */
-    private static boolean addLog(Long localTID,
-        CoordinatorLog clog ) {
+    private static boolean addLog(Long localTID, CoordinatorLog clog) {
         CoordinatorLogStateHolder logStateHolder = defaultLogStateHolder;
 
         boolean result = true;
 
-        logStateHolder.activeLogs.put(localTID,clog);
+        logStateHolder.activeLogs.put(localTID, clog);
 
         return result;
     }
 
-    private static boolean addLog(Long localTID,
-        CoordinatorLog clog, String logPath ) {
+    private static boolean addLog(Long localTID, CoordinatorLog clog, String logPath) {
         CoordinatorLogStateHolder logStateHolder = getStateHolder(logPath);
 
         boolean result = true;
 
-        logStateHolder.activeLogs.put(localTID,clog);
+        logStateHolder.activeLogs.put(localTID, clog);
 
         return result;
     }
 
-    /**Removes the CoordinatorLog object from the map, and destroys it.
+    /**
+     * Removes the CoordinatorLog object from the map, and destroys it.
      *
-     * @param localTID  The local transaction identifier.
+     * @param localTID The local transaction identifier.
      *
-     * @return  Indicates success of the operation.
+     * @return Indicates success of the operation.
      *
      * @see
      */
-    synchronized static boolean removeLog( Long localTID ) {
+    synchronized static boolean removeLog(Long localTID) {
 
         boolean result = true;
         CoordinatorLogStateHolder logStateHolder = defaultLogStateHolder;
@@ -1373,44 +1323,42 @@ class CoordinatorLog extends java.lang.Object implements LogUpcallTarget {
         // keypoint is in progress, and if so, prevent the CoordinatorLog from being
         // called during the keypoint.
 
-        CoordinatorLog clog = (CoordinatorLog)logStateHolder.activeLogs.remove(localTID);
-        if( clog != null ) {
+        CoordinatorLog clog = (CoordinatorLog) logStateHolder.activeLogs.remove(localTID);
+        if (clog != null) {
 
             // Obtaining the keypoint state lock prevents us from doing this while the
             // keypoint method is using the map.
 
-            synchronized( logStateHolder.keypointStateLock ) {
+            synchronized (logStateHolder.keypointStateLock) {
                 // If a keypoint is in progress, look up the entry for the transaction in the
                 // map and replace the value with a NULL entry.
 
-                if( logStateHolder.keypointInProgress && logStateHolder.keypointLogs != null )
-                    logStateHolder.keypointLogs.put(localTID,NULL_ENTRY);
+                if (logStateHolder.keypointInProgress && logStateHolder.keypointLogs != null)
+                    logStateHolder.keypointLogs.put(localTID, NULL_ENTRY);
             }
 
             // If the transaction is read-only, then do not increment the transaction count.
 
-            if( clog.writeDone )
+            if (clog.writeDone)
                 logStateHolder.tranCount++;
 
             // return the CoordinatorLog object to the pool to be reused.
-            //                    Arun 9/27/99
+            // Arun 9/27/99
             clog.reUse();
 
-
-            // Check whether a keypoint is required.  This is based solely on the number
+            // Check whether a keypoint is required. This is based solely on the number
             // of (non-readonly) transactions since the last keypoint.
 
-            if( logStateHolder.tranCount >= keypointTrigger ) {
+            if (logStateHolder.tranCount >= keypointTrigger) {
                 logStateHolder.tranCount = 0;
                 keypoint();
             }
         }
 
-
         return result;
     }
 
-    synchronized static boolean removeLog( Long localTID , String logPath) {
+    synchronized static boolean removeLog(Long localTID, String logPath) {
 
         boolean result = true;
         CoordinatorLogStateHolder logStateHolder = getStateHolder(logPath);
@@ -1420,49 +1368,46 @@ class CoordinatorLog extends java.lang.Object implements LogUpcallTarget {
         // keypoint is in progress, and if so, prevent the CoordinatorLog from being
         // called during the keypoint.
 
-        CoordinatorLog clog = (CoordinatorLog)logStateHolder.activeLogs.remove(localTID);
-        if( clog != null ) {
+        CoordinatorLog clog = (CoordinatorLog) logStateHolder.activeLogs.remove(localTID);
+        if (clog != null) {
 
             // Obtaining the keypoint state lock prevents us from doing this while the
             // keypoint method is using the map.
 
-            synchronized( logStateHolder.keypointStateLock ) {
+            synchronized (logStateHolder.keypointStateLock) {
                 // If a keypoint is in progress, look up the entry for the transaction in the
                 // map and replace the value with a NULL entry.
 
-                if( logStateHolder.keypointInProgress && logStateHolder.keypointLogs != null )
-                    logStateHolder.keypointLogs.put(localTID,NULL_ENTRY);
+                if (logStateHolder.keypointInProgress && logStateHolder.keypointLogs != null)
+                    logStateHolder.keypointLogs.put(localTID, NULL_ENTRY);
             }
 
             // If the transaction is read-only, then do not increment the transaction count.
 
-            if( clog.writeDone )
+            if (clog.writeDone)
                 logStateHolder.tranCount++;
 
             // return the CoordinatorLog object to the pool to be reused.
-            //                    Arun 9/27/99
+            // Arun 9/27/99
             clog.reUse(logPath);
 
-
-            // Check whether a keypoint is required.  This is based solely on the number
+            // Check whether a keypoint is required. This is based solely on the number
             // of (non-readonly) transactions since the last keypoint.
 
-            if( logStateHolder.tranCount >= keypointTrigger ) {
+            if (logStateHolder.tranCount >= keypointTrigger) {
                 logStateHolder.tranCount = 0;
                 keypoint(logPath);
             }
         }
 
-
         return result;
     }
 
-    /**Performs a keypoint operation to allow old information in the log to be
-     * discarded.
+    /**
+     * Performs a keypoint operation to allow old information in the log to be discarded.
      * <p>
-     * This operation is not synchronized as we do not want the latter part of the
-     * operation to block other logging operations.  The start of the keypoint is
-     * in a separate method which is synchronized.
+     * This operation is not synchronized as we do not want the latter part of the operation to block other logging
+     * operations. The start of the keypoint is in a separate method which is synchronized.
      *
      * @param
      *
@@ -1473,13 +1418,7 @@ class CoordinatorLog extends java.lang.Object implements LogUpcallTarget {
     static void keypoint() {
         CoordinatorLogStateHolder logStateHolder = defaultLogStateHolder;
 
-        byte[] keypointEndRecord = {
-            (byte) 'K',
-            (byte) 'E',
-            (byte) 'Y',
-            (byte) 'E',
-            (byte) 'N',
-            (byte) 'D'};
+        byte[] keypointEndRecord = { (byte) 'K', (byte) 'E', (byte) 'Y', (byte) 'E', (byte) 'N', (byte) 'D' };
 
         LogLSN previousLSN = new LogLSN();
         LogLSN keypointStartLSN = new LogLSN();
@@ -1488,7 +1427,7 @@ class CoordinatorLog extends java.lang.Object implements LogUpcallTarget {
         // Obtain the global keypoint lock to prevent any activity until the keypoint
         // start has been recorded.
         // Once the keypoint start has been completed, we can release the
-        // keypoint lock.  This will allow waiting CoordinatorLog writes to complete.
+        // keypoint lock. This will allow waiting CoordinatorLog writes to complete.
 
         try {
             logStateHolder.keypointLock.acquireWriteLock();
@@ -1499,48 +1438,45 @@ class CoordinatorLog extends java.lang.Object implements LogUpcallTarget {
 
         // If no keypoint start record was written, then just return.
 
-        if( keypointStartLSN.isNULL() ) {
+        if (keypointStartLSN.isNULL()) {
             return;
         }
 
         // Once all of the CoordinatorLog objects have been unlocked, we must make
         // sure each of them has been rewritten before the keypoint end record is
-        // written.  Note that it is possible that one or more of the CoordinatorLog
-        // objects in this list has already been deleted.  We must be careful
+        // written. Note that it is possible that one or more of the CoordinatorLog
+        // objects in this list has already been deleted. We must be careful
         // to make sure that we do not invoke a method on a deleted object.
 
-        if( keypointRequired ) {
+        if (keypointRequired) {
             Enumeration keypointLocalTIDs = logStateHolder.keypointLogs.keys();
-            while( keypointLocalTIDs.hasMoreElements() )
+            while (keypointLocalTIDs.hasMoreElements())
 
                 // Obtain the keypoint state lock before obtaining the value from the map, as the
-                // remove operation might be changing the value to NULL.  Note that the
+                // remove operation might be changing the value to NULL. Note that the
                 // remove operation only changes the value of an entry in this map, it does
                 // not change the number of entries in the map, so we do not need to hold the
                 // mutex for the browse.
 
-                synchronized( logStateHolder.keypointStateLock ) {
-                    CoordinatorLog currentLog = (CoordinatorLog)logStateHolder.keypointLogs.get(keypointLocalTIDs.nextElement());
+                synchronized (logStateHolder.keypointStateLock) {
+                    CoordinatorLog currentLog = (CoordinatorLog) logStateHolder.keypointLogs.get(keypointLocalTIDs.nextElement());
 
                     // Get the value out of the map, and if not NULL entry, tell it to rewrite itself.
 
-                    if( currentLog != NULL_ENTRY )
+                    if (currentLog != NULL_ENTRY)
                         currentLog.rewrite();
                 }
         }
 
         // Now we know all CoordinatorLog objects have either independently rewritten
-        // themselves, or we have done it explicitly.  A keypoint end record is
+        // themselves, or we have done it explicitly. A keypoint end record is
         // written to indicate that the keypoint is complete.
 
-        logStateHolder.logFile.write(LogFile.UNFORCED,
-            keypointEndRecord,
-            LogFile.KEYPOINT_END,
-            previousLSN);
+        logStateHolder.logFile.write(LogFile.UNFORCED, keypointEndRecord, LogFile.KEYPOINT_END, previousLSN);
 
         // All that is left to do is to inform the LogFile that the records before
         // the keypoint start record are no longer required.
-        // Checkpoint the log.  This allows the log to discard previous entries that
+        // Checkpoint the log. This allows the log to discard previous entries that
         // are no longer required.
 
         logStateHolder.logFile.checkpoint(keypointStartLSN);
@@ -1552,16 +1488,11 @@ class CoordinatorLog extends java.lang.Object implements LogUpcallTarget {
         logStateHolder.keypointLogs.clear();
 
     }
+
     static void keypoint(String logPath) {
         CoordinatorLogStateHolder logStateHolder = getStateHolder(logPath);
 
-        byte[] keypointEndRecord = {
-            (byte) 'K',
-            (byte) 'E',
-            (byte) 'Y',
-            (byte) 'E',
-            (byte) 'N',
-            (byte) 'D'};
+        byte[] keypointEndRecord = { (byte) 'K', (byte) 'E', (byte) 'Y', (byte) 'E', (byte) 'N', (byte) 'D' };
 
         LogLSN previousLSN = new LogLSN();
         LogLSN keypointStartLSN = new LogLSN();
@@ -1570,7 +1501,7 @@ class CoordinatorLog extends java.lang.Object implements LogUpcallTarget {
         // Obtain the global keypoint lock to prevent any activity until the keypoint
         // start has been recorded.
         // Once the keypoint start has been completed, we can release the
-        // keypoint lock.  This will allow waiting CoordinatorLog writes to complete.
+        // keypoint lock. This will allow waiting CoordinatorLog writes to complete.
 
         try {
             logStateHolder.keypointLock.acquireWriteLock();
@@ -1581,48 +1512,45 @@ class CoordinatorLog extends java.lang.Object implements LogUpcallTarget {
 
         // If no keypoint start record was written, then just return.
 
-        if( keypointStartLSN.isNULL() ) {
+        if (keypointStartLSN.isNULL()) {
             return;
         }
 
         // Once all of the CoordinatorLog objects have been unlocked, we must make
         // sure each of them has been rewritten before the keypoint end record is
-        // written.  Note that it is possible that one or more of the CoordinatorLog
-        // objects in this list has already been deleted.  We must be careful
+        // written. Note that it is possible that one or more of the CoordinatorLog
+        // objects in this list has already been deleted. We must be careful
         // to make sure that we do not invoke a method on a deleted object.
 
-        if( keypointRequired ) {
+        if (keypointRequired) {
             Enumeration keypointLocalTIDs = logStateHolder.keypointLogs.keys();
-            while( keypointLocalTIDs.hasMoreElements() )
+            while (keypointLocalTIDs.hasMoreElements())
 
                 // Obtain the keypoint state lock before obtaining the value from the map, as the
-                // remove operation might be changing the value to NULL.  Note that the
+                // remove operation might be changing the value to NULL. Note that the
                 // remove operation only changes the value of an entry in this map, it does
                 // not change the number of entries in the map, so we do not need to hold the
                 // mutex for the browse.
 
-                synchronized( logStateHolder.keypointStateLock ) {
-                    CoordinatorLog currentLog = (CoordinatorLog)logStateHolder.keypointLogs.get(keypointLocalTIDs.nextElement());
+                synchronized (logStateHolder.keypointStateLock) {
+                    CoordinatorLog currentLog = (CoordinatorLog) logStateHolder.keypointLogs.get(keypointLocalTIDs.nextElement());
 
                     // Get the value out of the map, and if not NULL entry, tell it to rewrite itself.
 
-                    if( currentLog != NULL_ENTRY )
+                    if (currentLog != NULL_ENTRY)
                         currentLog.rewrite();
                 }
         }
 
         // Now we know all CoordinatorLog objects have either independently rewritten
-        // themselves, or we have done it explicitly.  A keypoint end record is
+        // themselves, or we have done it explicitly. A keypoint end record is
         // written to indicate that the keypoint is complete.
 
-        logStateHolder.logFile.write(LogFile.UNFORCED,
-            keypointEndRecord,
-            LogFile.KEYPOINT_END,
-            previousLSN);
+        logStateHolder.logFile.write(LogFile.UNFORCED, keypointEndRecord, LogFile.KEYPOINT_END, previousLSN);
 
         // All that is left to do is to inform the LogFile that the records before
         // the keypoint start record are no longer required.
-        // Checkpoint the log.  This allows the log to discard previous entries that
+        // Checkpoint the log. This allows the log to discard previous entries that
         // are no longer required.
 
         logStateHolder.logFile.checkpoint(keypointStartLSN);
@@ -1635,18 +1563,20 @@ class CoordinatorLog extends java.lang.Object implements LogUpcallTarget {
 
     }
 
-    /**Handles a short-on-storage situation in the log by taking a keypoint.
-
-    /**Handles a short-on-storage situation in the log by taking a keypoint.
+    /**
+     * Handles a short-on-storage situation in the log by taking a keypoint.
      *
-     * @param reason  The reason for the upcall.
+     * /**Handles a short-on-storage situation in the log by taking a keypoint.
+     *
+     * @param reason The reason for the upcall.
      *
      * @return
      *
      * @see
      */
 
-    public void upcall( int reason ){
+    @Override
+    public void upcall(int reason) {
 
         // Just perform a keypoint.
         if (logPath == null)
@@ -1656,7 +1586,8 @@ class CoordinatorLog extends java.lang.Object implements LogUpcallTarget {
 
     }
 
-    /**Destroys the state of the CoordinatorLog class.
+    /**
+     * Destroys the state of the CoordinatorLog class.
      *
      * @param
      *
@@ -1665,34 +1596,35 @@ class CoordinatorLog extends java.lang.Object implements LogUpcallTarget {
      * @see
      */
 
-    synchronized static void finalizeAll(){
+    synchronized static void finalizeAll() {
         CoordinatorLogStateHolder logStateHolder = defaultLogStateHolder;
 
         boolean deleteFile = false;
 
         // Obtain the keypoint state lock for this operation.
 
-        synchronized( logStateHolder.keypointStateLock ) {
+        synchronized (logStateHolder.keypointStateLock) {
 
             // Close the LogFile.
 
-            if( logStateHolder.activeLogs != null ) {
+            if (logStateHolder.activeLogs != null) {
 
                 // If there are no active log records sete delete_file to TRUE so that
                 // LogFile_close will cause the logfile to be deleted
 
-                if( logStateHolder.activeLogs.size() == 0 )
+                if (logStateHolder.activeLogs.size() == 0)
                     deleteFile = true;
                 logStateHolder.activeLogs.clear();
                 logStateHolder.activeLogs = null;
             }
 
-            if( logStateHolder.logFile != null ) logStateHolder.logFile.close(deleteFile);
+            if (logStateHolder.logFile != null)
+                logStateHolder.logFile.close(deleteFile);
             logStateHolder.logFile = null;
 
             // Discard the CoordinatorLog mappings.
 
-            if( logStateHolder.keypointLogs != null )
+            if (logStateHolder.keypointLogs != null)
                 logStateHolder.keypointLogs.clear();
             logStateHolder.keypointLogs = null;
         }
@@ -1704,34 +1636,35 @@ class CoordinatorLog extends java.lang.Object implements LogUpcallTarget {
 
     }
 
-    synchronized static void finalizeAll(String logPath){
+    synchronized static void finalizeAll(String logPath) {
         CoordinatorLogStateHolder logStateHolder = getStateHolder(logPath);
 
         boolean deleteFile = false;
 
         // Obtain the keypoint state lock for this operation.
 
-        synchronized( logStateHolder.keypointStateLock ) {
+        synchronized (logStateHolder.keypointStateLock) {
 
             // Close the LogFile.
 
-            if( logStateHolder.activeLogs != null ) {
+            if (logStateHolder.activeLogs != null) {
 
                 // If there are no active log records sete delete_file to TRUE so that
                 // LogFile_close will cause the logfile to be deleted
 
-                if( logStateHolder.activeLogs.size() == 0 )
+                if (logStateHolder.activeLogs.size() == 0)
                     deleteFile = true;
                 logStateHolder.activeLogs.clear();
                 logStateHolder.activeLogs = null;
             }
 
-            if( logStateHolder.logFile != null ) logStateHolder.logFile.close(deleteFile);
+            if (logStateHolder.logFile != null)
+                logStateHolder.logFile.close(deleteFile);
             logStateHolder.logFile = null;
 
             // Discard the CoordinatorLog mappings.
 
-            if( logStateHolder.keypointLogs != null )
+            if (logStateHolder.keypointLogs != null)
                 logStateHolder.keypointLogs.clear();
             logStateHolder.keypointLogs = null;
         }
@@ -1743,31 +1676,32 @@ class CoordinatorLog extends java.lang.Object implements LogUpcallTarget {
 
     }
 
-    /**Starts a keypoint.
+    /**
+     * Starts a keypoint.
      *
-     * @param keypointStartLSN  The LSN to hold the keypoint start LSN.
+     * @param keypointStartLSN The LSN to hold the keypoint start LSN.
      *
-     * @return  Indicates whether keypoint is required.
+     * @return Indicates whether keypoint is required.
      *
      * @see
      */
 
-    synchronized static boolean startKeypoint( LogLSN keypointStartLSN ) {
+    synchronized static boolean startKeypoint(LogLSN keypointStartLSN) {
         CoordinatorLogStateHolder logStateHolder = defaultLogStateHolder;
 
         boolean keypointRequired = false;
 
         // If a keypoint is in progress, return and do nothing.
 
-        if( logStateHolder.keypointInProgress ) {
+        if (logStateHolder.keypointInProgress) {
             return false;
         }
         logStateHolder.keypointInProgress = true;
 
-        // Initialise the Log.  If this fails, then return whatever exception the
+        // Initialise the Log. If this fails, then return whatever exception the
         // open raised.
 
-        if( !openLog() ) {
+        if (!openLog()) {
             logStateHolder.keypointInProgress = false;
             return false;
         }
@@ -1775,11 +1709,11 @@ class CoordinatorLog extends java.lang.Object implements LogUpcallTarget {
         // If there are no known CoordinatorLog objects, then all that the keypoint
         // operation does is checkpoint the log at the head.
 
-        if( logStateHolder.activeLogs.size() == 0 )
+        if (logStateHolder.activeLogs.size() == 0)
             keypointRequired = false;
 
         // Else go round all currently known CoordinatorLog objects and build a list
-        // of them.  New CoordinatorLog objects that are created during this time
+        // of them. New CoordinatorLog objects that are created during this time
         // will be suspended when they try to do an CoordinatorLog.addLog operation as
         // this thread has the lock.
 
@@ -1790,12 +1724,12 @@ class CoordinatorLog extends java.lang.Object implements LogUpcallTarget {
             // Each CoordinatorLog that exists at this time is copied to a separate list.
 
             Enumeration clogs = logStateHolder.activeLogs.elements();
-            while( clogs.hasMoreElements() ) {
-                CoordinatorLog currentLog = (CoordinatorLog)clogs.nextElement();
+            while (clogs.hasMoreElements()) {
+                CoordinatorLog currentLog = (CoordinatorLog) clogs.nextElement();
                 Long localTID = currentLog.localTID;
 
                 currentLog.requireRewrite();
-                logStateHolder.keypointLogs.put(localTID,currentLog);
+                logStateHolder.keypointLogs.put(localTID, currentLog);
             }
             keypointRequired = logStateHolder.keypointLogs.size() > 0;
         }
@@ -1803,38 +1737,28 @@ class CoordinatorLog extends java.lang.Object implements LogUpcallTarget {
         // Write a keypoint start record now that we know no logging activity is
         // taking place.
 
-        byte[] keypointStartRecord = {(byte) 'K',
-            (byte) 'E',
-            (byte) 'Y',
-            (byte) 'S',
-            (byte) 'T',
-            (byte) 'A',
-            (byte) 'R',
-            (byte) 'T'};
-        logStateHolder.logFile.write(LogFile.UNFORCED,
-            keypointStartRecord,
-            LogFile.KEYPOINT_START,
-            keypointStartLSN);
+        byte[] keypointStartRecord = { (byte) 'K', (byte) 'E', (byte) 'Y', (byte) 'S', (byte) 'T', (byte) 'A', (byte) 'R', (byte) 'T' };
+        logStateHolder.logFile.write(LogFile.UNFORCED, keypointStartRecord, LogFile.KEYPOINT_START, keypointStartLSN);
 
         return keypointRequired;
     }
 
-    synchronized static boolean startKeypoint( LogLSN keypointStartLSN, String logPath ) {
+    synchronized static boolean startKeypoint(LogLSN keypointStartLSN, String logPath) {
         CoordinatorLogStateHolder logStateHolder = getStateHolder(logPath);
 
         boolean keypointRequired = false;
 
         // If a keypoint is in progress, return and do nothing.
 
-        if( logStateHolder.keypointInProgress ) {
+        if (logStateHolder.keypointInProgress) {
             return false;
         }
         logStateHolder.keypointInProgress = true;
 
-        // Initialise the Log.  If this fails, then return whatever exception the
+        // Initialise the Log. If this fails, then return whatever exception the
         // open raised.
 
-        if( !openLog(logPath) ) {
+        if (!openLog(logPath)) {
             logStateHolder.keypointInProgress = false;
             return false;
         }
@@ -1842,11 +1766,11 @@ class CoordinatorLog extends java.lang.Object implements LogUpcallTarget {
         // If there are no known CoordinatorLog objects, then all that the keypoint
         // operation does is checkpoint the log at the head.
 
-        if( logStateHolder.activeLogs.size() == 0 )
+        if (logStateHolder.activeLogs.size() == 0)
             keypointRequired = false;
 
         // Else go round all currently known CoordinatorLog objects and build a list
-        // of them.  New CoordinatorLog objects that are created during this time
+        // of them. New CoordinatorLog objects that are created during this time
         // will be suspended when they try to do an CoordinatorLog.addLog operation as
         // this thread has the lock.
 
@@ -1857,12 +1781,12 @@ class CoordinatorLog extends java.lang.Object implements LogUpcallTarget {
             // Each CoordinatorLog that exists at this time is copied to a separate list.
 
             Enumeration clogs = logStateHolder.activeLogs.elements();
-            while( clogs.hasMoreElements() ) {
-                CoordinatorLog currentLog = (CoordinatorLog)clogs.nextElement();
+            while (clogs.hasMoreElements()) {
+                CoordinatorLog currentLog = (CoordinatorLog) clogs.nextElement();
                 Long localTID = currentLog.localTID;
 
                 currentLog.requireRewrite();
-                logStateHolder.keypointLogs.put(localTID,currentLog);
+                logStateHolder.keypointLogs.put(localTID, currentLog);
             }
             keypointRequired = logStateHolder.keypointLogs.size() > 0;
         }
@@ -1870,23 +1794,14 @@ class CoordinatorLog extends java.lang.Object implements LogUpcallTarget {
         // Write a keypoint start record now that we know no logging activity is
         // taking place.
 
-        byte[] keypointStartRecord = {(byte) 'K',
-            (byte) 'E',
-            (byte) 'Y',
-            (byte) 'S',
-            (byte) 'T',
-            (byte) 'A',
-            (byte) 'R',
-            (byte) 'T'};
-        logStateHolder.logFile.write(LogFile.UNFORCED,
-            keypointStartRecord,
-            LogFile.KEYPOINT_START,
-            keypointStartLSN);
+        byte[] keypointStartRecord = { (byte) 'K', (byte) 'E', (byte) 'Y', (byte) 'S', (byte) 'T', (byte) 'A', (byte) 'R', (byte) 'T' };
+        logStateHolder.logFile.write(LogFile.UNFORCED, keypointStartRecord, LogFile.KEYPOINT_START, keypointStartLSN);
 
         return keypointRequired;
     }
 
-    /**Dumps the state of the class.
+    /**
+     * Dumps the state of the class.
      *
      * @param
      *
@@ -1904,15 +1819,15 @@ class CoordinatorLog extends java.lang.Object implements LogUpcallTarget {
     }
 
     // START IASRI 4662745
-    public static void setKeypointTrigger(int keypoint)
-    {
+    public static void setKeypointTrigger(int keypoint) {
         keypointTrigger = keypoint;
     }
     // END IASRI 4662745
 
 }
 
-/**The CoordinatorLogSection class stores information relevant to a section.
+/**
+ * The CoordinatorLogSection class stores information relevant to a section.
  *
  * @version 0.1
  *
@@ -1927,27 +1842,29 @@ class CoordinatorLog extends java.lang.Object implements LogUpcallTarget {
 //------------------------------------------------------------------------------
 
 class CoordinatorLogSection extends java.lang.Object {
-    String  sectionName      = null;
-    boolean unwrittenEmpty   = true;
-    boolean writtenEmpty     = true;
-    Vector  unwrittenObjects = null;
-    Vector  unwrittenData    = null;
-    Vector  writtenObjects   = null;
-    Vector  writtenData      = null;
+    String sectionName = null;
+    boolean unwrittenEmpty = true;
+    boolean writtenEmpty = true;
+    Vector unwrittenObjects = null;
+    Vector unwrittenData = null;
+    Vector writtenObjects = null;
+    Vector writtenData = null;
 
-    /**Creates a CoordinatorLogSection with the given name.
+    /**
+     * Creates a CoordinatorLogSection with the given name.
      *
-     * @param sectionName  The name of the section.
+     * @param sectionName The name of the section.
      *
      * @return
      *
      * @see
      */
-    CoordinatorLogSection( String sectionName ) {
+    CoordinatorLogSection(String sectionName) {
         this.sectionName = sectionName;
     }
 
-    /**Destroys the contents of a CoordinatorLogSection.
+    /**
+     * Destroys the contents of a CoordinatorLogSection.
      *
      * @param
      *
@@ -1956,36 +1873,33 @@ class CoordinatorLogSection extends java.lang.Object {
      * @see
      */
     public void doFinalize() {
-        if( unwrittenObjects != null )
+        if (unwrittenObjects != null)
             unwrittenObjects.removeAllElements();
 
-        if( unwrittenData != null )
+        if (unwrittenData != null)
             unwrittenData.removeAllElements();
 
-        if( writtenObjects != null )
+        if (writtenObjects != null)
             writtenObjects.removeAllElements();
 
-        if( writtenData != null )
+        if (writtenData != null)
             writtenData.removeAllElements();
 
         sectionName = null;
 
         unwrittenObjects = null;
-        unwrittenData    = null;
-        writtenObjects   = null;
-        writtenData      = null;
+        unwrittenData = null;
+        writtenObjects = null;
+        writtenData = null;
     }
 
-    /**Cleans up the CoordinatorLogSection and
-     * returns it to the pool for re-use
+    /**
+     * Cleans up the CoordinatorLogSection and returns it to the pool for re-use
      *
-     * Note: the implementation of the cache does not ensure
-     *       that when an object is re-used there are no
-     *         outstanding references to that object. However, the
-     *         risk involved is minimal since reUse() replaces the
-     *         existing call to finalize(). The existing call to
-     *         finalize also does not ensure that there are no
-     *         outstanding references to the object being finalized.
+     * Note: the implementation of the cache does not ensure that when an object is re-used there are no outstanding
+     * references to that object. However, the risk involved is minimal since reUse() replaces the existing call to
+     * finalize(). The existing call to finalize also does not ensure that there are no outstanding references to the object
+     * being finalized.
      *
      * @param
      *
@@ -1993,32 +1907,31 @@ class CoordinatorLogSection extends java.lang.Object {
      *
      * @see
      */
-    synchronized void reUse() {            // Arun 9/27/99
+    synchronized void reUse() { // Arun 9/27/99
 
-        if( unwrittenObjects != null )
+        if (unwrittenObjects != null)
             unwrittenObjects.removeAllElements();
 
-        if( unwrittenData != null )
+        if (unwrittenData != null)
             unwrittenData.removeAllElements();
 
-        if( writtenObjects != null )
+        if (writtenObjects != null)
             writtenObjects.removeAllElements();
 
-        if( writtenData != null )
+        if (writtenData != null)
             writtenData.removeAllElements();
 
         sectionName = null;
-        unwrittenEmpty   = true;
-        writtenEmpty     = true;
+        unwrittenEmpty = true;
+        writtenEmpty = true;
 
         SectionPool.putCoordinatorLogSection(this);
     }
 }
 
 /**
- * The SectionPool is used as a cache for CoordinatorLogSection objects.
- * This pool allows the re-use of these objects which are very expensive
- * to instantiate.
+ * The SectionPool is used as a cache for CoordinatorLogSection objects. This pool allows the re-use of these objects
+ * which are very expensive to instantiate.
  *
  * The pool was added to improve performance of trnasaction logging
  *
@@ -2036,30 +1949,25 @@ class SectionPool {
 
     static SectionPool SPool = new SectionPool();
 
-
     public SectionPool() {
         pool = new Stack();
     }
 
     /**
-     * Fetch a CoordinatorLogSection object from the cache. This method
-     * should be called instead of "new CoordinatorLogSection()". If the
-     * cache is empty this method will instantiate a new
-     * CoordinatorLogSection object.
+     * Fetch a CoordinatorLogSection object from the cache. This method should be called instead of "new
+     * CoordinatorLogSection()". If the cache is empty this method will instantiate a new CoordinatorLogSection object.
      *
      * @param String name the section name
      *
      * @return CoordinatorLogSection
      *
      */
-    public static synchronized
-    CoordinatorLogSection getCoordinatorLogSection(String name) {
+    public static synchronized CoordinatorLogSection getCoordinatorLogSection(String name) {
 
         CoordinatorLogSection cls;
         if (SPool.pool.empty()) {
             return new CoordinatorLogSection(name);
-        }
-        else {
+        } else {
             cls = (CoordinatorLogSection) SPool.pool.pop();
             cls.sectionName = name;
             return cls;
@@ -2067,9 +1975,8 @@ class SectionPool {
     }
 
     /**
-     * Return a CoordinatorLogSection object to cache. Cache size is
-     * limited to MAXSTACKSIZE by discarding objects when the cache
-     * is already at max size.
+     * Return a CoordinatorLogSection object to cache. Cache size is limited to MAXSTACKSIZE by discarding objects when the
+     * cache is already at max size.
      *
      * @param CoordinatorLogSection object to be returned to cache
      *
@@ -2083,11 +1990,11 @@ class SectionPool {
 }
 
 class CoordinatorLogStateHolder {
-    LogFile logFile        = null;
-    Log log                = null;
-    Hashtable activeLogs   = null;
+    LogFile logFile = null;
+    Log log = null;
+    Hashtable activeLogs = null;
     Hashtable keypointLogs = null;
-    int tranCount          = 0;
+    int tranCount = 0;
     boolean keypointInProgress = false;
     // java.lang.Object keypointLock = new java.lang.Object();
     RWLock keypointLock = null;

@@ -16,12 +16,12 @@
 
 package com.sun.jts.utils;
 
+import static java.util.logging.Level.FINE;
 
 import java.text.MessageFormat;
 import java.util.Enumeration;
 import java.util.Properties;
 import java.util.ResourceBundle;
-import java.util.logging.Level;
 import java.util.logging.Logger;
 
 import javax.transaction.xa.Xid;
@@ -46,9 +46,9 @@ public class LogFormatter {
         for (i = 0; i < byteArray.length; i++) {
             strBuf.append(byteArray[i]);
         }
+
         return strBuf.toString();
     }
-
 
     /**
      * Converts an array of xids to string that can be printed. Its a helper method.
@@ -60,8 +60,7 @@ public class LogFormatter {
         if (xidArray.length != 0) {
             int i;
             StringBuffer strBuf = new StringBuffer(
-                "Xid class name is " + xidArray[0].getClass().getName()
-                + " Number of Xids are " + xidArray.length + " [ ");
+                    "Xid class name is " + xidArray[0].getClass().getName() + " Number of Xids are " + xidArray.length + " [ ");
             for (i = 0; i < xidArray.length - 1; i++) {
                 strBuf.append(xidArray[i]).append("\n");
             }
@@ -71,7 +70,6 @@ public class LogFormatter {
             return " null ";
         }
     }
-
 
     /**
      * Helper method to convert properties to string.
@@ -83,6 +81,7 @@ public class LogFormatter {
         if (prop == null) {
             return "{null}";
         }
+
         StringBuffer strBuf = new StringBuffer("{ ");
         for (Enumeration enum1 = prop.propertyNames(); enum1.hasMoreElements();) {
             Object obj = enum1.nextElement();
@@ -99,10 +98,8 @@ public class LogFormatter {
         return strBuf.toString();
     }
 
-
     /**
-     * getLocalizedMessage is used to localize the messages being used in
-     * exceptions
+     * getLocalizedMessage is used to localize the messages being used in exceptions
      **/
 
     public static String getLocalizedMessage(Logger logger, String key) {
@@ -111,15 +108,13 @@ public class LogFormatter {
             String message = rb.getString(key);
             return message;
         } catch (Exception ex) {
-            logger.log(Level.FINE, "JTS:Error while localizing the log message");
+            logger.log(FINE, "JTS:Error while localizing the log message");
             return key;
         }
     }
 
-
     /**
-     * getLocalizedMessage is used to localize the messages being used in
-     * exceptions with arguments inserted appropriately.
+     * getLocalizedMessage is used to localize the messages being used in exceptions with arguments inserted appropriately.
      **/
 
     public static String getLocalizedMessage(Logger logger, String key, Object[] args) {
@@ -128,7 +123,7 @@ public class LogFormatter {
             String message = rb.getString(key);
             return MessageFormat.format(message, args);
         } catch (Exception ex) {
-            logger.log(Level.FINE, "JTS:Error while localizing the log message");
+            logger.log(FINE, "JTS:Error while localizing the log message");
             return key;
         }
     }

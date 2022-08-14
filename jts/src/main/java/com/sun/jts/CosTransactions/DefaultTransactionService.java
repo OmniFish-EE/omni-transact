@@ -30,36 +30,37 @@
 
 package com.sun.jts.CosTransactions;
 
-// Import required classes.
-
-import java.util.*;
 import java.net.InetAddress;
 import java.net.UnknownHostException;
-
-import org.omg.CORBA.*;
-import org.omg.CORBA.ORBPackage.InvalidName;
-import org.omg.CosTransactions.*;
-import org.omg.CORBA.Policy.*;
-import org.omg.CosNaming.*;
-import org.omg.CosNaming.NamingContextPackage.*;
-import org.omg.PortableServer.*;
-import org.omg.CORBA.LocalObject;
-
-import com.sun.corba.ee.spi.presentation.rmi.StubAdapter;
-
-import com.sun.jts.codegen.otsidl.*;
-
-import java.util.logging.Logger;
+// Import required classes.
+import java.util.Properties;
 import java.util.logging.Level;
-import com.sun.logging.LogDomains;
-import com.sun.jts.utils.LogFormatter;
+import java.util.logging.Logger;
 
-/**The DefaultTransactionService is our implemention of the
- * com.sun.CosTransactions.TransactionService class.
+import org.omg.CORBA.CompletionStatus;
+import org.omg.CORBA.INTERNAL;
+import org.omg.CORBA.LocalObject;
+import org.omg.CORBA.ORB;
+import org.omg.CORBA.Policy;
+import org.omg.CORBA.TSIdentification;
+import org.omg.CORBA.ORBPackage.InvalidName;
+import org.omg.CosNaming.NameComponent;
+import org.omg.CosNaming.NamingContext;
+import org.omg.CosNaming.NamingContextHelper;
+import org.omg.CosTransactions.TransactionFactory;
+import org.omg.CosTransactions.TransactionFactoryHelper;
+import org.omg.PortableServer.AdapterActivator;
+import org.omg.PortableServer.LifespanPolicyValue;
+import org.omg.PortableServer.POA;
+import org.omg.PortableServer.RequestProcessingPolicyValue;
+import org.omg.PortableServer.Servant;
+import org.omg.PortableServer.ServantActivator;
+
+/**
+ * The DefaultTransactionService is our implemention of the com.sun.CosTransactions.TransactionService class.
  * <p>
- * The TransactionService abstract class describes the packaging of a
- * Java Transaction Service implementation. Each implementation should be
- * packaged as a subclass of the TransactionService class.
+ * The TransactionService abstract class describes the packaging of a Java Transaction Service implementation. Each
+ * implementation should be packaged as a subclass of the TransactionService class.
  *
  * @version 0.01
  *
@@ -67,7 +68,7 @@ import com.sun.jts.utils.LogFormatter;
  * @author mvatkina
  *
  * @see
-*/
+ */
 //----------------------------------------------------------------------------// CHANGE HISTORY
 //
 // Version By     Change Description
@@ -77,21 +78,21 @@ import com.sun.jts.utils.LogFormatter;
 public class DefaultTransactionService implements ProxyChecker {
     private static CurrentImpl currentInstance = null;
     private static TransactionFactoryImpl factoryInstance = null;
-    //private static AdministrationImpl adminInstance = null;
+    // private static AdministrationImpl adminInstance = null;
     private static NamingContext namingContext = null;
     private static ORB orb = null;
     private static boolean recoverable = false;
     private static boolean poasCreated = false;
     private static boolean active = false;
     /*
-        Logger to log transaction messages
-    */
-    static Logger _logger = LogDomains.getLogger(DefaultTransactionService.class, LogDomains.TRANSACTION_LOGGER);
+     * Logger to log transaction messages
+     */
+    static Logger _logger = Logger.getLogger(DefaultTransactionService.class.getName());
     public static final String JTS_SERVER_ID = "com.sun.jts.persistentServerId"; /* FROZEN */
     public static final String JTS_XA_SERVER_NAME = "com.sun.jts.xa-servername";
 
-
-    /**Default constructor.
+    /**
+     * Default constructor.
      *
      * @param
      *
@@ -113,8 +114,8 @@ public class DefaultTransactionService implements ProxyChecker {
         return active;
     }
 
-    /**Obtain the implementation of the Current interface provided
-     * by the transaction service implementation.
+    /**
+     * Obtain the implementation of the Current interface provided by the transaction service implementation.
      *
      * @param
      *
@@ -125,31 +126,27 @@ public class DefaultTransactionService implements ProxyChecker {
     public org.omg.CosTransactions.Current get_current() {
         org.omg.CosTransactions.Current result = null;
 
-        result = (org.omg.CosTransactions.Current)currentInstance;
+        result = currentInstance;
 
         return result;
     }
 
-    /**Request the transaction service to identify itself with a communication
-     * manager.
+    /**
+     * Request the transaction service to identify itself with a communication manager.
      * <p>
-     * Multiple communication managers may request a transaction
-     * service to identify itself.
+     * Multiple communication managers may request a transaction service to identify itself.
      *
-     * @param orb         The ORB to be used for communication.
-     * @param ident       The TSIdentification object with which the Sender and
-     *                    Receiver must be registered.
-     * @param properties  The Properties with which the ORB was initialised.
+     * @param orb The ORB to be used for communication.
+     * @param ident The TSIdentification object with which the Sender and Receiver must be registered.
+     * @param properties The Properties with which the ORB was initialised.
      *
      * @return
      *
      * @see
      */
-    public void identify_ORB(ORB orb,
-                             TSIdentification ident,
-                             Properties properties) {
-        if( this.orb == null ) {
-            this.orb = orb;
+    public void identify_ORB(ORB orb, TSIdentification ident, Properties properties) {
+        if (DefaultTransactionService.orb == null) {
+            DefaultTransactionService.orb = orb;
             Configuration.setORB(orb);
             Configuration.setProperties(properties);
             Configuration.setProxyChecker(this);
@@ -158,30 +155,30 @@ public class DefaultTransactionService implements ProxyChecker {
         // We have to wait until this point to trace entry into this method as trace
         // is only started by setting the properties in the Configuration class.
 
-        // Get the persistent server id of the server.  If it does not represent a
+        // Get the persistent server id of the server. If it does not represent a
         // transient server, then the server is recoverable.
 
-        if( !poasCreated ) {
+        if (!poasCreated) {
             setServerName(properties);
             // Set up the POA objects for transient and persistent references.
 
             try {
                 if (orb != null)
                     createPOAs();
-            } catch( Exception exc ) {
-                _logger.log(Level.WARNING,"jts.unexpected_error_when_creating_poa",exc);
-                throw new INTERNAL(MinorCode.TSCreateFailed,CompletionStatus.COMPLETED_NO);
+            } catch (Exception exc) {
+                _logger.log(Level.WARNING, "jts.unexpected_error_when_creating_poa", exc);
+                throw new INTERNAL(MinorCode.TSCreateFailed, CompletionStatus.COMPLETED_NO);
             }
         }
 
         // Set up the instance of the Current object now that we know the ORB.
 
-        if( currentInstance == null )
-           try {
+        if (currentInstance == null)
+            try {
                 currentInstance = new CurrentImpl();
-            } catch( Exception exc ) {
-                _logger.log(Level.WARNING,"jts.unexpected_error_when_creating_current",exc);
-                throw new INTERNAL(MinorCode.TSCreateFailed,CompletionStatus.COMPLETED_NO);
+            } catch (Exception exc) {
+                _logger.log(Level.WARNING, "jts.unexpected_error_when_creating_current", exc);
+                throw new INTERNAL(MinorCode.TSCreateFailed, CompletionStatus.COMPLETED_NO);
             }
 
         // Identify Sender and Receiver objects to the Comm Manager.
@@ -192,31 +189,31 @@ public class DefaultTransactionService implements ProxyChecker {
         // If the server is recoverable, create a NamingContext with which to
         // register the factory and admin objects.
 
-        if( recoverable && namingContext == null )
+        if (recoverable && namingContext == null)
             try {
-                namingContext = NamingContextHelper.narrow(orb.resolve_initial_references("NameService"/*#Frozen*/));
-            } catch( InvalidName inexc ) {
+                namingContext = NamingContextHelper.narrow(orb.resolve_initial_references("NameService"/* #Frozen */));
+            } catch (InvalidName inexc) {
                 // _logger.log(Level.WARNING,"jts.orb_not_running");
                 if (_logger.isLoggable(Level.FINE)) {
-                    _logger.log(Level.FINE,"jts.orb_not_running");
+                    _logger.log(Level.FINE, "jts.orb_not_running");
                 }
-            } catch( Exception exc ) {
+            } catch (Exception exc) {
                 // _logger.log(Level.WARNING,"jts.orb_not_running");
                 if (_logger.isLoggable(Level.FINE)) {
-                    _logger.log(Level.FINE,"jts.orb_not_running");
+                    _logger.log(Level.FINE, "jts.orb_not_running");
                 }
             }
 
         // Create a TransactionFactory object and register it with the naming service
         // if recoverable.
 
-        if( factoryInstance == null )
+        if (factoryInstance == null)
             try {
                 boolean localFactory = true;
                 TransactionFactory factory = null;
                 factoryInstance = new TransactionFactoryImpl();
                 if (localFactory) {
-                    factory = (TransactionFactory) factoryInstance;
+                    factory = factoryInstance;
                 } else {
                     factory = factoryInstance.object();
                 }
@@ -224,89 +221,89 @@ public class DefaultTransactionService implements ProxyChecker {
                 // Since we are instantiating the TransactionFactory object
                 // locally, we have a local transaction factory.
 
-                Configuration.setFactory(factory, /*local factory*/ localFactory);
+                Configuration.setFactory(factory, /* local factory */ localFactory);
 
-                if (Configuration.isLocalFactory() == false &&  namingContext != null) {
-                    NameComponent nc = new NameComponent(TransactionFactoryHelper.id(),"");
-                    NameComponent path[] = {nc};
-                    namingContext.rebind(path,factory);
+                if (!Configuration.isLocalFactory() && namingContext != null) {
+                    NameComponent nc = new NameComponent(TransactionFactoryHelper.id(), "");
+                    NameComponent path[] = { nc };
+                    namingContext.rebind(path, factory);
                 }
 
                 // Commented out by TN
-                //if( !recoverable )
-                //_logger.log(Level.WARNING,"jts.non_persistent_server");
-            } catch( Exception exc ) {
-                _logger.log(Level.WARNING,"jts.cannot_register_with_orb","TransactionFactory");
+                // if( !recoverable )
+                // _logger.log(Level.WARNING,"jts.non_persistent_server");
+            } catch (Exception exc) {
+                _logger.log(Level.WARNING, "jts.cannot_register_with_orb", "TransactionFactory");
             }
 
-            active = true; // transaction manager is alive and available
+        active = true; // transaction manager is alive and available
     }
 
     public static void setServerName(Properties properties) {
-        if( !poasCreated ) {
+        if (!poasCreated) {
             Configuration.setProperties(properties);
 
-            //String serverId = properties.getProperty("com.sun.corba.ee.internal.POA.ORBServerId"/*#Frozen*/);
+            // String serverId = properties.getProperty("com.sun.corba.ee.internal.POA.ORBServerId"/*#Frozen*/);
             String serverId = properties.getProperty(JTS_SERVER_ID);
             if (serverId == null) {
-                serverId =
-                    properties.getProperty("com.sun.CORBA.POA.ORBServerId"/*#Frozen*/);
+                serverId = properties.getProperty("com.sun.CORBA.POA.ORBServerId"/* #Frozen */);
             }
             if (serverId != null) {
-                    _logger.log(Level.INFO,"jts.startup_msg",serverId);
+                _logger.log(Level.INFO, "jts.startup_msg", serverId);
             }
-            String serverName = "UnknownHost"/*#Frozen*/;
-            if(properties.getProperty(JTS_XA_SERVER_NAME) != null) {
-                 serverName = properties.getProperty(JTS_XA_SERVER_NAME);
-                 if (_logger.isLoggable(Level.FINE))
-                     _logger.log(Level.FINE,"DTR: Got serverName from JTS_XA_SERVER_NAME");
+            String serverName = "UnknownHost"/* #Frozen */;
+            if (properties.getProperty(JTS_XA_SERVER_NAME) != null) {
+                serverName = properties.getProperty(JTS_XA_SERVER_NAME);
+                if (_logger.isLoggable(Level.FINE))
+                    _logger.log(Level.FINE, "DTR: Got serverName from JTS_XA_SERVER_NAME");
 
             } else {
                 try {
                     serverName = InetAddress.getLocalHost().getHostName();
                     if (_logger.isLoggable(Level.FINE))
-                        _logger.log(Level.FINE,"DTR: Got serverName from InetAddress.getLocalHost().getHostName()");
+                        _logger.log(Level.FINE, "DTR: Got serverName from InetAddress.getLocalHost().getHostName()");
 
                 } catch (UnknownHostException ex) {
                 }
             }
-            if( serverId != null ) {
-                Configuration.setServerName(getAdjustedServerName(serverName + "," +
-                        Configuration.getPropertyValue(Configuration.INSTANCE_NAME) +
-                        ",P" + serverId/*#Frozen*/), true);
+            if (serverId != null) {
+                Configuration.setServerName(getAdjustedServerName(
+                        serverName + "," + Configuration.getPropertyValue(Configuration.INSTANCE_NAME) + ",P" + serverId/* #Frozen */),
+                        true);
                 if (_logger.isLoggable(Level.FINE))
-                    _logger.log(Level.FINE,"DTR: Recoverable Server");
+                    _logger.log(Level.FINE, "DTR: Recoverable Server");
 
                 recoverable = true;
             } else {
                 long timestamp = System.currentTimeMillis();
-                Configuration.setServerName(getAdjustedServerName(serverName +
-                         ",T" + String.valueOf(timestamp)/*#Frozen*/), false);
+                Configuration.setServerName(getAdjustedServerName(serverName + ",T" + String.valueOf(timestamp)/* #Frozen */), false);
                 if (_logger.isLoggable(Level.FINE))
-                    _logger.log(Level.FINE,"DTR: Non-Recoverable Server");
+                    _logger.log(Level.FINE, "DTR: Non-Recoverable Server");
             }
         }
     }
 
-    /**Request the transaction service to stop any further transactional activity.
+    /**
+     * Request the transaction service to stop any further transactional activity.
      *
-     * @param immediate  Indicates whether to ignore running transactions.
+     * @param immediate Indicates whether to ignore running transactions.
      *
      * @return
      *
      * @see
      */
-    public static void shutdown( boolean immediate ) {
+    public static void shutdown(boolean immediate) {
         // Remove the admin and factory objects from the naming service.
 
-        if( namingContext != null )
+        if (namingContext != null)
             try {
-                NameComponent nc = new NameComponent(TransactionFactoryHelper.id(),"");
-                NameComponent path[] = {nc};
+                NameComponent nc = new NameComponent(TransactionFactoryHelper.id(), "");
+                NameComponent path[] = { nc };
                 namingContext.unbind(path);
 
                 namingContext = null;
-            } catch( Exception exc ) {}
+            } catch (Exception exc) {
+            }
 
         // Inform the local TransactionFactory and CurrentImpl classes that no more
         // transactional activity may occur.
@@ -322,50 +319,51 @@ public class DefaultTransactionService implements ProxyChecker {
 
         currentInstance = null;
         factoryInstance = null;
-        //adminInstance   = null;
+        // adminInstance = null;
         active = false;
     }
 
-    /**Determines whether the given object is a proxy.
+    /**
+     * Determines whether the given object is a proxy.
      *
-     * @param obj  The potential proxy.
+     * @param obj The potential proxy.
      *
-     * @return  Indicates whether the object is a proxy.
+     * @return Indicates whether the object is a proxy.
      *
      * @see
      */
-    public final boolean isProxy( org.omg.CORBA.Object obj ) {
-
-        // TN  POA changes
-        return !( StubAdapter.isStub(obj) && StubAdapter.isLocal(obj) );
+    @Override
+    public final boolean isProxy(org.omg.CORBA.Object obj) {
+        // TN POA changes
+        return true; // com.sun.enterprise.transaction.Corba.isProxy(obj);
     }
 
-    /**Creates the POA objects which are used for objects within the JTS.
+    /**
+     * Creates the POA objects which are used for objects within the JTS.
      *
      * @param
      *
      * @return
      *
-     * @exception Exception  The operation failed.
+     * @exception Exception The operation failed.
      *
      * @see
      */
-    final static void createPOAs()
-        throws Exception {
+    final static void createPOAs() throws Exception {
 
-        POA rootPOA = (POA)orb.resolve_initial_references("RootPOA"/*#Frozen*/);
+        POA rootPOA = (POA) orb.resolve_initial_references("RootPOA"/* #Frozen */);
 
         // Create the POA used for CoordinatorResource objects.
 
         POA CRpoa = null;
-        if( recoverable ) {
+        if (recoverable) {
 
             // Create the POA with PERSISTENT and USE_SERVANT_MANAGER policies.
 
             Policy[] tpolicy = new Policy[2];
             tpolicy[0] = rootPOA.create_lifespan_policy(LifespanPolicyValue.PERSISTENT);
             tpolicy[1] = rootPOA.create_request_processing_policy(RequestProcessingPolicyValue.USE_SERVANT_MANAGER);
-            CRpoa = rootPOA.create_POA("com.sun.jts.CosTransactions.CoordinatorResourcePOA"/*#Frozen*/, null, tpolicy);
+            CRpoa = rootPOA.create_POA("com.sun.jts.CosTransactions.CoordinatorResourcePOA"/* #Frozen */, null, tpolicy);
 
             // Register the ServantActivator with the POA, then activate POA.
 
@@ -378,19 +376,19 @@ public class DefaultTransactionService implements ProxyChecker {
         else
             CRpoa = rootPOA;
 
-        Configuration.setPOA("CoordinatorResource"/*#Frozen*/,CRpoa);
+        Configuration.setPOA("CoordinatorResource"/* #Frozen */, CRpoa);
 
         // Create the POA used for RecoveryCoordinator objects.
 
         POA RCpoa = null;
-        if( recoverable ) {
+        if (recoverable) {
 
             // Create the POA with PERSISTENT and USE_SERVANT_MANAGER policies.
 
             Policy[] tpolicy = new Policy[2];
             tpolicy[0] = rootPOA.create_lifespan_policy(LifespanPolicyValue.PERSISTENT);
             tpolicy[1] = rootPOA.create_request_processing_policy(RequestProcessingPolicyValue.USE_SERVANT_MANAGER);
-            RCpoa = rootPOA.create_POA("com.sun.jts.CosTransactions.RecoveryCoordinatorPOA"/*#Frozen*/, null, tpolicy);
+            RCpoa = rootPOA.create_POA("com.sun.jts.CosTransactions.RecoveryCoordinatorPOA"/* #Frozen */, null, tpolicy);
 
             // Register the ServantActivator with the POA, then activate POA.
 
@@ -403,19 +401,19 @@ public class DefaultTransactionService implements ProxyChecker {
         else
             RCpoa = rootPOA;
 
-        Configuration.setPOA("RecoveryCoordinator"/*#Frozen*/,RCpoa);
+        Configuration.setPOA("RecoveryCoordinator"/* #Frozen */, RCpoa);
 
         // Create the POA used for Coordinator objects.
 
-        POA Cpoa = rootPOA.create_POA("CoordinatorPOA"/*#Frozen*/, null, null);
-        //  POA Cpoa = rootPOA;
-        Configuration.setPOA("Coordinator"/*#Frozen*/,Cpoa);
+        POA Cpoa = rootPOA.create_POA("CoordinatorPOA"/* #Frozen */, null, null);
+        // POA Cpoa = rootPOA;
+        Configuration.setPOA("Coordinator"/* #Frozen */, Cpoa);
 
         // Create the POA used for transient objects.
 
-        Configuration.setPOA("transient"/*#Frozen*/,rootPOA);
+        Configuration.setPOA("transient"/* #Frozen */, rootPOA);
 
-        //  rootPOA.the_activator(new JTSAdapterActivator(orb));
+        // rootPOA.the_activator(new JTSAdapterActivator(orb));
         CRpoa.the_POAManager().activate();
         RCpoa.the_POAManager().activate();
         Cpoa.the_POAManager().activate();
@@ -436,29 +434,29 @@ public class DefaultTransactionService implements ProxyChecker {
             String newString = Integer.toString(hc);
 
             if (hc < 0) {
-                 newString = newString.replace("-", "R");
+                newString = newString.replace("-", "R");
             }
 
             int hcLength = (56 - newString.length());
             tempServerName = tempServerName.substring(0, hcLength) + newString;
         }
         if (_logger.isLoggable(Level.FINE))
-            _logger.log(Level.FINE,"DTR: Adjusted serverName " + originalName + " to: " + tempServerName );
+            _logger.log(Level.FINE, "DTR: Adjusted serverName " + originalName + " to: " + tempServerName);
 
         return tempServerName;
     }
 }
 
-/**The RecoveryCoordinatorServantActivator class provides the means to locate
- * instances of the RecoveryCoordinator class using the transaction identifier
- * and the RecoveryManager.
+/**
+ * The RecoveryCoordinatorServantActivator class provides the means to locate instances of the RecoveryCoordinator class
+ * using the transaction identifier and the RecoveryManager.
  *
  * @version 0.01
  *
  * @author Simon Holdsworth, IBM Corporation
  *
  * @see
-*/
+ */
 //----------------------------------------------------------------------------
 // CHANGE HISTORY
 //
@@ -470,28 +468,24 @@ class RecoveryCoordinatorServantActivator extends LocalObject implements Servant
     private ORB orb = null;
 
     /*
-     * COMMENT(Ram J) The _ids() method needs to be removed/modified
-     * (along with LocalObjectImpl) once OMG standardizes the local
-     * object interfaces.
+     * COMMENT(Ram J) The _ids() method needs to be removed/modified (along with LocalObjectImpl) once OMG standardizes the
+     * local object interfaces.
      *
      * TN - removed ids after switching to LocalObject
      */
 
-     // Type-specific CORBA::Object operations
+    // Type-specific CORBA::Object operations
     /*
-    private static String[] __ids = {
-        "IDL:omg.org/PortableServer/ServantActivator:1.0",
-        "IDL:omg.org/PortableServer/ServantManager:1.0"
-    };
-
-    public String[] _ids () {
-        return __ids;
-    }
-    */
-
-    /**Creates the servant activator for the RecoveryCoordinator class.
+     * private static String[] __ids = { "IDL:omg.org/PortableServer/ServantActivator:1.0",
+     * "IDL:omg.org/PortableServer/ServantManager:1.0" };
      *
-     * @param  orb  The ORB.
+     * public String[] _ids () { return __ids; }
+     */
+
+    /**
+     * Creates the servant activator for the RecoveryCoordinator class.
+     *
+     * @param orb The ORB.
      *
      * @return
      *
@@ -501,25 +495,26 @@ class RecoveryCoordinatorServantActivator extends LocalObject implements Servant
         this.orb = orb;
     }
 
-    /**Returns the servant object which corresponds to the given object identity
-     * for the given POA.
+    /**
+     * Returns the servant object which corresponds to the given object identity for the given POA.
      *
-     * @param oid      The object identifier.
-     * @param adapter  The POA.
+     * @param oid The object identifier.
+     * @param adapter The POA.
      *
-     * @return  The servant.
+     * @return The servant.
      *
      * @see
      */
-    public Servant incarnate( byte[] oid, POA adapter )
-        throws org.omg.PortableServer.ForwardRequest {
+    @Override
+    public Servant incarnate(byte[] oid, POA adapter) throws org.omg.PortableServer.ForwardRequest {
 
         Servant servant = new RecoveryCoordinatorImpl(oid);
 
         return servant;
     }
 
-    /**Does nothing.
+    /**
+     * Does nothing.
      *
      * @param
      *
@@ -527,24 +522,21 @@ class RecoveryCoordinatorServantActivator extends LocalObject implements Servant
      *
      * @see
      */
-    public void etherealize( byte[] oid,
-                             POA adapter,
-                             Servant servant,
-                             boolean cleanup_in_progress,
-                             boolean remaining_activations ) {
+    @Override
+    public void etherealize(byte[] oid, POA adapter, Servant servant, boolean cleanup_in_progress, boolean remaining_activations) {
     }
 }
 
-/**The CoordinatorResourceServantActivator class provides the means to locate
- * instances of the CoordinatorResource class after a failure, using the
- * transaction identifier and the RecoveryManager.
+/**
+ * The CoordinatorResourceServantActivator class provides the means to locate instances of the CoordinatorResource class
+ * after a failure, using the transaction identifier and the RecoveryManager.
  *
  * @version 0.01
  *
  * @author Simon Holdsworth, IBM Corporation
  *
  * @see
-*/
+ */
 //----------------------------------------------------------------------------
 // CHANGE HISTORY
 //
@@ -556,28 +548,23 @@ class CoordinatorResourceServantActivator extends LocalObject implements Servant
     private ORB orb = null;
 
     /*
-     * COMMENT(Ram J) The _ids() method needs to be removed/modified
-     * (along with LocalObjectImpl) once OMG standardizes the local
-     * object interfaces.
+     * COMMENT(Ram J) The _ids() method needs to be removed/modified (along with LocalObjectImpl) once OMG standardizes the
+     * local object interfaces.
      *
      * TN - removed ids after switching to LocalObject
      */
 
     /*
-     // Type-specific CORBA::Object operations
-    private static String[] __ids = {
-        "IDL:omg.org/PortableServer/ServantActivator:1.0",
-        "IDL:omg.org/PortableServer/ServantManager:1.0"
-    };
-
-    public String[] _ids () {
-        return __ids;
-    }
-    */
-
-    /**Creates the servant activator for the CoordinatorResource class.
+     * // Type-specific CORBA::Object operations private static String[] __ids = {
+     * "IDL:omg.org/PortableServer/ServantActivator:1.0", "IDL:omg.org/PortableServer/ServantManager:1.0" };
      *
-     * @param  orb  The ORB.
+     * public String[] _ids () { return __ids; }
+     */
+
+    /**
+     * Creates the servant activator for the CoordinatorResource class.
+     *
+     * @param orb The ORB.
      *
      * @return
      *
@@ -587,23 +574,24 @@ class CoordinatorResourceServantActivator extends LocalObject implements Servant
         this.orb = orb;
     }
 
-    /**Returns the servant object which corresponds to the given object identity
-     * for the given POA.
+    /**
+     * Returns the servant object which corresponds to the given object identity for the given POA.
      *
-     * @param oid      The object identifier.
-     * @param adapter  The POA.
+     * @param oid The object identifier.
+     * @param adapter The POA.
      *
-     * @return  The servant.
+     * @return The servant.
      *
      * @see
      */
-    public Servant incarnate( byte[] oid, POA adapter )
-        throws org.omg.PortableServer.ForwardRequest {
+    @Override
+    public Servant incarnate(byte[] oid, POA adapter) throws org.omg.PortableServer.ForwardRequest {
         Servant servant = new CoordinatorResourceImpl(oid);
         return servant;
     }
 
-    /**Does nothing.
+    /**
+     * Does nothing.
      *
      * @param
      *
@@ -611,11 +599,8 @@ class CoordinatorResourceServantActivator extends LocalObject implements Servant
      *
      * @see
      */
-    public void etherealize( byte[] oid,
-                             POA adapter,
-                             Servant servant,
-                             boolean cleanup_in_progress,
-                             boolean remaining_activations ) {
+    @Override
+    public void etherealize(byte[] oid, POA adapter, Servant servant, boolean cleanup_in_progress, boolean remaining_activations) {
     }
 }
 
@@ -623,33 +608,29 @@ class JTSAdapterActivator extends LocalObject implements AdapterActivator {
     private ORB orb;
 
     /*
-     * COMMENT(Ram J) The _ids() method needs to be removed/modified
-     * (along with LocalObjectImpl) once OMG standardizes the local
-     * object interfaces.
+     * COMMENT(Ram J) The _ids() method needs to be removed/modified (along with LocalObjectImpl) once OMG standardizes the
+     * local object interfaces.
      *
      * TN - removed ids after switching to LocalObject
      */
 
     /*
-    // Type-specific CORBA::Object operations
-    private static String[] __ids = {
-        "IDL:omg.org/PortableServer/AdapterActivator:1.0"
-    };
-
-    public String[] _ids() {
-        return __ids;
-    }
-    */
+     * // Type-specific CORBA::Object operations private static String[] __ids = {
+     * "IDL:omg.org/PortableServer/AdapterActivator:1.0" };
+     *
+     * public String[] _ids() { return __ids; }
+     */
 
     JTSAdapterActivator(ORB orb) {
         this.orb = orb;
     }
 
+    @Override
     public boolean unknown_adapter(POA parent, String name) {
 
         try {
             DefaultTransactionService.createPOAs();
-        } catch( Exception exc ) {
+        } catch (Exception exc) {
         }
 
         return true;

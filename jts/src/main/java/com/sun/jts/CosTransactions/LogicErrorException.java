@@ -31,8 +31,7 @@
 package com.sun.jts.CosTransactions;
 
 /**
- * This class provides an exception which can be thrown to indicate that
- * some sort of logic error has occurred.
+ * This class provides an exception which can be thrown to indicate that some sort of logic error has occurred.
  *
  * @version 0.01
  *
@@ -55,14 +54,13 @@ class LogicErrorException extends Exception {
     /**
      * Constructs the LogicErrorException with a reason string.
      *
-     * @param reason  The reason identifier.
+     * @param reason The reason identifier.
      *
      * @return
      *
      * @see
      */
     LogicErrorException(String reason) {
-        super();
     }
 
     /**
@@ -70,11 +68,12 @@ class LogicErrorException extends Exception {
      *
      * @param
      *
-     * @return  The string representation.
+     * @return The string representation.
      *
      * @see
      */
+    @Override
     public String toString() {
-        return super.toString() + ", reason("/*#Frozen*/ + reason + ")"/*#Frozen*/;
+        return super.toString() + ", reason("/* #Frozen */ + reason + ")"/* #Frozen */;
     }
 }

@@ -30,12 +30,11 @@
 
 package com.sun.jts.CosTransactions;
 
-/**The EventSemaphore interface provides operations that wait for and post an
- * event semaphore.
+/**
+ * The EventSemaphore interface provides operations that wait for and post an event semaphore.
  * <p>
- * This is specifically to handle the situation where the event may have been
- * posted before the wait method is called.  This behaviour is not supported by
- * the existing wait and notify methods.
+ * This is specifically to handle the situation where the event may have been posted before the wait method is called.
+ * This behaviour is not supported by the existing wait and notify methods.
  *
  * @version 0.01
  *
@@ -53,7 +52,8 @@ package com.sun.jts.CosTransactions;
 public class EventSemaphore {
     boolean posted = false;
 
-    /**Default EventSemaphore constructor.
+    /**
+     * Default EventSemaphore constructor.
      *
      * @param
      *
@@ -64,15 +64,16 @@ public class EventSemaphore {
     EventSemaphore() {
     }
 
-    /**Creates the event semaphore in the given posted state.
+    /**
+     * Creates the event semaphore in the given posted state.
      *
-     * @param posted  Indicates whether the semaphore should be posted.
+     * @param posted Indicates whether the semaphore should be posted.
      *
      * @return
      *
      * @see
      */
-    EventSemaphore( boolean posted ) {
+    EventSemaphore(boolean posted) {
         this.posted = posted;
     }
 
@@ -83,7 +84,8 @@ public class EventSemaphore {
         return posted;
     }
 
-    /**Waits for the event to be posted.
+    /**
+     * Waits for the event to be posted.
      * <p>
      * If the event has already been posted, then the operation returns immediately.
      *
@@ -91,32 +93,29 @@ public class EventSemaphore {
      *
      * @return
      *
-     * @exception InterruptedException  The wait was interrupted.
+     * @exception InterruptedException The wait was interrupted.
      *
      * @see
      */
-    synchronized public void waitEvent()
-            throws InterruptedException {
-        if( !posted )
+    synchronized public void waitEvent() throws InterruptedException {
+        if (!posted)
             wait();
     }
 
-   /*Waits for the event to be posted. Release the thread waiting after the CMT
-     * Timeout period if no event has been posted during this timeout interval.
-     * <p>
-     * If the event has already been posted, then the operation returns immediately.
+    /*
+     * Waits for the event to be posted. Release the thread waiting after the CMT Timeout period if no event has been posted
+     * during this timeout interval. <p> If the event has already been posted, then the operation returns immediately.
      *
      * @param cmtTimeout - container managed transaction timeout
      *
      * @return
      *
-     * @exception InterruptedException  The wait was interrupted.
+     * @exception InterruptedException The wait was interrupted.
      *
      * @see
      */
 
-    synchronized public void waitTimeoutEvent(int cmtTimeout)
-            throws InterruptedException {
+    synchronized public void waitTimeoutEvent(int cmtTimeout) throws InterruptedException {
 
         if (!posted) {
             long timeout = (System.currentTimeMillis() / 1000) + cmtTimeout;
@@ -126,7 +125,8 @@ public class EventSemaphore {
         }
     }
 
-    /**Posts the event semaphore.
+    /**
+     * Posts the event semaphore.
      * <p>
      * All waiters are notified.
      *
@@ -137,12 +137,13 @@ public class EventSemaphore {
      * @see
      */
     synchronized void post() {
-        if( !posted )
+        if (!posted)
             notifyAll();
         posted = true;
     }
 
-    /**Clears a posted event semaphore.
+    /**
+     * Clears a posted event semaphore.
      *
      * @param
      *

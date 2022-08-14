@@ -14,29 +14,29 @@
  * SPDX-License-Identifier: EPL-2.0 OR GPL-2.0 WITH Classpath-exception-2.0
  */
 
- package com.sun.jts.jta;
+package com.sun.jts.jta;
 
- import javax.transaction.xa.*;
+import javax.transaction.xa.XAException;
+import javax.transaction.xa.XAResource;
 
- /**
-  * This interface extends JTA XAResource interface and defines
-  * new methods for thread association support and resource
-  * initialization.
-  */
+/**
+ * This interface extends JTA XAResource interface and defines new methods for thread association support and resource
+ * initialization.
+ */
 
 public interface NativeXAResource extends XAResource {
 
     // added functionality for thread management
 
     /**
-     *  Opens the RM for the calling thread (xa_open).
+     * Opens the RM for the calling thread (xa_open).
      */
-     public void open() throws XAException;
+    void open() throws XAException;
 
     /**
-     *  Closes the RM for the calling thread (xa_close).
+     * Closes the RM for the calling thread (xa_close).
      */
-    public void close() throws XAException;
+    void close() throws XAException;
 
     /**
      * checks if the thread has opened (xa_open) the RM atleast once.
@@ -45,11 +45,11 @@ public interface NativeXAResource extends XAResource {
      *
      * @return true if the thread has opened the resource (RM) atleast once.
      */
-    public boolean isInitialized(Thread thread);
+    boolean isInitialized(Thread thread);
 
     /**
-     * enlist the JDBC connection in XA (needed to support MSSQLServer)
-     * this should be called once per connection per transaction
+     * enlist the JDBC connection in XA (needed to support MSSQLServer) this should be called once per connection per
+     * transaction
      */
-    public void enlistConnectionInXA();
+    void enlistConnectionInXA();
 }

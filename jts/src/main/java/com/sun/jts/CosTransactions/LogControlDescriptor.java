@@ -31,17 +31,17 @@
 package com.sun.jts.CosTransactions;
 
 // Import required classes
+import java.io.Serializable;
 
-import java.io.*;
-
-/**A class containing control information relating to an open log file.
+/**
+ * A class containing control information relating to an open log file.
  *
  * @version 0.01
  *
  * @author Simon Holdsworth, IBM Corporation
  *
  * @see LogHandle
-*/
+ */
 //----------------------------------------------------------------------------
 // CHANGE HISTORY
 //
@@ -50,15 +50,20 @@ import java.io.*;
 //------------------------------------------------------------------------------
 
 class LogControlDescriptor implements Serializable {
-    /**This constant holds the size of the LogControlDescriptor object.
+
+    private static final long serialVersionUID = 1L;
+
+    /**
+     * This constant holds the size of the LogControlDescriptor object.
      */
-    final static int SIZEOF = 3*LogLSN.SIZEOF;
+    final static int SIZEOF = 3 * LogLSN.SIZEOF;
 
     LogLSN headLSN = new LogLSN();
     LogLSN tailLSN = new LogLSN();
     LogLSN nextLSN = new LogLSN();
 
-    /**Default LogControlDescriptor constructor.
+    /**
+     * Default LogControlDescriptor constructor.
      *
      * @param
      *
@@ -72,7 +77,8 @@ class LogControlDescriptor implements Serializable {
         nextLSN = new LogLSN();
     }
 
-    /**Constructs a LogControlDescriptor from the given byte array.
+    /**
+     * Constructs a LogControlDescriptor from the given byte array.
      *
      * @param bytes The array of bytes from which the object is to be constructed.
      * @param index The index in the array where copy is to start.
@@ -81,40 +87,44 @@ class LogControlDescriptor implements Serializable {
      *
      * @see
      */
-    LogControlDescriptor( byte[] bytes,
-                          int  index ) {
-        headLSN = new LogLSN(bytes,index);  index += LogLSN.SIZEOF;
-        tailLSN = new LogLSN(bytes,index);  index += LogLSN.SIZEOF;
-        nextLSN = new LogLSN(bytes,index);  index += LogLSN.SIZEOF;
+    LogControlDescriptor(byte[] bytes, int index) {
+        headLSN = new LogLSN(bytes, index);
+        index += LogLSN.SIZEOF;
+        tailLSN = new LogLSN(bytes, index);
+        index += LogLSN.SIZEOF;
+        nextLSN = new LogLSN(bytes, index);
+        index += LogLSN.SIZEOF;
     }
 
-    /**Makes a byte representation of the LogControlDescriptor.
+    /**
+     * Makes a byte representation of the LogControlDescriptor.
      *
      * @param bytes The array of bytes into which the object is to be copied.
      * @param index The index in the array where copy is to start.
      *
-     * @return  Number of bytes copied.
+     * @return Number of bytes copied.
      *
      * @see
      */
-    final int toBytes( byte[] bytes,
-                       int  index ) {
-        index += headLSN.toBytes(bytes,index);
-        index += tailLSN.toBytes(bytes,index);
-        index += nextLSN.toBytes(bytes,index);
+    final int toBytes(byte[] bytes, int index) {
+        index += headLSN.toBytes(bytes, index);
+        index += tailLSN.toBytes(bytes, index);
+        index += nextLSN.toBytes(bytes, index);
 
         return SIZEOF;
     }
 
-    /**This method is called to direct the object to format its state into a String.
+    /**
+     * This method is called to direct the object to format its state into a String.
      *
      * @param
      *
-     * @return  The formatted representation of the object.
+     * @return The formatted representation of the object.
      *
      * @see
      */
+    @Override
     public final String toString() {
-        return "LCD(head="/*#Frozen*/+headLSN+",tail="/*#Frozen*/+tailLSN+",next="/*#Frozen*/+nextLSN+")"/*#Frozen*/;
+        return "LCD(head="/* #Frozen */ + headLSN + ",tail="/* #Frozen */ + tailLSN + ",next="/* #Frozen */ + nextLSN + ")"/* #Frozen */;
     }
 }

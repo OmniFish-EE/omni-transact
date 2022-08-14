@@ -31,13 +31,13 @@
 package com.sun.jts.CosTransactions;
 
 // Import required definitions.
-
-import java.io.*;
+import java.io.File;
 
 //------------------------------------------------------------------------------
 // LogExtent class
 //------------------------------------------------------------------------------
-/**A structure containing information for an open log file extent.
+/**
+ * A structure containing information for an open log file extent.
  *
  * @version 0.01
  *
@@ -57,75 +57,86 @@ class LogExtent extends Object {
     // The type of access last made to an extent file is stored in the extent
     // descriptor block. This is used to save doing uneccessary fseeks.
 
-    /**Type of last access is unknown (forces fseek to required cursor pos'n)
+    /**
+     * Type of last access is unknown (forces fseek to required cursor pos'n)
      */
     final static int ACCESSTYPE_UNKNOWN = 0;
 
-    /**Last access was for reading
+    /**
+     * Last access was for reading
      */
     final static int ACCESSTYPE_READ = 1;
 
-    /**Last access was for writing
+    /**
+     * Last access was for writing
      */
     final static int ACCESSTYPE_WRITE = 2;
 
-    /**The radix used to convert extent numbers to strings.
+    /**
+     * The radix used to convert extent numbers to strings.
      */
-    final static int EXTENT_RADIX      = 36;
+    final static int EXTENT_RADIX = 36;
 
-    /**The maximum number of extent files that can be allocated to a single
-     * log at any one time. Extent names are made up of <logfilename>.nnn
-     * Hence this value is restricted by the .nnn extension (3 characters
-     * only, to support the FAT file system.
+    /**
+     * The maximum number of extent files that can be allocated to a single log at any one time. Extent names are made up of
+     * <logfilename>.nnn Hence this value is restricted by the .nnn extension (3 characters only, to support the FAT file
+     * system.
      */
-    final static int MAX_NO_OF_EXTENTS = EXTENT_RADIX*EXTENT_RADIX*EXTENT_RADIX;
+    final static int MAX_NO_OF_EXTENTS = EXTENT_RADIX * EXTENT_RADIX * EXTENT_RADIX;
 
-    /**This value is used to validate the LogExtent object.
+    /**
+     * This value is used to validate the LogExtent object.
      */
     LogExtent blockValid = null;
 
-    /**The extent number.
+    /**
+     * The extent number.
      */
     int extentNumber = -1;
 
-    /**The file handle for the log extent file.
+    /**
+     * The file handle for the log extent file.
      */
-    LogFileHandle  fileHandle = null;
+    LogFileHandle fileHandle = null;
 
-    /**The file for the log extent file.
+    /**
+     * The file for the log extent file.
      */
     File file = null;
 
-    /**Indicates whether any information has been written since the last force.
+    /**
+     * Indicates whether any information has been written since the last force.
      */
     boolean writtenSinceLastForce = false;
 
-    /**The cursor position in the log extent.
+    /**
+     * The cursor position in the log extent.
      */
     int cursorPosition = 0;
 
-    /**The last type of access to the extent.
+    /**
+     * The last type of access to the extent.
      */
     int lastAccess = ACCESSTYPE_UNKNOWN;
 
-    /**LogExtent constructor
+    /**
+     * LogExtent constructor
      *
-     * @param extent   The number of the extent.
+     * @param extent The number of the extent.
      * @param extentFH The handle of the extent file.
      *
      * @return
      *
      * @see
      */
-    LogExtent( int           extent,
-               LogFileHandle extentFH,
-               File          extentFile ) {
+    LogExtent(int extent, LogFileHandle extentFH, File extentFile) {
         extentNumber = extent;
         fileHandle = extentFH;
         file = extentFile;
     }
 
-    /**Default LogExtent destructor.
+    /**
+     * Default LogExtent destructor.
      *
      * @param
      *
@@ -136,21 +147,23 @@ class LogExtent extends Object {
     public void doFinalize() {
         try {
             fileHandle.destroy();
-        } catch( Throwable e ) {};
+        } catch (Throwable e) {
+        }
 
         blockValid = null;
         file = null;
     }
 
-    /**Modulates the extent number using the maximum extent number.
+    /**
+     * Modulates the extent number using the maximum extent number.
      *
-     * @param ext  The extent number
+     * @param ext The extent number
      *
-     * @return  The modulated extent number.
+     * @return The modulated extent number.
      *
      * @see
      */
-    final static int modExtent( int ext ) {
+    final static int modExtent(int ext) {
         return (ext % MAX_NO_OF_EXTENTS);
     }
 }

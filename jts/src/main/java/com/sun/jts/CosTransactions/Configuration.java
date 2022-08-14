@@ -30,10 +30,6 @@
 
 package com.sun.jts.CosTransactions;
 
-import com.sun.enterprise.transaction.api.TransactionConstants;
-import com.sun.jts.utils.LogFormatter;
-import com.sun.logging.LogDomains;
-
 // Import required classes.
 import java.io.File;
 import java.util.Hashtable;
@@ -44,14 +40,18 @@ import java.util.logging.Logger;
 import org.omg.CosTransactions.TransactionFactory;
 import org.omg.PortableServer.POA;
 
-/**Provides interaction with the execution environment.
+import com.sun.enterprise.transaction.api.TransactionConstants;
+import com.sun.jts.utils.LogFormatter;
+
+/**
+ * Provides interaction with the execution environment.
  *
  * @version 0.01
  *
  * @author Simon Holdsworth, IBM Corporation
  *
  * @see
-*/
+ */
 // CHANGE HISTORY
 //
 // Version By     Change Description
@@ -59,18 +59,24 @@ import org.omg.PortableServer.POA;
 //------------------------------------------------------------------------------
 
 public class Configuration extends Object {
-    private static String serverName = null;
-    private static byte[] serverNameByteArray = null;
-    private static org.omg.CORBA.ORB orb = null;
-    private static Properties prop = null;
-    private static TransactionFactory factory = null;
-    private static boolean localFactory = false;
-    private static boolean recoverable = false;
-    private static ProxyChecker checker = null;
-    private static LogFile logFile = null;
+
+    /*
+     * Logger to log transaction messages
+     */
+    static Logger _logger = Logger.getLogger(Configuration.class.getName());
+
+    private static String serverName;
+    private static byte[] serverNameByteArray;
+    private static org.omg.CORBA.ORB orb;
+    private static Properties prop;
+    private static TransactionFactory factory;
+    private static boolean localFactory;
+    private static boolean recoverable;
+    private static ProxyChecker checker;
+    private static LogFile logFile;
     private static Hashtable poas = new Hashtable();
-    private static String dbLogResource = null;
-    private static boolean disableFileLogging = false;
+    private static String dbLogResource;
+    private static boolean disableFileLogging;
 
     // for delegated recovery support
     private static Hashtable logPathToServernametable = new Hashtable();
@@ -82,164 +88,153 @@ public class Configuration extends Object {
     public final static long COMMIT_RETRY_WAIT = 60000;
     private static boolean isAppClient = true;
 
-/**
-   The traceOn would enable/disable JTS wide tracing;
-   (Related class: com.sun.jts.trace.TraceUtil)
-   - kannan.srinivasan@Sun.COM 27Nov2001
-*/
-
-    /*
-        Logger to log transaction messages
+    /**
+     * The traceOn would enable/disable JTS wide tracing; (Related class: com.sun.jts.trace.TraceUtil) -
+     * kannan.srinivasan@Sun.COM 27Nov2001
      */
-    static Logger _logger = LogDomains.getLogger(Configuration.class, LogDomains.TRANSACTION_LOGGER);
+    private static boolean traceOn;
 
-    private static boolean traceOn = false;
-
-   /**The property key used to specify the directory to which trace files and the
-     * error log should be written.
+    /**
+     * The property key used to specify the directory to which trace files and the error log should be written.
      * <p>
      * The value is <em><b>com.sun.jts.traceDirectory</b></em>.
      * <p>
      * The default value used for this property is the current directory.
      */
-    public final static String TRACE_DIRECTORY = "com.sun.jts.traceDirectory"/*#Frozen*/;
+    public final static String TRACE_DIRECTORY = "com.sun.jts.traceDirectory"/* #Frozen */;
 
-    /**The property key used to specify the directory to which transaction log files
-     * should be written.
+    /**
+     * The property key used to specify the directory to which transaction log files should be written.
      * <p>
      * The value is <em><b>com.sun.jts.logDirectory</b></em>.
      * <p>
-     * The default value used for this property is the "jts" subdirectory from the
-     * current directory, if that exists, otherwise the current directory.
+     * The default value used for this property is the "jts" subdirectory from the current directory, if that exists,
+     * otherwise the current directory.
      */
-    public final static String LOG_DIRECTORY = "com.sun.jts.logDirectory"/*#Frozen*/;
+    public final static String LOG_DIRECTORY = "com.sun.jts.logDirectory"/* #Frozen */;
 
-    /**The property key used to specify the resource which will be used to wirte
-     * transaction logs.
+    /**
+     * The property key used to specify the resource which will be used to wirte transaction logs.
      * <p>
      * The value is <em><b>com.sun.jts.logResource</b></em>.
      * <p>
      */
-    public final static String DB_LOG_RESOURCE = "com.sun.jts.logResource"/*#Frozen*/;
+    public final static String DB_LOG_RESOURCE = "com.sun.jts.logResource"/* #Frozen */;
 
     /**
-     * Whether to write warnings and errors to jts.log file
-     * if this property has any value, it is active, otherwise it is inactive
+     * Whether to write warnings and errors to jts.log file if this property has any value, it is active, otherwise it is
+     * inactive
      *
      */
-    public final static String ERR_LOGGING = "com.sun.jts.errorLogging"/*#Frozen*/;
+    public final static String ERR_LOGGING = "com.sun.jts.errorLogging"/* #Frozen */;
 
     /**
-     * This property indicates that XA Resources would be passed in via
-     * the TM.recover() method, and that the recovery thread would have
-     * to wait until the resources are passed in. If not set, the recovery
-     * thread would not wait for the XA Resources to be passed in.
+     * This property indicates that XA Resources would be passed in via the TM.recover() method, and that the recovery
+     * thread would have to wait until the resources are passed in. If not set, the recovery thread would not wait for the
+     * XA Resources to be passed in.
      */
-    public final static String MANUAL_RECOVERY = "com.sun.jts.ManualRecovery"/*#Frozen*/;
+    public final static String MANUAL_RECOVERY = "com.sun.jts.ManualRecovery"/* #Frozen */;
 
-    /**The property key used to specify the number of times the JTS should retry
-     * a commit or resync operation before giving up.
+    /**
+     * The property key used to specify the number of times the JTS should retry a commit or resync operation before giving
+     * up.
      * <p>
      * The value is <em><b>com.sun.jts.commitRetry</b></em>.
      * <p>
-     * If this property has no value, retries continue indefinitely.  A value of
-     * zero indicates that no retries should be made.
+     * If this property has no value, retries continue indefinitely. A value of zero indicates that no retries should be
+     * made.
      */
-    public final static String COMMIT_RETRY = "com.sun.jts.commitRetry"/*#Frozen*/;
+    public final static String COMMIT_RETRY = "com.sun.jts.commitRetry"/* #Frozen */;
 
-    /**The property key used to specify whether the JTS should assume a transaction
-     * is to be committed or rolled back if an outcome cannot be obtained during
-     * recovery.  It should also be used by Resource objects if they cannot obtain
-     * an outcome during recovery and cannot make a decision.
+    /**
+     * The property key used to specify whether the JTS should assume a transaction is to be committed or rolled back if an
+     * outcome cannot be obtained during recovery. It should also be used by Resource objects if they cannot obtain an
+     * outcome during recovery and cannot make a decision.
      * <p>
      * The value is <em><b>com.sun.jts.heuristicDirection</b></em>.
      * <p>
-     * The default is to assume that the transaction should be rolled back.  If the
-     * value is '1', the transaction should be committed.
+     * The default is to assume that the transaction should be rolled back. If the value is '1', the transaction should be
+     * committed.
      */
-    public final static String HEURISTIC_DIRECTION = "com.sun.jts.heuristicDirection"/*#Frozen*/;
+    public final static String HEURISTIC_DIRECTION = "com.sun.jts.heuristicDirection"/* #Frozen */;
 
-    /**The property key used to specify the number of transactions between keypoint
-     * operations on the log.  Keypoint operations reduce the size of the transaction
-     * log files.  A larger value for this property (for example, 1000) will result
-     * in larger transaction log files, but less keypoint operations, and hence better
-     * performance.  a smaller value (e.g. 20) results in smaller log files but
-     * slightly reduced performance due to the greater frequency of keypoint
+    /**
+     * The property key used to specify the number of transactions between keypoint operations on the log. Keypoint
+     * operations reduce the size of the transaction log files. A larger value for this property (for example, 1000) will
+     * result in larger transaction log files, but less keypoint operations, and hence better performance. a smaller value
+     * (e.g. 20) results in smaller log files but slightly reduced performance due to the greater frequency of keypoint
      * operations.
      * <p>
      * The value is <em><b>com.sun.jts.keypointCount</b></em>.
      * <p>
-     * The default value for this property is 100.  If the value is specified as
-     * zero, then no keypoints are taken.
+     * The default value for this property is 100. If the value is specified as zero, then no keypoints are taken.
      */
-    public final static String KEYPOINT_COUNT = "com.sun.jts.keypointCount"/*#Frozen*/;
+    public final static String KEYPOINT_COUNT = "com.sun.jts.keypointCount"/* #Frozen */;
 
     // Property to specify the instance name
-    public final static String INSTANCE_NAME = "com.sun.jts.instancename"/*#Frozen*/;
+    public final static String INSTANCE_NAME = "com.sun.jts.instancename"/* #Frozen */;
 
-    /**The property is used to specify the time interval in seconds for which the timeout
-     * manager would scan for timedout transactions. A higher value would mean better
-     * performance, but at the cost of closeness to which coordinator timeout is effected.
+    /**
+     * The property is used to specify the time interval in seconds for which the timeout manager would scan for timedout
+     * transactions. A higher value would mean better performance, but at the cost of closeness to which coordinator timeout
+     * is effected.
      * <p>
      * The value is <em><b>com.sun.jts.timeoutInterval"</b></em>
      * <p>
-     * This needs to be a positive integer value greater than 10. If the value is less than
-     * 10, illegal or unspecified a default value of 10 seconds is assumed.
+     * This needs to be a positive integer value greater than 10. If the value is less than 10, illegal or unspecified a
+     * default value of 10 seconds is assumed.
      */
-    public final static String TIMEOUT_INTERVAL = "com.sun.jts.timeoutInterval" ;
+    public final static String TIMEOUT_INTERVAL = "com.sun.jts.timeoutInterval";
 
-    /**The default subdirectory in which log and repository files are stored.
+    /**
+     * The default subdirectory in which log and repository files are stored.
      */
-    public final static String JTS_SUBDIRECTORY = "jts"/*#Frozen*/;
+    public final static String JTS_SUBDIRECTORY = "jts"/* #Frozen */;
 
-    /**getDirectory return value which indicates that the required directory was
-     * specified and is OK.
+    /**
+     * getDirectory return value which indicates that the required directory was specified and is OK.
      */
-    public final static int DIRECTORY_OK    = 0;
+    public final static int DIRECTORY_OK = 0;
 
-    /**getDirectory return value which indicates that the required directory was
-     * either not specified or was specified and invalid, and that the default
-     * subdirectory exists.  In this case the default subdirectory should be used.
+    /**
+     * getDirectory return value which indicates that the required directory was either not specified or was specified and
+     * invalid, and that the default subdirectory exists. In this case the default subdirectory should be used.
      */
-    public final static int DEFAULT_USED    = 1;
+    public final static int DEFAULT_USED = 1;
 
-    /**getDirectory return value which indicates that the required directory was
-     * either not specified or was specified and invalid, and that the default
-     * subdirectory does not exist.  In this case the current directory should be
-     * used.
+    /**
+     * getDirectory return value which indicates that the required directory was either not specified or was specified and
+     * invalid, and that the default subdirectory does not exist. In this case the current directory should be used.
      */
     public final static int DEFAULT_INVALID = 2;
 
-    /**The approximate concurrent transactions expected. This is used to set the capacity of  Vectors etc.
-    */
+    /**
+     * The approximate concurrent transactions expected. This is used to set the capacity of Vectors etc.
+     */
     public final static int EXPECTED_CONCURRENT_TRANSACTIONS = 10000;
 
-    /**The approximate concurrent transactions expected. This is used to set the capacity of  Vectors etc.
-    */
+    /**
+     * The approximate concurrent transactions expected. This is used to set the capacity of Vectors etc.
+     */
     public final static int EXPECTED_CONCURRENT_THREADS = 100;
 
-    /**Returns a valid directory for a particular purpose.  If the required
-     * directory is not valid, then a default subdirectory of the current directory
-     * is tried.  If that is not valid either, then the current directory is used.
+    /**
+     * Returns a valid directory for a particular purpose. If the required directory is not valid, then a default
+     * subdirectory of the current directory is tried. If that is not valid either, then the current directory is used.
      *
-     * @param envDir               The environment variable containing the directory.
-     * @param defaultSubdirectory  The default subdirectory to use.
-     * @param result               A single-element array which will hold a value
-     *                             indicating whether the requested directory,
-     *                             default subdirectory, or current directory
-     *                             had to be used.
+     * @param envDir The environment variable containing the directory.
+     * @param defaultSubdirectory The default subdirectory to use.
+     * @param result A single-element array which will hold a value indicating whether the requested directory, default
+     * subdirectory, or current directory had to be used.
      *
-     * @return  The directory name.
+     * @return The directory name.
      *
      */
-    public static String getDirectory( String envDir,
-                                       String defaultSubdirectory,
-                                       int[/*1*/] result ) {
-
+    public static String getDirectory(String envDir, String defaultSubdirectory, int[/* 1 */] result) {
         // Get the environment variable value.
 
         String envValue = null;
-        if( prop != null )
+        if (prop != null)
             envValue = prop.getProperty(envDir);
 
         // If the environment variable is not set, or does not refer to a valid
@@ -247,69 +242,64 @@ public class Configuration extends Object {
 
         result[0] = DIRECTORY_OK;
 
-        if (envValue == null || envValue.length() == 0
-            || (new File(envValue).exists() && !new File(envValue).isDirectory())) {
+        if (envValue == null || envValue.length() == 0 || (new File(envValue).exists() && !new File(envValue).isDirectory())) {
             result[0] = DEFAULT_USED;
 
             // If the default subdirectory is not valid, then use the current directory.
 
-            envValue = "."+File.separator+defaultSubdirectory/*#Frozen*/;
-            if( new File(envValue).exists() && !new File(envValue).isDirectory() ) {
+            envValue = "." + File.separator + defaultSubdirectory/* #Frozen */;
+            if (new File(envValue).exists() && !new File(envValue).isDirectory()) {
                 result[0] = DEFAULT_INVALID;
             }
         }
         if (_logger.isLoggable(Level.FINE)) {
             String dirType = "";
             switch (result[0]) {
-                case DEFAULT_INVALID:
-                    dirType = "used default, but is invalid";
-                    break;
-                case DEFAULT_USED:
-                    dirType = "used default";
-                    break;
-                case DIRECTORY_OK:
-                    dirType = "provided in configuration";
-                    break;
-                default:
-                    dirType = "invalid type";
-                    break;
+            case DEFAULT_INVALID:
+                dirType = "used default, but is invalid";
+                break;
+            case DEFAULT_USED:
+                dirType = "used default";
+                break;
+            case DIRECTORY_OK:
+                dirType = "provided in configuration";
+                break;
+            default:
+                dirType = "invalid type";
+                break;
             }
-            _logger.logp(Level.FINE, "Configuration", "getDirectory()",
-                "Using directory = " + envValue + " : " + dirType);
+            _logger.logp(Level.FINE, "Configuration", "getDirectory()", "Using directory = " + envValue + " : " + dirType);
         }
 
         return envValue;
     }
-
 
     /**
      * Sets the name of the server.
      *
      * @param name The server name. Non-recoverable servers have null.
      */
-    public static final void setServerName( String name, boolean recoverableServer ) {
+    public static final void setServerName(String name, boolean recoverableServer) {
 
         // Store the server name.
 
         serverName = name;
-          serverNameByteArray = (name == null) ? null : serverName.getBytes();
+        serverNameByteArray = (name == null) ? null : serverName.getBytes();
         recoverable = recoverableServer;
-        if(recoverable) {
+        if (recoverable) {
             RecoveryManager.createRecoveryFile(serverName);
         }
 
-        if(_logger.isLoggable(Level.FINE)) {
-        _logger.logp(Level.FINE,"Configuration" ,"setServerName()",
-            " serverName = " + serverName + "; isRecoverable = " + recoverable);
+        if (_logger.isLoggable(Level.FINE)) {
+            _logger.logp(Level.FINE, "Configuration", "setServerName()",
+                    " serverName = " + serverName + "; isRecoverable = " + recoverable);
         }
     }
-
 
     /**
      * Returns the name of the server.
      * <p>
-     * Non-recoverable servers may not have a name, in which case the method returns
-     * null.
+     * Non-recoverable servers may not have a name, in which case the method returns null.
      *
      * @param
      * @return The server name.
@@ -322,10 +312,8 @@ public class Configuration extends Object {
         return result;
     }
 
-
     /**
-     * Sets the name of the server for the given log path. Added for delegated
-     * recovery support.
+     * Sets the name of the server for the given log path. Added for delegated recovery support.
      *
      * @param logPath Location, where the logs are stored.
      * @param name The server name.
@@ -334,10 +322,8 @@ public class Configuration extends Object {
         logPathToServernametable.put(logPath, name);
     }
 
-
     /**
-     * Returns the name of the server for the given log path. Added for delegated
-     * recovery support.
+     * Returns the name of the server for the given log path. Added for delegated recovery support.
      *
      * @param logPath location of the log files.
      * @return The server name.
@@ -346,12 +332,10 @@ public class Configuration extends Object {
         return (String) logPathToServernametable.get(logPath);
     }
 
-
     /**
      * Returns a byte array with the name of the server.
      * <p>
-     * Non-recoverable servers may not have a name, in which case the method returns
-     * null.
+     * Non-recoverable servers may not have a name, in which case the method returns null.
      *
      * @param
      * @return The server name (byte array).
@@ -361,7 +345,6 @@ public class Configuration extends Object {
         byte[] result = serverNameByteArray;
         return result;
     }
-
 
     /**
      * Sets the Properties object to be used for this JTS instance.
@@ -396,7 +379,6 @@ public class Configuration extends Object {
 
     }
 
-
     /**
      * Returns the value of the given variable.
      *
@@ -418,7 +400,6 @@ public class Configuration extends Object {
         return result;
     }
 
-
     /**
      * Sets the identity of the ORB.
      *
@@ -430,7 +411,6 @@ public class Configuration extends Object {
         orb = newORB;
 
     }
-
 
     /**
      * Returns the identity of the ORB.
@@ -444,10 +424,8 @@ public class Configuration extends Object {
         return orb;
     }
 
-
     /**
-     * Sets the identity of the TransactionFactory and indicates if it is local
-     * or remote.
+     * Sets the identity of the TransactionFactory and indicates if it is local or remote.
      *
      * @param newFactory The TransactionFactory.
      * @param localFactory Indicates if the factory is local or remote.
@@ -458,7 +436,6 @@ public class Configuration extends Object {
         factory = newFactory;
         localFactory = localTxFactory;
     }
-
 
     /**
      * Returns the identity of the TransactionFactory.
@@ -471,7 +448,6 @@ public class Configuration extends Object {
 
         return factory;
     }
-
 
     /**
      * Determines whether we hava a local factory or a remote factory.
@@ -487,7 +463,6 @@ public class Configuration extends Object {
         return result;
     }
 
-
     /**
      * Determines whether the JTS instance is recoverable.
      *
@@ -502,7 +477,6 @@ public class Configuration extends Object {
         return result;
     }
 
-
     /**
      * Sets the identity of the ProxyChecker.
      *
@@ -515,7 +489,6 @@ public class Configuration extends Object {
 
     }
 
-
     /**
      * Returns the identity of the ProxyChecker.
      *
@@ -525,7 +498,6 @@ public class Configuration extends Object {
     public static final ProxyChecker getProxyChecker() {
         return checker;
     }
-
 
     /**
      * Sets the identity of the log file for the process.
@@ -539,7 +511,6 @@ public class Configuration extends Object {
 
     }
 
-
     /**
      * Returns the identity of the LogFile for the process.
      *
@@ -550,7 +521,6 @@ public class Configuration extends Object {
         return logFile;
     }
 
-
     /**
      * Sets the log file for the given log path. For delegated recovery support.
      *
@@ -560,7 +530,6 @@ public class Configuration extends Object {
     public static final void setLogFile(String logPath, LogFile newLogFile) {
         logPathToFiletable.put(logPath, newLogFile);
     }
-
 
     /**
      * Returns the LogFile for the given log path. For delegated recovery support.
@@ -574,7 +543,6 @@ public class Configuration extends Object {
         return (LogFile) logPathToFiletable.get(logPath);
     }
 
-
     /**
      * Sets the identity of the POA to be used for the given types of object.
      *
@@ -587,7 +555,6 @@ public class Configuration extends Object {
         poas.put(type, poa);
 
     }
-
 
     /**
      * Returns the identity of the POA to be used for the given type of objects.
@@ -619,25 +586,25 @@ public class Configuration extends Object {
 
     }
 
-
     // START IASRI 4662745
     public static void setKeypointTrigger(int keypoint) {
-        CoordinatorLogPool.getCoordinatorLog().setKeypointTrigger(keypoint);
+        CoordinatorLogPool.getCoordinatorLog();
+        CoordinatorLog.setKeypointTrigger(keypoint);
     }
-
 
     public static void setCommitRetryVar(String commitRetryString) {
         // RegisteredResources.setCommitRetryVar(commitRetryString);
         if (commitRetryString != null) {
-            int retriesInMinutes = Integer.parseInt(commitRetryString,10);
+            int retriesInMinutes = Integer.parseInt(commitRetryString, 10);
             if ((retriesInMinutes % (COMMIT_RETRY_WAIT / 1000)) == 0) {
-                retries = (int)(retriesInMinutes / (COMMIT_RETRY_WAIT / 1000));
+                retries = (int) (retriesInMinutes / (COMMIT_RETRY_WAIT / 1000));
             } else {
-                retries = ((int)(retriesInMinutes / (COMMIT_RETRY_WAIT / 1000))) + 1;
+                retries = ((int) (retriesInMinutes / (COMMIT_RETRY_WAIT / 1000))) + 1;
             }
 
         }
     }
+
     // END IASRI 4662745
     public static int getRetries() {
         return retries;

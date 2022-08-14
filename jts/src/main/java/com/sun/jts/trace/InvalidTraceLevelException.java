@@ -22,6 +22,5 @@ package com.sun.jts.trace;
  * @author <a href="mailto:kannan.srinivasan@sun.com">Kannan Srinivasan</a>
  * @version 1.0
  */
-public class InvalidTraceLevelException extends Exception
-{
+public class InvalidTraceLevelException extends Exception {
 }

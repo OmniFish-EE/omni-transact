@@ -33,12 +33,12 @@ package com.sun.jts.CosTransactions;
 //------------------------------------------------------------------------------
 // CompletionHandler interface
 //------------------------------------------------------------------------------
-/**The CompletionHandler interface provides operations that allow an object
- * to be informed when a Coordinator locally completes a transaction.
+/**
+ * The CompletionHandler interface provides operations that allow an object to be informed when a Coordinator locally
+ * completes a transaction.
  * <p>
- * This is to allow the CoordinatorResource and CoordinatorTerm objects
- * for a transaction to be informed when the Coordinator is completed via
- * some path other than normal.
+ * This is to allow the CoordinatorResource and CoordinatorTerm objects for a transaction to be informed when the
+ * Coordinator is completed via some path other than normal.
  *
  * @version 0.1
  *
@@ -54,22 +54,20 @@ package com.sun.jts.CosTransactions;
 
 interface CompletionHandler {
 
-    /**Informs the ComplemtionHandler object that the transaction it represents
-     * has completed.
+    /**
+     * Informs the ComplemtionHandler object that the transaction it represents has completed.
      * <p>
-     * Flags indicate whether the transaction aborted, and whether there was
-     * heuristic damage.
+     * Flags indicate whether the transaction aborted, and whether there was heuristic damage.
      * <p>
-     * This operation is invoked by a Coordinator when it is rolled back,
-     * potentially by a caller other than the CompletionHandler itself.
+     * This operation is invoked by a Coordinator when it is rolled back, potentially by a caller other than the
+     * CompletionHandler itself.
      *
-     * @param aborted          Indicates whether the transaction locally aborted.
-     * @param heuristicDamage  Indicates local heuristic damage.
+     * @param aborted Indicates whether the transaction locally aborted.
+     * @param heuristicDamage Indicates local heuristic damage.
      *
      * @return
      *
      * @see
      */
-    abstract void setCompleted( boolean aborted,
-                                boolean heuristicDamage );
+    void setCompleted(boolean aborted, boolean heuristicDamage);
 }

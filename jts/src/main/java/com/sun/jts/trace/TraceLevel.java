@@ -22,15 +22,14 @@ package com.sun.jts.trace;
  * @author <a href="mailto:kannan.srinivasan@sun.com">Kannan Srinivasan</a>
  * @version 1.0
  */
-public class TraceLevel
-{
-        public static final int IAS_JTS_TRACE_TRIVIAL = 0;
-        public static final int IAS_JTS_TRACE_RECOVERY = 1;
-        public static final int IAS_JTS_TRACE_CONFIGURATION = 2;
-        public static final int IAS_JTS_TRACE_TIMEOUT = 3;
-        public static final int IAS_JTS_TRACE_TRANSACTION_HIGH_LEVEL = 4;
-        public static final int IAS_JTS_TRACE_TRANSACTION = 5;
-        public static final int IAS_JTS_TRACE_LOGGING = 6;
-        public static final int IAS_JTS_MAX_TRACE_LEVEL = 6;
+public class TraceLevel {
+    public static final int IAS_JTS_TRACE_TRIVIAL = 0;
+    public static final int IAS_JTS_TRACE_RECOVERY = 1;
+    public static final int IAS_JTS_TRACE_CONFIGURATION = 2;
+    public static final int IAS_JTS_TRACE_TIMEOUT = 3;
+    public static final int IAS_JTS_TRACE_TRANSACTION_HIGH_LEVEL = 4;
+    public static final int IAS_JTS_TRACE_TRANSACTION = 5;
+    public static final int IAS_JTS_TRACE_LOGGING = 6;
+    public static final int IAS_JTS_MAX_TRACE_LEVEL = 6;
 
 }

@@ -16,34 +16,37 @@
 
 package com.sun.jts.CosTransactions;
 
+import org.omg.CosTransactions.RecoveryCoordinator;
 import org.omg.CosTransactions.Resource;
 import org.omg.CosTransactions.Synchronization;
-import org.omg.CosTransactions.RecoveryCoordinator;
 
 /**
- * This used for mimicking a superior TopCoordinator behavior.
+ * This is used for mimicking a superior TopCoordinator behavior.
  *
  * @version 1.0
- * @author  Ram Jeyaraman
+ * @author Ram Jeyaraman
  */
 class TxInflowCoordinator extends TopCoordinator {
+
+    private static final long serialVersionUID = 1L;
 
     /**
      * Simply returns a recovery coordinator.
      *
-     * @return a RecoveryCoordinator object that could be used by a subordinate
-     * TopCoordinator to replay completion.
+     * @return a RecoveryCoordinator object that could be used by a subordinate TopCoordinator to replay completion.
      */
+    @Override
     public RecoveryCoordinator register_resource(Resource res) {
         return new TxInflowRecoveryCoordinator();
     }
 
     /**
-     * Ignores synchronization registrations from the subordinate. The
-     * synchronization flows will be initiated when the superior initiates
-     * a transaction completion.
+     * Ignores synchronization registrations from the subordinate. The synchronization flows will be initiated when the
+     * superior initiates a transaction completion.
      *
      * @see XATerminatorImpl
      */
-    public void register_synchronization(Synchronization sync) {}
+    @Override
+    public void register_synchronization(Synchronization sync) {
+    }
 }

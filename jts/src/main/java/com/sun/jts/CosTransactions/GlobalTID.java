@@ -31,25 +31,23 @@
 package com.sun.jts.CosTransactions;
 
 // Import required classes.
-
-import java.io.*;
-
-import org.omg.CosTransactions.*;
-
-
-import java.util.logging.Logger;
+import java.io.DataInputStream;
+import java.io.DataOutputStream;
 import java.util.logging.Level;
-import com.sun.logging.LogDomains;
+import java.util.logging.Logger;
 
-/**This class provides a wrapper for the otid_t class in the
- * org.omg.CosTSInteroperation package to allow us to add operations.
+import org.omg.CosTransactions.otid_t;
+
+/**
+ * This class provides a wrapper for the otid_t class in the org.omg.CosTSInteroperation package to allow us to add
+ * operations.
  *
  * @version 0.01
  *
  * @author Simon Holdsworth, IBM Corporation
  *
  * @see
-*/
+ */
 //----------------------------------------------------------------------------
 // CHANGE HISTORY
 //
@@ -64,42 +62,41 @@ public class GlobalTID extends Object {
     private boolean hashed = false;
 
     /*
-        Logger to log transaction messages
-    */
-    static Logger _logger = LogDomains.getLogger(GlobalTID.class, LogDomains.TRANSACTION_LOGGER);
+     * Logger to log transaction messages
+     */
+    static Logger _logger = Logger.getLogger(GlobalTID.class.getName());
 
     /*
-     * Keep this line at the end of all variable initialization as
-     * The class's static initializer should not create an instance of the class
-     * before all of the static final fields are assigned.
+     * Keep this line at the end of all variable initialization as The class's static initializer should not create an
+     * instance of the class before all of the static final fields are assigned.
      */
-    static GlobalTID NULL_GLOBAL_TID = new GlobalTID(-1,-1,null);
+    static GlobalTID NULL_GLOBAL_TID = new GlobalTID(-1, -1, null);
 
-    /**Creates a new global identifier which is a copy of the parameter.
+    /**
+     * Creates a new global identifier which is a copy of the parameter.
      *
-     * @param otherTID  The other global identifier.
+     * @param otherTID The other global identifier.
      *
      * @return
      *
      * @see
      */
-    public GlobalTID( otid_t otherTID ) {
+    public GlobalTID(otid_t otherTID) {
         realTID = otherTID;
     }
 
-    /**Creates a new global identifier from the given values.
+    /**
+     * Creates a new global identifier from the given values.
      *
-     * @param formatID      The format identifier.
-     * @param bqual_length  The branch qualifier.
-     * @param data          The identifier data.
+     * @param formatID The format identifier.
+     * @param bqual_length The branch qualifier.
+     * @param data The identifier data.
      *
      * @return
      *
      * @see
      */
-    GlobalTID( int    formatID,
-               int    bqual_length,
-               byte[] tid ) {
+    GlobalTID(int formatID, int bqual_length, byte[] tid) {
         realTID = new otid_t(formatID, bqual_length, tid);
     }
 
@@ -120,54 +117,52 @@ public class GlobalTID extends Object {
         realTID = new otid_t(xid.getFormatId(), blen, xidRep);
     }
 
-    /**Creates a GlobalTID from the given stream.
+    /**
+     * Creates a GlobalTID from the given stream.
      *
-     * @param dataIn  The DataInputStream for the operation.
+     * @param dataIn The DataInputStream for the operation.
      *
      * @return
      *
      * @see
      */
-    GlobalTID( DataInputStream dataIn ) {
+    GlobalTID(DataInputStream dataIn) {
         try {
-            int formatID     = dataIn.readInt();
-            int bqualLength  = dataIn.readInt();
-            int bufferlen    = dataIn.readUnsignedShort();
+            int formatID = dataIn.readInt();
+            int bqualLength = dataIn.readInt();
+            int bufferlen = dataIn.readUnsignedShort();
             byte[] tid = new byte[bufferlen];
             dataIn.read(tid);
 
-            realTID = new otid_t(formatID,bqualLength,tid);
-        } catch( Throwable exc ) {}
+            realTID = new otid_t(formatID, bqualLength, tid);
+        } catch (Throwable exc) {
+        }
     }
 
-    /**Creates a global identifier from a byte array.
+    /**
+     * Creates a global identifier from a byte array.
      *
-     * @param  The array of bytes.
+     * @param The array of bytes.
      *
      * @return
      *
      * @see
      */
-    GlobalTID( byte[] bytes ) {
-        int formatID =  (bytes[0]&255) +
-            ((bytes[1]&255) << 8) +
-            ((bytes[2]&255) << 16) +
-            ((bytes[3]&255) << 24);
-        int bqualLength =  (bytes[4]&255) +
-            ((bytes[5]&255) << 8) +
-            ((bytes[6]&255) << 16) +
-            ((bytes[7]&255) << 24);
-        byte[] tid = new byte[bytes.length-8];
-        System.arraycopy(bytes,8,tid,0,tid.length);
+    GlobalTID(byte[] bytes) {
+        int formatID = (bytes[0] & 255) + ((bytes[1] & 255) << 8) + ((bytes[2] & 255) << 16) + ((bytes[3] & 255) << 24);
+        int bqualLength = (bytes[4] & 255) + ((bytes[5] & 255) << 8) + ((bytes[6] & 255) << 16) + ((bytes[7] & 255) << 24);
+        byte[] tid = new byte[bytes.length - 8];
+        System.arraycopy(bytes, 8, tid, 0, tid.length);
 
-        realTID = new otid_t(formatID,bqualLength,tid);
+        realTID = new otid_t(formatID, bqualLength, tid);
     }
 
-    /**Creates a new global identifier which is a copy of the target object.
+    /**
+     * Creates a new global identifier which is a copy of the target object.
      *
      * @param
      *
-     * @return  The copy.
+     * @return The copy.
      *
      * @see
      */
@@ -180,12 +175,12 @@ public class GlobalTID extends Object {
         return result;
     }
 
-    /**Determines whether the global identifier represents the null transaction
-     * identifier.
+    /**
+     * Determines whether the global identifier represents the null transaction identifier.
      *
      * @param
      *
-     * @return  Indicates whether the global identifier is null.
+     * @return Indicates whether the global identifier is null.
      *
      * @see
      */
@@ -193,36 +188,37 @@ public class GlobalTID extends Object {
         return realTID.formatID == -1;
     }
 
-    /**Compares the two global identifiers. Delegates to #isSameTIDInternal
-     * for the actual implementation to avoid comparison with otid_t
-     * that FindBugs doesn't like.
+    /**
+     * Compares the two global identifiers. Delegates to #isSameTIDInternal for the actual implementation to avoid
+     * comparison with otid_t that FindBugs doesn't like.
      *
-     * @param other  The other global identifier to compare.
+     * @param other The other global identifier to compare.
      *
-     * @return  Indicates the two global identifiers are equal.
+     * @return Indicates the two global identifiers are equal.
      *
      * @see
      */
-    public final boolean equals( Object other ) {
+    @Override
+    public final boolean equals(Object other) {
         return isSameTIDInternal(other);
     }
 
     private final boolean isSameTIDInternal(Object other) {
         otid_t otherTID = null;
 
-        if( other == null )
+        if (other == null)
             return false;
-        else if( other instanceof otid_t )
-            otherTID = (otid_t)other;
-        else if( other instanceof GlobalTID )
-            otherTID = ((GlobalTID)other).realTID;
+        else if (other instanceof otid_t)
+            otherTID = (otid_t) other;
+        else if (other instanceof GlobalTID)
+            otherTID = ((GlobalTID) other).realTID;
         else
             return false;
 
         return isSameTID(otherTID);
     }
 
-    public final boolean isSameTID( otid_t otherTID ) {
+    public final boolean isSameTID(otid_t otherTID) {
 
         if (otherTID == null)
             return false;
@@ -231,11 +227,13 @@ public class GlobalTID extends Object {
 
         // If the references are equal, return immediately.
 
-        if( realTID == otherTID ) return true;
+        if (realTID == otherTID)
+            return true;
 
         // If the formats are different, then the identifiers cannot be the same.
 
-        if( realTID.formatID != otherTID.formatID ) return false;
+        if (realTID.formatID != otherTID.formatID)
+            return false;
 
         // Determine the GTRID length for each transaction identifier.
 
@@ -244,39 +242,41 @@ public class GlobalTID extends Object {
 
         // If the GTRID lengths are different, the identifiers are different.
 
-        if( firstGTRID != secondGTRID )
+        if (firstGTRID != secondGTRID)
             return false;
 
         // Compare the global part of the identifier.
 
         result = true;
-        for( int pos = 0; pos < firstGTRID && result; pos++ )
-            result = (realTID.tid[pos] == otherTID.tid[pos] );
+        for (int pos = 0; pos < firstGTRID && result; pos++)
+            result = (realTID.tid[pos] == otherTID.tid[pos]);
 
         return result;
     }
 
-    /**Returns a hash value for the global identifier.
+    /**
+     * Returns a hash value for the global identifier.
      *
      * @param
      *
-     * @return  The hash value.
+     * @return The hash value.
      *
      * @see
      */
 
+    @Override
     public final int hashCode() {
 
         // If the hash code has already been calculated, then return the value.
 
-        if( hashed )
+        if (hashed)
             return hashCode;
 
         hashCode = 0;
 
         // Add up the values in the XID.
 
-        if( realTID.tid != null ) {
+        if (realTID.tid != null) {
             for (int pos = 0; pos < realTID.tid.length - realTID.bqual_length; pos++) {
                 hashCode += realTID.tid[pos];
             }
@@ -295,146 +295,137 @@ public class GlobalTID extends Object {
         return hashCode;
     }
 
-    public GlobalTID(String stid){
-        //invalid data
-        if(stid==null){
-             return ;
-        }
-
-        //there was no proper formatId
-        if(stid.equals("[NULL ID]")){
-                        realTID = new otid_t(-1, -1, null);
-            //realTID.formatID=-1;
+    public GlobalTID(String stid) {
+        // invalid data
+        if (stid == null) {
             return;
         }
-        if(_logger.isLoggable(Level.FINEST))
-            _logger.logp(Level.FINEST,"GlobalTID","GlobalTID(String)",
-                    "Tid is: "+stid);
 
-        //main part starts here
-           char [] ctid =stid.toCharArray();
-
-        int colon=stid.indexOf(":");
-
-        //bqualLen and globalLen are not real lengths but twice of them
-        int globalLen=0;
-        int bqualLen=0;
-        if(colon==-1){
-            //there was no bqual_length in the tid
-            globalLen=ctid.length-2;
+        // there was no proper formatId
+        if (stid.equals("[NULL ID]")) {
+            realTID = new otid_t(-1, -1, null);
+            // realTID.formatID=-1;
+            return;
         }
-        else{
-            globalLen=colon-1;
-            bqualLen=ctid.length -3 - globalLen;
+        if (_logger.isLoggable(Level.FINEST))
+            _logger.logp(Level.FINEST, "GlobalTID", "GlobalTID(String)", "Tid is: " + stid);
+
+        // main part starts here
+        char[] ctid = stid.toCharArray();
+
+        int colon = stid.indexOf(":");
+
+        // bqualLen and globalLen are not real lengths but twice of them
+        int globalLen = 0;
+        int bqualLen = 0;
+        if (colon == -1) {
+            // there was no bqual_length in the tid
+            globalLen = ctid.length - 2;
+        } else {
+            globalLen = colon - 1;
+            bqualLen = ctid.length - 3 - globalLen;
         }
 
-        if( (globalLen%2!=0) || (bqualLen%2 !=0)){
-            if(_logger.isLoggable(Level.FINEST)){
-                _logger.logp(Level.FINEST,"GlobalTID", "GlobalTID(String)",
-                        "Corrupted gtid string , total length is not integral");
+        if ((globalLen % 2 != 0) || (bqualLen % 2 != 0)) {
+            if (_logger.isLoggable(Level.FINEST)) {
+                _logger.logp(Level.FINEST, "GlobalTID", "GlobalTID(String)", "Corrupted gtid string , total length is not integral");
             }
             throw new RuntimeException("invalid global tid");
         }
 
+        byte[] b = new byte[(globalLen + bqualLen) / 2];
+        int index = 1;
+        int bIndex = 0;
 
-        byte [] b=new byte[(globalLen+bqualLen)/2];
-        int index=1;
-        int bIndex=0;
+        // while b gets filled
+        while (bIndex < b.length) {
 
-        //while b gets filled
-        while(bIndex<b.length){
+            int t = ctid[index++];
+            int t1 = ctid[index++];
+            if (_logger.isLoggable(Level.FINEST))
+                _logger.logp(Level.FINEST, "GlobalTID", "GlobalTID(String)",
+                        "Index is : " + bIndex + " value of t,t1 is : " + t + "," + t1);
+            if (t >= 'A') {
+                t = t - 'A' + 10;
+            } else {
+                t = t - '0';
+            }
+            if (t1 >= 'A') {
+                t1 = t1 - 'A' + 10;
+            } else {
+                t1 = t1 - '0';
+            }
+            if (_logger.isLoggable(Level.FINEST))
+                _logger.logp(Level.FINEST, "GlobalTID", "GlobalTID(String)", " Value of t,t1 is : " + t + "," + t1);
+            t = t << 4;
+            if (_logger.isLoggable(Level.FINEST))
+                _logger.logp(Level.FINEST, "GlobalTID", "GlobalTID(String)", "Value of t is : " + t);
+            t = t | t1;
 
-            int t=ctid[index++];
-            int t1=ctid[index++];
-            if(_logger.isLoggable(Level.FINEST))
-                _logger.logp(Level.FINEST,"GlobalTID", "GlobalTID(String)",
-                         "Index is : "+bIndex+" value of t,t1 is : "+t+","+t1);
-            if( t >= 'A'){
-                t = t - 'A'+10;
-            }
-            else{
-                t=t-'0';
-            }
-            if( t1 >= 'A'){
-                t1 = t1 - 'A'+10;
-            }
-            else{
-                t1=t1-'0';
-            }
-            if(_logger.isLoggable(Level.FINEST))
-                _logger.logp(Level.FINEST,"GlobalTID", "GlobalTID(String)",
-                        " Value of t,t1 is : "+t+","+t1);
-            t=t<<4;
-            if(_logger.isLoggable(Level.FINEST))
-                _logger.logp(Level.FINEST,"GlobalTID", "GlobalTID(String)",
-                        "Value of t is : "+t);
-            t=t|t1;
-
-            if(_logger.isLoggable(Level.FINEST))
-                _logger.logp(Level.FINEST,"GlobalTID", "GlobalTID(String)",
-                        " Value of t is :  "+t);
-            b[bIndex++] = (byte)t;
-            if(_logger.isLoggable(Level.FINEST))
-                _logger.logp(Level.FINEST,"GlobalTID", "GlobalTID(String)",
-                        "Value of t is : "+(byte)t);
+            if (_logger.isLoggable(Level.FINEST))
+                _logger.logp(Level.FINEST, "GlobalTID", "GlobalTID(String)", " Value of t is :  " + t);
+            b[bIndex++] = (byte) t;
+            if (_logger.isLoggable(Level.FINEST))
+                _logger.logp(Level.FINEST, "GlobalTID", "GlobalTID(String)", "Value of t is : " + (byte) t);
         }
 
-        realTID = new otid_t(TransactionState.XID_FORMAT_ID,bqualLen/2,b);
-        if(_logger.isLoggable(Level.FINEST))
-            _logger.logp(Level.FINEST,"GlobalTID", "GlobalTID(String)",
-                    "created gtid : "+this);
+        realTID = new otid_t(TransactionState.XID_FORMAT_ID, bqualLen / 2, b);
+        if (_logger.isLoggable(Level.FINEST))
+            _logger.logp(Level.FINEST, "GlobalTID", "GlobalTID(String)", "created gtid : " + this);
     }
 
-
-    /**Converts the global identifier to a string.
+    /**
+     * Converts the global identifier to a string.
      *
      * @param
      *
-     * @return  The string representation of the identifier.
+     * @return The string representation of the identifier.
      *
      * @see
      */
 
+    @Override
     public final String toString() {
 
         // Return a string for the null transaction id.
 
-        if( realTID.formatID == -1 )
-            return "[NULL ID]"/*#Frozen*/;
+        if (realTID.formatID == -1)
+            return "[NULL ID]"/* #Frozen */;
 
         // If we have a cached copy of the string form of the global identifier, return
         // it now.
 
-        if( stringForm != null ) return stringForm;
+        if (stringForm != null)
+            return stringForm;
 
         // Otherwise format the global identifier.
 
-        //char[] buff = new char[realTID.tid.length*2 + 2 + (realTID.bqual_length>0?1:0)];
-        char[] buff = new char[realTID.tid.length*2 + (realTID.bqual_length>0?1:0)];
+        // char[] buff = new char[realTID.tid.length*2 + 2 + (realTID.bqual_length>0?1:0)];
+        char[] buff = new char[realTID.tid.length * 2 + (realTID.bqual_length > 0 ? 1 : 0)];
         int pos = 0;
-        //buff[pos++] = '[';
+        // buff[pos++] = '[';
 
         // Convert the global transaction identifier into a string of hex digits.
 
         int globalLen = realTID.tid.length - realTID.bqual_length;
-        for( int i = 0; i < globalLen; i++ ) {
-            int currCharHigh = (realTID.tid[i]&0xf0) >> 4;
-            int currCharLow  = realTID.tid[i]&0x0f;
-            buff[pos++] = (char)(currCharHigh + (currCharHigh > 9 ? 'A'-10 : '0'));
-            buff[pos++] = (char)(currCharLow  + (currCharLow  > 9 ? 'A'-10 : '0'));
+        for (int i = 0; i < globalLen; i++) {
+            int currCharHigh = (realTID.tid[i] & 0xf0) >> 4;
+            int currCharLow = realTID.tid[i] & 0x0f;
+            buff[pos++] = (char) (currCharHigh + (currCharHigh > 9 ? 'A' - 10 : '0'));
+            buff[pos++] = (char) (currCharLow + (currCharLow > 9 ? 'A' - 10 : '0'));
         }
 
-        if( realTID.bqual_length > 0 ) {
-            //buff[pos++] = ':';
+        if (realTID.bqual_length > 0) {
+            // buff[pos++] = ':';
             buff[pos++] = '_';
-            for( int i = 0; i < realTID.bqual_length; i++ ) {
-                int currCharHigh = (realTID.tid[i+globalLen]&0xf0) >> 4;
-                int currCharLow  = realTID.tid[i+globalLen]&0x0f;
-                buff[pos++] = (char)(currCharHigh + (currCharHigh > 9 ? 'A'-10 : '0'));
-                buff[pos++] = (char)(currCharLow  + (currCharLow  > 9 ? 'A'-10 : '0'));
+            for (int i = 0; i < realTID.bqual_length; i++) {
+                int currCharHigh = (realTID.tid[i + globalLen] & 0xf0) >> 4;
+                int currCharLow = realTID.tid[i + globalLen] & 0x0f;
+                buff[pos++] = (char) (currCharHigh + (currCharHigh > 9 ? 'A' - 10 : '0'));
+                buff[pos++] = (char) (currCharLow + (currCharLow > 9 ? 'A' - 10 : '0'));
             }
         }
-        //buff[pos] = ']';
+        // buff[pos] = ']';
 
         // Cache the string form of the global identifier.
 
@@ -443,30 +434,31 @@ public class GlobalTID extends Object {
         return stringForm;
     }
 
-    /**Converts the global identifier to a byte array.
+    /**
+     * Converts the global identifier to a byte array.
      *
      * @param
      *
-     * @return  The byte array representation of the identifier.
+     * @return The byte array representation of the identifier.
      *
      * @see
      */
     final byte[] toBytes() {
-        if( realTID.formatID == -1 )
+        if (realTID.formatID == -1)
             return null;
 
         byte[] result = new byte[realTID.tid.length + 8];
 
         result[0] = (byte) realTID.formatID;
-        result[1] = (byte)(realTID.formatID >> 8);
-        result[2] = (byte)(realTID.formatID >> 16);
-        result[3] = (byte)(realTID.formatID >> 24);
+        result[1] = (byte) (realTID.formatID >> 8);
+        result[2] = (byte) (realTID.formatID >> 16);
+        result[3] = (byte) (realTID.formatID >> 24);
         result[4] = (byte) realTID.bqual_length;
-        result[5] = (byte)(realTID.bqual_length >> 8);
-        result[6] = (byte)(realTID.bqual_length >> 16);
-        result[7] = (byte)(realTID.bqual_length >> 24);
+        result[5] = (byte) (realTID.bqual_length >> 8);
+        result[6] = (byte) (realTID.bqual_length >> 16);
+        result[7] = (byte) (realTID.bqual_length >> 24);
 
-        System.arraycopy(realTID.tid,0,result,8,realTID.tid.length);
+        System.arraycopy(realTID.tid, 0, result, 8, realTID.tid.length);
 
         return result;
     }
@@ -479,21 +471,22 @@ public class GlobalTID extends Object {
         return new GlobalTID(TransactionState.XID_FORMAT_ID, 0, bytes);
     }
 
-
-    /**Writes the contents of the global identifier to the given stream.
+    /**
+     * Writes the contents of the global identifier to the given stream.
      *
-     * @param dataOut  The DataOutputStream for the operation.
+     * @param dataOut The DataOutputStream for the operation.
      *
      * @return
      *
      * @see
      */
-    final void write( DataOutputStream dataOut ) {
+    final void write(DataOutputStream dataOut) {
         try {
             dataOut.writeInt(realTID.formatID);
             dataOut.writeInt(realTID.bqual_length);
             dataOut.writeShort(realTID.tid.length);
-            dataOut.write(realTID.tid,0,realTID.tid.length);
-        } catch( Throwable exc ) {}
+            dataOut.write(realTID.tid, 0, realTID.tid.length);
+        } catch (Throwable exc) {
+        }
     }
 }

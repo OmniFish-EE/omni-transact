@@ -30,15 +30,14 @@
 
 package com.sun.jts.CosTransactions;
 
-import java.util.*;
+import java.util.Vector;
 
-import org.omg.CORBA.*;
-import org.omg.CosTransactions.*;
+import org.omg.CORBA.INVALID_TRANSACTION;
+import org.omg.CosTransactions.Unavailable;
 
 /**
- * The RegisteredStatics class provides operations that manage the set of
- * StaticResource objects and distributes association operations to those
- * registered objects.
+ * The RegisteredStatics class provides operations that manage the set of StaticResource objects and distributes
+ * association operations to those registered objects.
  *
  * @version 0.01
  *
@@ -67,18 +66,18 @@ class RegisteredStatics {
      *
      * @see
      */
-    RegisteredStatics() {}
+    RegisteredStatics() {
+    }
 
     /**
      * Informs all registered objects an association has started.
      * <p>
      * The Control object which represents the transaction is given.
      * <p>
-     * A flag is passed indicating whether this association
-     * is as a result of a Current.begin operation.
+     * A flag is passed indicating whether this association is as a result of a Current.begin operation.
      *
      * @param control The transaction whose association has started.
-     * @param begin   Indicates if this is a begin rather than a resume.
+     * @param begin Indicates if this is a begin rather than a resume.
      *
      * @return
      *
@@ -92,7 +91,8 @@ class RegisteredStatics {
 
         try {
             coord = control.get_coordinator();
-        } catch (Unavailable exc) {}
+        } catch (Unavailable exc) {
+        }
 
         // Browse through the set, telling each that association is starting.
 
@@ -100,8 +100,7 @@ class RegisteredStatics {
 
             for (int i = 0; i < registered.size(); i++) {
 
-                StaticResource resource =
-                    (StaticResource) registered.elementAt(i);
+                StaticResource resource = (StaticResource) registered.elementAt(i);
 
                 try {
                     resource.startAssociation(coord, begin);
@@ -112,11 +111,10 @@ class RegisteredStatics {
                     // immediately.
 
                     for (int j = i - 1; j >= 0; j--) {
-                        ((StaticResource) registered.elementAt(j)).
-                            endAssociation(coord, begin);
+                        ((StaticResource) registered.elementAt(j)).endAssociation(coord, begin);
                     }
 
-                    throw (INVALID_TRANSACTION)exc.fillInStackTrace();
+                    throw (INVALID_TRANSACTION) exc.fillInStackTrace();
                 } catch (Throwable exc) {
                     // discard any other exception
                 }
@@ -125,17 +123,14 @@ class RegisteredStatics {
     }
 
     /**
-     * Informs all registered StaticResource objects that a thread association
-     * has ended.
+     * Informs all registered StaticResource objects that a thread association has ended.
      * <p>
      * The Control object representing the transaction is given.
      * <p>
-     * A flag is passed indicating whether this association
-     * is as a result of the transaction completing.
+     * A flag is passed indicating whether this association is as a result of the transaction completing.
      *
-     * @param control   The transaction whose association has ended.
-     * @param complete  Indicates that this is a commit/rollback rather than a
-     *                  suspend.
+     * @param control The transaction whose association has ended.
+     * @param complete Indicates that this is a commit/rollback rather than a suspend.
      *
      * @return
      *
@@ -149,14 +144,14 @@ class RegisteredStatics {
 
         try {
             coord = control.get_coordinator();
-        } catch (Unavailable exc) {}
+        } catch (Unavailable exc) {
+        }
 
         // Browse through the set, telling each that the association is ending.
 
         if (coord != null) {
             for (int i = 0; i < registered.size(); i++) {
-                StaticResource resource =
-                    (StaticResource)registered.elementAt(i);
+                StaticResource resource = (StaticResource) registered.elementAt(i);
                 try {
                     resource.endAssociation(coord, complete);
                 } catch (Throwable e) {
@@ -167,13 +162,12 @@ class RegisteredStatics {
     }
 
     /**
-     * Adds the given StaticResource object to the set of those informed of
-     * thread association changes.
+     * Adds the given StaticResource object to the set of those informed of thread association changes.
      * <p>
-     * If there is a current thread association, then the added StaticResource
-     * is called immediately so that it is aware of the association.
+     * If there is a current thread association, then the added StaticResource is called immediately so that it is aware of
+     * the association.
      *
-     * @param obj  The StaticResource to be added.
+     * @param obj The StaticResource to be added.
      *
      * @return
      *
@@ -187,8 +181,7 @@ class RegisteredStatics {
         // Determine whether there is a current association.
 
         try {
-            org.omg.CosTransactions.Coordinator coord =
-                CurrentTransaction.getCurrentCoordinator();
+            org.omg.CosTransactions.Coordinator coord = CurrentTransaction.getCurrentCoordinator();
 
             // Tell the StaticResource that the association has started.
             // Pretend that it is a begin association, as the
@@ -197,18 +190,17 @@ class RegisteredStatics {
             if (coord != null) {
                 obj.startAssociation(coord, true);
             }
-        } catch(Throwable exc) {
+        } catch (Throwable exc) {
             // Discard any exception.
         }
     }
 
     /**
-     * Removes the given StaticResource object from the set of those
-     * informed of thread association changes.
+     * Removes the given StaticResource object from the set of those informed of thread association changes.
      *
-     * @param obj  The StaticResource to be removed.
+     * @param obj The StaticResource to be removed.
      *
-     * @return  Indicates success of the operation.
+     * @return Indicates success of the operation.
      *
      * @see
      */

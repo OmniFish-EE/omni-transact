@@ -30,7 +30,7 @@
 
 package com.sun.jts.CosTransactions;
 
-import java.io.*;
+import java.io.Serializable;
 
 /**
  * A class containing header information for a log record.
@@ -48,11 +48,11 @@ class LogRecordHeader implements Serializable {
      */
     final static int SIZEOF = 3 * LogLSN.SIZEOF + 8;
 
-    int    recordType   = 0;
-    LogLSN currentLSN   = null;
-    LogLSN previousLSN  = null;
-    LogLSN nextLSN      = null;
-    int    recordLength = 0;
+    int recordType = 0;
+    LogLSN currentLSN = null;
+    LogLSN previousLSN = null;
+    LogLSN nextLSN = null;
+    int recordLength = 0;
 
     LogRecordHeader() {
         currentLSN = new LogLSN();
@@ -63,8 +63,7 @@ class LogRecordHeader implements Serializable {
     /**
      * Constructs a LogRecordHeader from the given byte array.
      *
-     * @param bytes The array of bytes from which the object is to
-     *              be constructed.
+     * @param bytes The array of bytes from which the object is to be constructed.
      * @param index The index in the array where copy is to start.
      *
      * @return
@@ -72,32 +71,31 @@ class LogRecordHeader implements Serializable {
      * @see
      */
     LogRecordHeader(byte[] bytes, int index) {
-        recordType = (bytes[index++]&255) +
-                     ((bytes[index++]&255) << 8) +
-                     ((bytes[index++]&255) << 16) +
-                     ((bytes[index++]&255) << 24);
+        recordType = (bytes[index++] & 255) + ((bytes[index++] & 255) << 8) + ((bytes[index++] & 255) << 16)
+                + ((bytes[index++] & 255) << 24);
 
-        currentLSN  = new LogLSN(bytes,index);  index += LogLSN.SIZEOF;
-        previousLSN = new LogLSN(bytes,index);  index += LogLSN.SIZEOF;
-        nextLSN     = new LogLSN(bytes,index);  index += LogLSN.SIZEOF;
+        currentLSN = new LogLSN(bytes, index);
+        index += LogLSN.SIZEOF;
+        previousLSN = new LogLSN(bytes, index);
+        index += LogLSN.SIZEOF;
+        nextLSN = new LogLSN(bytes, index);
+        index += LogLSN.SIZEOF;
 
-        recordLength = (bytes[index++]&255) +
-                       ((bytes[index++]&255) << 8) +
-                       ((bytes[index++]&255) << 16) +
-                       ((bytes[index++]&255) << 24);
+        recordLength = (bytes[index++] & 255) + ((bytes[index++] & 255) << 8) + ((bytes[index++] & 255) << 16)
+                + ((bytes[index++] & 255) << 24);
     }
 
     /**
      * Makes the target object a copy of the parameter.
      *
-     * @param other  The object to be copied.
+     * @param other The object to be copied.
      *
      * @return
      *
      * @see
      */
-    void copy( LogRecordHeader other) {
-        recordType  = other.recordType;
+    void copy(LogRecordHeader other) {
+        recordType = other.recordType;
         currentLSN.copy(other.currentLSN);
         previousLSN.copy(other.previousLSN);
         nextLSN.copy(other.nextLSN);
@@ -110,39 +108,38 @@ class LogRecordHeader implements Serializable {
      * @param bytes The array of bytes into which the object is to be copied.
      * @param index The index in the array where copy is to start.
      *
-     * @return  Number of bytes copied.
+     * @return Number of bytes copied.
      *
      * @see
      */
-    final int toBytes(byte[] bytes, int  index) {
+    final int toBytes(byte[] bytes, int index) {
         bytes[index++] = (byte) recordType;
-        bytes[index++] = (byte)(recordType >> 8);
-        bytes[index++] = (byte)(recordType >> 16);
-        bytes[index++] = (byte)(recordType >> 24);
-        index += currentLSN.toBytes(bytes,index);
-        index += previousLSN.toBytes(bytes,index);
-        index += nextLSN.toBytes(bytes,index);
+        bytes[index++] = (byte) (recordType >> 8);
+        bytes[index++] = (byte) (recordType >> 16);
+        bytes[index++] = (byte) (recordType >> 24);
+        index += currentLSN.toBytes(bytes, index);
+        index += previousLSN.toBytes(bytes, index);
+        index += nextLSN.toBytes(bytes, index);
         bytes[index++] = (byte) recordLength;
-        bytes[index++] = (byte)(recordLength >> 8);
-        bytes[index++] = (byte)(recordLength >> 16);
-        bytes[index++] = (byte)(recordLength >> 24);
+        bytes[index++] = (byte) (recordLength >> 8);
+        bytes[index++] = (byte) (recordLength >> 16);
+        bytes[index++] = (byte) (recordLength >> 24);
 
         return SIZEOF;
     }
 
     /**
-     * This method is called to direct the object to format its state
-     * to a String.
+     * This method is called to direct the object to format its state to a String.
      *
      * @param
      *
-     * @return  The formatted representation of the object.
+     * @return The formatted representation of the object.
      *
      * @see
      */
+    @Override
     public final String toString() {
-        return "LRH(type="/*#Frozen*/ + recordType + ",curr="/*#Frozen*/ + currentLSN +
-               ",prev="/*#Frozen*/ + previousLSN + ",next="/*#Frozen*/ + nextLSN +
-               ",len="/*#Frozen*/ + recordLength + ")"/*#Frozen*/;
+        return "LRH(type="/* #Frozen */ + recordType + ",curr="/* #Frozen */ + currentLSN + ",prev="/* #Frozen */ + previousLSN
+                + ",next="/* #Frozen */ + nextLSN + ",len="/* #Frozen */ + recordLength + ")"/* #Frozen */;
     }
 }

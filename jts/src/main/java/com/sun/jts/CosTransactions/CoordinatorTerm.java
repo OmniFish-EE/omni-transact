@@ -30,9 +30,6 @@
 
 package com.sun.jts.CosTransactions;
 
-import com.sun.jts.utils.LogFormatter;
-import com.sun.logging.LogDomains;
-
 import java.util.logging.Level;
 import java.util.logging.Logger;
 
@@ -50,16 +47,18 @@ import org.omg.CosTransactions.Status;
 import org.omg.CosTransactions.Unavailable;
 import org.omg.CosTransactions.Vote;
 
-/**The CoordinatorTerm interface provides operations that allow an
- * Terminator to direct completion of a transaction without any dependency
- * on the Coordinator interface.
+import com.sun.jts.utils.LogFormatter;
+
+/**
+ * The CoordinatorTerm interface provides operations that allow an Terminator to direct completion of a transaction
+ * without any dependency on the Coordinator interface.
  *
  * @version 0.01
  *
  * @author Simon Holdsworth, IBM Corporation
  *
  * @see
-*/
+ */
 //----------------------------------------------------------------------------
 // CHANGE HISTORY
 //
@@ -69,19 +68,20 @@ import org.omg.CosTransactions.Vote;
 
 class CoordinatorTerm implements CompletionHandler {
     private CoordinatorImpl coordinator = null;
-    private boolean         subtransaction = false;
-    private boolean         aborted = false;
-    private boolean         heuristicDamage = false;
-    private boolean         completed = false;
-    private boolean         completing = false;
+    private boolean subtransaction = false;
+    private boolean aborted = false;
+    private boolean heuristicDamage = false;
+    private boolean completed = false;
+    private boolean completing = false;
 
     /*
-        Logger to log transaction messages
+     * Logger to log transaction messages
      */
 
-    static Logger _logger = LogDomains.getLogger(CoordinatorTerm.class, LogDomains.TRANSACTION_LOGGER);
+    static Logger _logger = Logger.getLogger(CoordinatorTerm.class.getName());
 
-    /**Default CoordinatorTerm constructor.
+    /**
+     * Default CoordinatorTerm constructor.
      *
      * @param
      *
@@ -92,24 +92,22 @@ class CoordinatorTerm implements CompletionHandler {
     CoordinatorTerm() {
     }
 
-    /**Normal constructor.
+    /**
+     * Normal constructor.
      * <p>
-     * Sets up the CoordinatorTerm with the Coordinator reference so that the
-     * CoordinatorTerm can find the Coordinator to pass on the two-phase commit
-     * messages.
+     * Sets up the CoordinatorTerm with the Coordinator reference so that the CoordinatorTerm can find the Coordinator to
+     * pass on the two-phase commit messages.
      * <p>
-     * A flag is passed to indicate whether the CoordinatorTerm
-     * represents a subtransaction.
+     * A flag is passed to indicate whether the CoordinatorTerm represents a subtransaction.
      *
-     * @param coord    The Coordinator for the transaction.
-     * @param subtran  The subtransaction indicator.
+     * @param coord The Coordinator for the transaction.
+     * @param subtran The subtransaction indicator.
      *
      * @return
      *
      * @see
      */
-    CoordinatorTerm( CoordinatorImpl coord,
-        boolean         subtran ) {
+    CoordinatorTerm(CoordinatorImpl coord, boolean subtran) {
 
         // Set up the instance variables from the values passed.
 
@@ -119,45 +117,38 @@ class CoordinatorTerm implements CompletionHandler {
         // Inform the Coordinator that this is the object that normally terminates
         // the transaction.
 
-        if( coordinator != null )
+        if (coordinator != null)
             coordinator.setTerminator(this);
 
     }
 
-    /**Informs the object that the transaction is to be committed.
+    /**
+     * Informs the object that the transaction is to be committed.
      * <p>
-     * Uses a private interface to pass the Terminator's commit request on to the
-     * Coordinator.
+     * Uses a private interface to pass the Terminator's commit request on to the Coordinator.
      * <p>
-     * This operation does not check for outstanding requests, that is done by
-     * the Current operations (when the client is using direct interaction we
-     * cannot provide checked behavior).
+     * This operation does not check for outstanding requests, that is done by the Current operations (when the client is
+     * using direct interaction we cannot provide checked behavior).
      * <p>
-     * Before telling the Coordinator to commit, it is informed that the
-     * transaction is about to complete, and afterwards it is told that the
-     * transaction has completed, with an indication of commit or rollback.
+     * Before telling the Coordinator to commit, it is informed that the transaction is about to complete, and afterwards it
+     * is told that the transaction has completed, with an indication of commit or rollback.
      *
-     * @param promptReturn  Indicates whether to return promptly.
+     * @param promptReturn Indicates whether to return promptly.
      *
      * @return
      *
-     * @exception TRANSACTION_ROLLEDBACK  The transaction could not be committed and
-     *                                   has been rolled back.
-     * @exception HeuristicHazard  Heuristic action may have been taken by a
-     *                             participant in the transaction.
-     * @exception HeuristicMixed  Heuristic action has been taken by a participant
-     *                            in the transaction so part of the transaction has
-     *                            been rolled back.
-     * @exception SystemException  An error occurred calling another object.
-     * @exception LogicErrorException  An internal logic error occurred.
+     * @exception TRANSACTION_ROLLEDBACK The transaction could not be committed and has been rolled back.
+     * @exception HeuristicHazard Heuristic action may have been taken by a participant in the transaction.
+     * @exception HeuristicMixed Heuristic action has been taken by a participant in the transaction so part of the
+     * transaction has been rolled back.
+     * @exception SystemException An error occurred calling another object.
+     * @exception LogicErrorException An internal logic error occurred.
      *
      * @see
      */
-    void commit( boolean promptReturn )
-        throws HeuristicMixed, HeuristicHazard, TRANSACTION_ROLLEDBACK,
-        SystemException, LogicErrorException {
+    void commit(boolean promptReturn) throws HeuristicMixed, HeuristicHazard, TRANSACTION_ROLLEDBACK, SystemException, LogicErrorException {
 
-        // BUGFIX(Ram J) (12/16/2000) This was previously set to true, which  the
+        // BUGFIX(Ram J) (12/16/2000) This was previously set to true, which the
         // caused commit_one_phase exceptions not to be reported.
         boolean commit_one_phase_worked_ok = false;
 
@@ -165,15 +156,14 @@ class CoordinatorTerm implements CompletionHandler {
         // back, raise the TRANSACTION_ROLLEDBACK exception and return.
         // If the transaction completed with heuristic damage, report that.
 
-        if( aborted ) {
-            throw new TRANSACTION_ROLLEDBACK(0,CompletionStatus.COMPLETED_NO);
+        if (aborted) {
+            throw new TRANSACTION_ROLLEDBACK(0, CompletionStatus.COMPLETED_NO);
         }
 
         // If there is no Coordinator reference, raise an exception.
 
-        if( coordinator == null ) {
-            String msg = LogFormatter.getLocalizedMessage(_logger,
-                "jts.no_coordinator_available");
+        if (coordinator == null) {
+            String msg = LogFormatter.getLocalizedMessage(_logger, "jts.no_coordinator_available");
             LogicErrorException exc = new LogicErrorException(msg);
             throw exc;
         }
@@ -183,7 +173,7 @@ class CoordinatorTerm implements CompletionHandler {
 
         completing = true;
 
-        // Determine the current Control object and Coordinator.  Determine whether
+        // Determine the current Control object and Coordinator. Determine whether
         // the current transaction is the same as that being committed.
 
         ControlImpl current = CurrentTransaction.getCurrent();
@@ -191,7 +181,7 @@ class CoordinatorTerm implements CompletionHandler {
         Coordinator currentCoord = null;
         boolean sameCoordinator = false;
 
-        if( current != null )
+        if (current != null)
             try {
                 if (Configuration.isLocalFactory()) {
                     currentCoord = current.get_localCoordinator();
@@ -200,7 +190,8 @@ class CoordinatorTerm implements CompletionHandler {
                 }
 
                 sameCoordinator = coordinator.is_same_transaction(currentCoord);
-            } catch( Unavailable exc ) {}
+            } catch (Unavailable exc) {
+            }
 
         // We must ensure that there is a current transaction at this point if it is a
         // top-level transaction because the Synchronization objects expect to have
@@ -209,27 +200,25 @@ class CoordinatorTerm implements CompletionHandler {
         // not have context because the Terminator is not a transactional object.
 
         RuntimeException rte = null;
-        if( !subtransaction ) {
+        if (!subtransaction) {
             try {
-                if( current == null ||
-                    !sameCoordinator ) {
-                    establishedControl = new ControlImpl(null,coordinator,
-                        new GlobalTID(coordinator.getGlobalTID()),
-                        coordinator.getLocalTID());
-                    CurrentTransaction.setCurrent(establishedControl,true);
+                if (current == null || !sameCoordinator) {
+                    establishedControl = new ControlImpl(null, coordinator, new GlobalTID(coordinator.getGlobalTID()),
+                            coordinator.getLocalTID());
+                    CurrentTransaction.setCurrent(establishedControl, true);
                 }
-            } catch( Throwable exc ) {
+            } catch (Throwable exc) {
             }
 
             // Tell the Coordinator that the transaction is about to complete.
 
             try {
-                ((TopCoordinator)coordinator).beforeCompletion();
+                ((TopCoordinator) coordinator).beforeCompletion();
             }
 
             // If the Coordinator raised an exception, return it to the caller.
 
-            catch( SystemException exc ) {
+            catch (SystemException exc) {
                 completing = false;
                 throw exc;
             } catch (RuntimeException exc) {
@@ -239,7 +228,7 @@ class CoordinatorTerm implements CompletionHandler {
             // If a temporary context was established, end it now.
 
             finally {
-                if( establishedControl != null ) {
+                if (establishedControl != null) {
                     CurrentTransaction.endCurrent(true);
                     establishedControl.doFinalize();
                 }
@@ -252,9 +241,8 @@ class CoordinatorTerm implements CompletionHandler {
         // method must be invoked while the transaction is still active.
 
         Status status = Status.StatusCommitted;
-        if( sameCoordinator )
+        if (sameCoordinator)
             CurrentTransaction.endCurrent(true);
-
 
         // Now, process the actual 2PC
 
@@ -268,32 +256,32 @@ class CoordinatorTerm implements CompletionHandler {
         if (rte == null) {
             try {
                 commit_one_phase_worked_ok = coordinator.commitOnePhase();
-            } catch( Throwable exc ) {
+            } catch (Throwable exc) {
 
-                if( exc instanceof HeuristicHazard ||
-                    exc instanceof HeuristicMixed ) {
+                if (exc instanceof HeuristicHazard || exc instanceof HeuristicMixed) {
                     heuristicExc = exc;
-                } else if( exc instanceof TRANSACTION_ROLLEDBACK ) {
+                } else if (exc instanceof TRANSACTION_ROLLEDBACK) {
                     status = Status.StatusRolledBack;
-                } else if( exc instanceof INVALID_TRANSACTION ) {
+                } else if (exc instanceof INVALID_TRANSACTION) {
                     // Why have we driven before completion before now?
-                    throw (INVALID_TRANSACTION)exc;
-                } if (exc instanceof INTERNAL) {
+                    throw (INVALID_TRANSACTION) exc;
+                }
+                if (exc instanceof INTERNAL) {
                     // ADDED(Ram J) percolate any system exception
                     // back to the caller.
-                    otherExc = exc; //throw (INTERNAL) exc;
-                }else {
+                    otherExc = exc; // throw (INTERNAL) exc;
+                } else {
                 }
             }
         }
 
-        if( commit_one_phase_worked_ok ) {
+        if (commit_one_phase_worked_ok) {
             // Then we have done the commit already above
             // Set the status for the after completion call
             // even though currently the parm is not used
             // inside the call - it get's the state from transtate
             // the status variable here is a local flag.
-            status = Status.StatusCommitted;  // GDH COPDEF1 Added this for neatness
+            status = Status.StatusCommitted; // GDH COPDEF1 Added this for neatness
 
         } else if (status != Status.StatusRolledBack) { // Added (Ram J) (12/06/2000)
             // commit two phase now
@@ -304,43 +292,38 @@ class CoordinatorTerm implements CompletionHandler {
             if (rte == null) {
                 try {
                     prepareResult = coordinator.prepare();
-                } catch( HeuristicHazard exc ) {
+                } catch (HeuristicHazard exc) {
                     heuristicExc = exc;
-                } catch( HeuristicMixed exc ) {
+                } catch (HeuristicMixed exc) {
                     heuristicExc = exc;
-                } catch( INVALID_TRANSACTION exc ) {
-                    otherExc = exc; //throw exc;
-                } catch( INTERNAL exc ) {
-                    otherExc = exc; //throw exc;
-                } catch( Throwable exc ) {
+                } catch (INVALID_TRANSACTION exc) {
+                    otherExc = exc; // throw exc;
+                } catch (INTERNAL exc) {
+                    otherExc = exc; // throw exc;
+                } catch (Throwable exc) {
                 }
             }
 
-            if( subtransaction ) {
+            if (subtransaction) {
                 // Depending on the prepare result, commit or abort the transaction.
 
-                if( prepareResult == Vote.VoteCommit )
+                if (prepareResult == Vote.VoteCommit)
                     try {
 
-                        if(_logger.isLoggable(Level.FINE))
-                        {
-                            _logger.logp(Level.FINE,"CoordinatorTerm","commit()",
-                                "Before invoking coordinator.commit() :"+"GTID is: "+
-                                    ((TopCoordinator)coordinator).superInfo.globalTID.toString());
+                        if (_logger.isLoggable(Level.FINE)) {
+                            _logger.logp(Level.FINE, "CoordinatorTerm", "commit()", "Before invoking coordinator.commit() :" + "GTID is: "
+                                    + ((TopCoordinator) coordinator).superInfo.globalTID.toString());
 
                         }
                         coordinator.commit();
-                    } catch( NotPrepared exc ) {
+                    } catch (NotPrepared exc) {
                         prepareResult = Vote.VoteRollback;
                     }
 
-                if( prepareResult == Vote.VoteRollback ) {
-                    if(_logger.isLoggable(Level.FINE))
-                    {
-                        _logger.logp(Level.FINE,"CoordinatorTerm","commit()",
-                            "Before invoking coordinator.rollback :"+
-                                "GTID is : "+
-                                ((TopCoordinator)coordinator).superInfo.globalTID.toString());
+                if (prepareResult == Vote.VoteRollback) {
+                    if (_logger.isLoggable(Level.FINE)) {
+                        _logger.logp(Level.FINE, "CoordinatorTerm", "commit()", "Before invoking coordinator.rollback :" + "GTID is : "
+                                + ((TopCoordinator) coordinator).superInfo.globalTID.toString());
                     }
                     coordinator.rollback(true);
                     status = Status.StatusRolledBack;
@@ -353,59 +336,57 @@ class CoordinatorTerm implements CompletionHandler {
 
                 // Depending on the prepare result, commit or abort the transaction.
 
-                //$ DO SOMETHING ABOUT PROMPT RETURN  */
+                // $ DO SOMETHING ABOUT PROMPT RETURN */
 
                 try {
-                    if( prepareResult == Vote.VoteCommit ) {
+                    if (prepareResult == Vote.VoteCommit) {
                         try {
                             coordinator.commit();
-                        } catch( NotPrepared exc ) {
+                        } catch (NotPrepared exc) {
                             prepareResult = Vote.VoteRollback;
                         }
                     }
 
-                    if( prepareResult == Vote.VoteRollback && heuristicExc == null ) {
+                    if (prepareResult == Vote.VoteRollback && heuristicExc == null) {
                         status = Status.StatusRolledBack; // GDH COPDEF1 Swapped these two lines
-                        coordinator.rollback(true);       // (not stricly necessary for problem fix)
+                        coordinator.rollback(true); // (not stricly necessary for problem fix)
                     }
-                } catch( Throwable exc ) {
-                    if (exc instanceof HeuristicHazard ||
-                        exc instanceof HeuristicMixed) {
+                } catch (Throwable exc) {
+                    if (exc instanceof HeuristicHazard || exc instanceof HeuristicMixed) {
                         heuristicExc = exc;
                     }
 
                     // ADDED(Ram J) percolate any system exception
                     // back to the caller.
                     if (exc instanceof INTERNAL) {
-                        otherExc = exc; //throw (INTERNAL) exc;
+                        otherExc = exc; // throw (INTERNAL) exc;
                     }
                 }
 
-
-            }   // end else was top level txn
+            } // end else was top level txn
 
         } // end else used two phase else
 
         // Tell the Coordinator that the transaction has completed (top-level
         // transactions only).
-        if( !subtransaction ) {
-            ((TopCoordinator)coordinator).afterCompletion(status);
+        if (!subtransaction) {
+            ((TopCoordinator) coordinator).afterCompletion(status);
         }
 
         // Inform the Control object that the transaction has completed.
 
         completed = true;
-        if( current != null && sameCoordinator )
+        if (current != null && sameCoordinator)
             current.setTranState(status);
 
         // If a heuristic was thrown, throw the exception.
 
-        if( heuristicExc != null ) {
-            if( heuristicExc instanceof HeuristicMixed )
-                throw (HeuristicMixed)heuristicExc;
+        if (heuristicExc != null) {
+            if (heuristicExc instanceof HeuristicMixed)
+                throw (HeuristicMixed) heuristicExc;
             else
-                throw (HeuristicHazard)heuristicExc;
-        } else if( otherExc != null ) {
+                throw (HeuristicHazard) heuristicExc;
+        } else if (otherExc != null) {
             if (otherExc instanceof INVALID_TRANSACTION)
                 throw (INVALID_TRANSACTION) otherExc;
             else if (otherExc instanceof INTERNAL)
@@ -414,8 +395,8 @@ class CoordinatorTerm implements CompletionHandler {
 
         // If the transaction was rolled back, raise an exception.
 
-        if( status == Status.StatusRolledBack ) {
-            TRANSACTION_ROLLEDBACK exc = new TRANSACTION_ROLLEDBACK(0,CompletionStatus.COMPLETED_YES);
+        if (status == Status.StatusRolledBack) {
+            TRANSACTION_ROLLEDBACK exc = new TRANSACTION_ROLLEDBACK(0, CompletionStatus.COMPLETED_YES);
             if (rte != null) {
                 exc.initCause(rte);
             }
@@ -424,43 +405,38 @@ class CoordinatorTerm implements CompletionHandler {
 
     }
 
-    /**Informs the object that the transaction is to be rolled back.
+    /**
+     * Informs the object that the transaction is to be rolled back.
      * <p>
-     * Uses a private interface to pass the Terminator's rollback request on to
-     * the Coordinator.
+     * Uses a private interface to pass the Terminator's rollback request on to the Coordinator.
      *
      * @param
      *
      * @return
      *
-     * @exception HeuristicHazard  Heuristic action may have been taken by a
-     *                             participant in the transaction.
-     * @exception HeuristicMixed  Heuristic action has been taken by a participant
-     *                            in the transaction so part of the transaction has
-     *                            been committed.
-     * @exception SystemException  An error occurred calling another object.
-     * @exception LogicErrorException  An internal logic error occurred.
+     * @exception HeuristicHazard Heuristic action may have been taken by a participant in the transaction.
+     * @exception HeuristicMixed Heuristic action has been taken by a participant in the transaction so part of the
+     * transaction has been committed.
+     * @exception SystemException An error occurred calling another object.
+     * @exception LogicErrorException An internal logic error occurred.
      *
      * @see
      */
-    void rollback()
-        throws HeuristicMixed, HeuristicHazard, SystemException,
-        LogicErrorException {
+    void rollback() throws HeuristicMixed, HeuristicHazard, SystemException, LogicErrorException {
 
         // If the transaction that this object represents has already been rolled
-        // back, raise an exception.  Note that we cannot raise a heuristic exception
+        // back, raise an exception. Note that we cannot raise a heuristic exception
         // here as it is not in the OMG interface.
 
-        if( aborted ) {
-            TRANSACTION_ROLLEDBACK exc = new TRANSACTION_ROLLEDBACK(0,CompletionStatus.COMPLETED_NO);
+        if (aborted) {
+            TRANSACTION_ROLLEDBACK exc = new TRANSACTION_ROLLEDBACK(0, CompletionStatus.COMPLETED_NO);
             throw exc;
         }
 
         // If there is no Coordinator reference, raise an exception.
 
-        if( coordinator == null ) {
-            String msg = LogFormatter.getLocalizedMessage(_logger,
-                "jts.no_coordinator_available");
+        if (coordinator == null) {
+            String msg = LogFormatter.getLocalizedMessage(_logger, "jts.no_coordinator_available");
 
             LogicErrorException exc = new LogicErrorException(msg);
             throw exc;
@@ -479,9 +455,10 @@ class CoordinatorTerm implements CompletionHandler {
 
         try {
             current = CurrentTransaction.getCurrent();
-        } catch( Throwable exc ) {}
+        } catch (Throwable exc) {
+        }
 
-        if( current != null )
+        if (current != null)
             try {
                 if (Configuration.isLocalFactory()) {
                     currentCoord = current.get_localCoordinator();
@@ -489,27 +466,25 @@ class CoordinatorTerm implements CompletionHandler {
                     currentCoord = current.get_coordinator();
                 }
 
-                if( coordinator.is_same_transaction(currentCoord) )
+                if (coordinator.is_same_transaction(currentCoord))
                     CurrentTransaction.endCurrent(true);
             }
 
-        // If an exception was raised, it must be because the transaction that the
-        // current Control object represents was rolled back.  In that case, always
-        // end the current thread association.
+            // If an exception was raised, it must be because the transaction that the
+            // current Control object represents was rolled back. In that case, always
+            // end the current thread association.
 
-        catch( Throwable exc ) {
-            CurrentTransaction.endCurrent(true);
-        }
+            catch (Throwable exc) {
+                CurrentTransaction.endCurrent(true);
+            }
 
         // Rollback the transaction and inform synchronisation objects.
 
         Throwable heuristicExc = null;
         try {
             coordinator.rollback(true);
-        }
-        catch (Throwable exc) {
-            if (exc instanceof HeuristicHazard ||
-                exc instanceof HeuristicMixed) {
+        } catch (Throwable exc) {
+            if (exc instanceof HeuristicHazard || exc instanceof HeuristicMixed) {
                 heuristicExc = exc;
             }
 
@@ -518,58 +493,55 @@ class CoordinatorTerm implements CompletionHandler {
                 throw (INTERNAL) exc;
             }
         } finally {
-            if( !subtransaction )
-                ((TopCoordinator)coordinator).afterCompletion(Status.StatusRolledBack);
+            if (!subtransaction)
+                ((TopCoordinator) coordinator).afterCompletion(Status.StatusRolledBack);
         }
 
         // Inform the Control object that the transaction has completed.
 
         completed = true;
-        if( current != null )
+        if (current != null)
             current.setTranState(Status.StatusRolledBack);
 
         // If a heuristic was thrown, throw the exception.
 
-        if( heuristicExc != null ) {
-            if( heuristicExc instanceof HeuristicMixed )
-                throw (HeuristicMixed)heuristicExc;
+        if (heuristicExc != null) {
+            if (heuristicExc instanceof HeuristicMixed)
+                throw (HeuristicMixed) heuristicExc;
             else
-                throw (HeuristicHazard)heuristicExc;
+                throw (HeuristicHazard) heuristicExc;
         }
 
         // Otherwise return normally.
 
     }
 
-    /**Informs the CoordinatorTerm object that the transaction it represents
-     * has completed.
+    /**
+     * Informs the CoordinatorTerm object that the transaction it represents has completed.
      * <p>
-     * Flags indicate whether the transaction aborted, and
-     * whether there was heuristic damage.
+     * Flags indicate whether the transaction aborted, and whether there was heuristic damage.
      * <p>
-     * This operation is invoked by a Coordinator when it is rolled back,
-     * potentially by a caller other than the CoordinatorTerm itself.  In the
-     * event that it is some other caller, the CoordinatorTerm object performs the
-     * after rollback synchronisation, and remembers the fact that it has aborted
-     * for later.
+     * This operation is invoked by a Coordinator when it is rolled back, potentially by a caller other than the
+     * CoordinatorTerm itself. In the event that it is some other caller, the CoordinatorTerm object performs the after
+     * rollback synchronisation, and remembers the fact that it has aborted for later.
      *
-     * @param aborted          Indicates whether the transaction locally aborted.
-     * @param heuristicDamage  Indicates local heuristic damage.
+     * @param aborted Indicates whether the transaction locally aborted.
+     * @param heuristicDamage Indicates local heuristic damage.
      *
      * @return
      *
      * @see
      */
 
-    public void setCompleted( boolean aborted,
-        boolean heuristicDamage ) {
+    @Override
+    public void setCompleted(boolean aborted, boolean heuristicDamage) {
 
         // If the transaction that this object represents has already been rolled
         // back, or is being rolled back by this object, just return.
 
-        if( !completing ) {
+        if (!completing) {
 
-            // If there is no Coordinator reference, we cannot do anything.  Note that
+            // If there is no Coordinator reference, we cannot do anything. Note that
             // CompletionHandler does not permit an exception through this method so we
             // cannot throw one.
 
@@ -580,14 +552,15 @@ class CoordinatorTerm implements CompletionHandler {
             this.aborted = aborted;
             this.heuristicDamage = heuristicDamage;
 
-            if( coordinator == null ) {
-            } else if( !subtransaction )
-                ((TopCoordinator)coordinator).afterCompletion(Status.StatusRolledBack);
+            if (coordinator == null) {
+            } else if (!subtransaction)
+                ((TopCoordinator) coordinator).afterCompletion(Status.StatusRolledBack);
         }
 
     }
 
-    /**Dumps the state of the object.
+    /**
+     * Dumps the state of the object.
      *
      * @param
      *
@@ -599,4 +572,3 @@ class CoordinatorTerm implements CompletionHandler {
     }
 
 }
-

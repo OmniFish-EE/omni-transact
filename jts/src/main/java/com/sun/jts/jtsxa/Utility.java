@@ -16,12 +16,12 @@
 
 package com.sun.jts.jtsxa;
 
-import java.io.*;
-import java.util.*;
+import org.omg.CosTransactions.Control;
+import org.omg.CosTransactions.Coordinator;
+import org.omg.CosTransactions.otid_t;
 
-import org.omg.CosTransactions.*;
-import com.sun.jts.codegen.otsidl.*;
-import com.sun.jts.CosTransactions.*;
+import com.sun.jts.CosTransactions.Configuration;
+import com.sun.jts.codegen.otsidl.JCoordinatorHelper;
 
 /**
  * This is an Utility class containing helper functions.
@@ -33,10 +33,10 @@ public class Utility {
     private static org.omg.CosTransactions.Current current = null;
 
     /*
-     * All Utility methods are static.
-     * It is not possible to create a JTSXA instance variable.
+     * All Utility methods are static. It is not possible to create a JTSXA instance variable.
      */
-    private Utility() {}
+    private Utility() {
+    }
 
     /**
      * Obtain the current Control object.
@@ -49,11 +49,11 @@ public class Utility {
 
         try {
             if (current == null) {
-                current = (org.omg.CosTransactions.Current) Configuration.
-                    getORB().resolve_initial_references("TransactionCurrent"/*#Frozen*/);
+                current = (org.omg.CosTransactions.Current) Configuration.getORB()
+                        .resolve_initial_references("TransactionCurrent"/* #Frozen */);
             }
             control = current.get_control();
-        } catch(Exception e) {
+        } catch (Exception e) {
             // empty
         }
 
@@ -62,10 +62,10 @@ public class Utility {
 
     /**
      * Obtain the coordinator object from the supplied control.
-     * <p>If a null control is supplied, an null coordinator will be returned.
+     * <p>
+     * If a null control is supplied, an null coordinator will be returned.
      *
-     * @param control the control object for which the coordinator
-     *        will be returned
+     * @param control the control object for which the coordinator will be returned
      *
      * @return the coordinator, or null if no coordinator can be obtained.
      *
@@ -81,7 +81,7 @@ public class Utility {
 
         try {
             coordinator = control.get_coordinator();
-        } catch(Exception e) {
+        } catch (Exception e) {
             coordinator = null;
         }
 
@@ -91,8 +91,8 @@ public class Utility {
     /**
      * Obtain the global transaction identifier for the supplied coordinator.
      *
-     * @param coordinator the coordinator representing the transaction for which
-     *                    the global transaction identifier is required
+     * @param coordinator the coordinator representing the transaction for which the global transaction identifier is
+     * required
      *
      * @return the global transaction identifier.
      *
@@ -109,7 +109,7 @@ public class Utility {
         try {
             tid = JCoordinatorHelper.narrow(coordinator).getGlobalTID();
             xid.copy(tid);
-        } catch(Exception e) {
+        } catch (Exception e) {
             return null;
         }
 

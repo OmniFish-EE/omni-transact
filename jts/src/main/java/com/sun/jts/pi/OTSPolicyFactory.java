@@ -17,14 +17,14 @@
 package com.sun.jts.pi;
 
 import org.omg.CORBA.Any;
+import org.omg.CORBA.LocalObject;
 import org.omg.CORBA.Policy;
 import org.omg.CORBA.PolicyError;
-import org.omg.CORBA.LocalObject;
-import org.omg.CosTransactions.REQUIRES;
 import org.omg.CosTransactions.ADAPTS;
 import org.omg.CosTransactions.FORBIDS;
-import org.omg.CosTransactions.OTS_POLICY_TYPE;
 import org.omg.CosTransactions.OTSPolicyValueHelper;
+import org.omg.CosTransactions.OTS_POLICY_TYPE;
+import org.omg.CosTransactions.REQUIRES;
 import org.omg.PortableInterceptor.PolicyFactory;
 
 /**
@@ -35,8 +35,10 @@ import org.omg.PortableInterceptor.PolicyFactory;
  */
 public class OTSPolicyFactory extends LocalObject implements PolicyFactory {
 
-    public OTSPolicyFactory() {}
+    public OTSPolicyFactory() {
+    }
 
+    @Override
     public Policy create_policy(int type, Any value) throws PolicyError {
 
         if (type != OTS_POLICY_TYPE.value) {
@@ -46,15 +48,14 @@ public class OTSPolicyFactory extends LocalObject implements PolicyFactory {
         short policyValue = OTSPolicyValueHelper.extract(value);
 
         switch (policyValue) {
-        case REQUIRES.value :
-        case ADAPTS.value :
-        case FORBIDS.value :
+        case REQUIRES.value:
+        case ADAPTS.value:
+        case FORBIDS.value:
             break;
-        default :
+        default:
             throw new PolicyError("Invalid OTSPolicyValue", (short) 1);
         }
 
         return new OTSPolicyImpl(policyValue);
     }
 }
-

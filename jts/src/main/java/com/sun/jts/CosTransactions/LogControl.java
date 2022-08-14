@@ -30,24 +30,26 @@
 
 package com.sun.jts.CosTransactions;
 
+import static com.sun.jts.CosTransactions.LogFileHandle.OPEN_CREAT;
+import static com.sun.jts.CosTransactions.LogFileHandle.OPEN_RDONLY;
+import static com.sun.jts.CosTransactions.LogFileHandle.OPEN_RDWR;
+import static com.sun.jts.CosTransactions.LogFileHandle.OPEN_SYNC;
+import static java.util.logging.Level.WARNING;
+
+import java.io.File;
 // Import required classes.
-
-import java.util.*;
-import java.util.logging.Level;
+import java.util.Vector;
 import java.util.logging.Logger;
-import java.io.*;
 
-import com.sun.enterprise.util.i18n.StringManager;
-import com.sun.logging.LogDomains;
-
-/**This class holds the top level information for an instance of the log,
+/**
+ * This class holds the top level information for an instance of the log,
  *
  * @version 0.01
  *
  * @author Simon Holdsworth, IBM Corporation
  *
  * @see
-*/
+ */
 //----------------------------------------------------------------------------
 // CHANGE HISTORY
 //
@@ -56,55 +58,50 @@ import com.sun.logging.LogDomains;
 //------------------------------------------------------------------------------
 
 public class LogControl {
-    private static final StringManager sm = StringManager.getManager(LogControl.class);
 
-    private static Logger _logger = LogDomains.getLogger(LogControl.class, LogDomains.TRANSACTION_LOGGER);
+    private static Logger _logger = Logger.getLogger(LogControl.class.getName());
 
-    /**Constants for file name extensions.
+    /**
+     * Constants for file name extensions.
      */
-    private final static String CUSHION_NAME = "cushion"/*#Frozen*/;
-    private final static String EXTENT_NAME  = "extent."/*#Frozen*/;
-    private final static String CONTROL_NAME = "control"/*#Frozen*/;
-    public final static String RECOVERY_STRING_FILE_NAME = "recoveryfile"/*#Frozen*/;
-    public final static String RECOVERY_LOCK_FILE_NAME = "recoverylockfile"/*#Frozen*/;
-    //START IASRI 4721336
-    //private final static String LOG_EXTENSION = ".ld"/*#Frozen*/;
-    private final static String LOG_EXTENSION = ""/*#Frozen*/;
-    //END IASRI 4721336
-    private final static char[] EXTENT_CHARS = { 'e','x','t','e','n','t','.','0','0','0' };
+    private final static String CUSHION_NAME = "cushion"/* #Frozen */;
+    private final static String EXTENT_NAME = "extent."/* #Frozen */;
+    private final static String CONTROL_NAME = "control"/* #Frozen */;
+    public final static String RECOVERY_STRING_FILE_NAME = "recoveryfile"/* #Frozen */;
+    public final static String RECOVERY_LOCK_FILE_NAME = "recoverylockfile"/* #Frozen */;
+    private final static String LOG_EXTENSION = ""/* #Frozen */;
+    private final static char[] EXTENT_CHARS = { 'e', 'x', 't', 'e', 'n', 't', '.', '0', '0', '0' };
 
-    /**Internal instance members
+    /**
+     * Internal instance members
      */
-    boolean logInitialised = false;
-    boolean logReadOnly = false;
-    Vector  logHandles = null;
-    String  directoryPath = null;
-    File    controlFile = null;
-    File    cushionFile = null;
+    boolean logInitialised;
+    boolean logReadOnly;
+    Vector logHandles;
+    String directoryPath;
+    File controlFile;
+    File cushionFile;
 
-    //static processSharedLog = GlobLock();
-
-    /**Initialises the log in the given directory.
+    /**
+     * Initialises the log in the given directory.
      *
-     * @param coldStart     Cold start indicator.
-     * @param readOnly      Read only log indicator.
-     * @param logDirectory  Directory for log files.
+     * @param coldStart Cold start indicator.
+     * @param readOnly Read only log indicator.
+     * @param logDirectory Directory for log files.
      *
      * @return
      *
      * @see
      */
-    synchronized void initLog( boolean coldStart,
-                               boolean readOnly,
-                               String  logDirectory ) {
+    synchronized void initLog(boolean coldStart, boolean readOnly, String logDirectory) {
 
         // Trace the global state of the log.
 
         // IF logInitialised
-        //    Unlock the LogGlobalMutex
-        //    Return LOG_SUCCESS
+        // Unlock the LogGlobalMutex
+        // Return LOG_SUCCESS
 
-        if( logInitialised ) {
+        if (logInitialised) {
             return;
         }
 
@@ -116,8 +113,9 @@ public class LogControl {
 
         // If this is a cold start, then remove all files in the log directory
 
-        if( coldStart && !readOnly )
+        if (coldStart && !readOnly) {
             clearDirectory(logDirectory);
+        }
 
         // Create the Vector which will hold the LogHandles.
 
@@ -131,30 +129,28 @@ public class LogControl {
 
     }
 
-    /**Opens a log file with the given name and upcall.
+    /**
+     * Opens a log file with the given name and upcall.
      *
-     * @param logName       Name of log.
-     * @param upcallTarget  Upcall for log file.
-     * @param baseNewName   Base of new name for log file.
-     * @param newlyCreated  A one-element array to hold the newly created indicator.
+     * @param logName Name of log.
+     * @param upcallTarget Upcall for log file.
+     * @param baseNewName Base of new name for log file.
+     * @param newlyCreated A one-element array to hold the newly created indicator.
      *
-     * @return  Handle for the log file.
+     * @return Handle for the log file.
      *
-     * @exception LogException  The open failed.
+     * @exception LogException The open failed.
      *
      * @see
      */
-    synchronized LogHandle openFile( String          logFileName,
-                                     LogUpcallTarget upcallTarget,
-                                     String          baseNewName,
-                                     boolean[]       newlyCreated )
-        throws LogException {
+    synchronized LogHandle openFile(String logFileName, LogUpcallTarget upcallTarget, String baseNewName, boolean[] newlyCreated) throws LogException {
 
         // IF not LogInitialised
-        //   Return LOG_NOT_INITIALISED
+        // Return LOG_NOT_INITIALISED
 
-        if( !logInitialised )
-            throw new LogException(null,LogException.LOG_NOT_INITIALISED,1);
+        if (!logInitialised) {
+            throw new LogException(null, LogException.LOG_NOT_INITIALISED, 1);
+        }
 
         // If the logid provided is an Alias name, it could be more than 8
         // characters. If so, to support the FAT file system, a unique
@@ -164,49 +160,22 @@ public class LogControl {
 
         String logName = null;
 
-        /*  if( baseNewName != null )
-            {
-            int i = 0;
-
-            // Determine the index to start allocating from based on the base
-
-            if( baseNewName.length() != 0 )
-            {
-            try
-            { i = Integer.parseInt(baseNewName.substring(LogHandle.FILENAME_PREFIX_LEN+1,LogHandle.FILENAME_PREFIX_LEN+3),16); }
-            catch( Throwable e ) {}
-            i++;
-            }
-
-            // Generate a new name from the base.
-
-            boolean logExists;
-            for( logExists = true;
-            i <= LogHandle.MAX_NAMES && logExists;
-            i++)
-            {
-            logName = new String(FILENAME_PREFIX);
-            if( i < 100 ) logName += "0";
-            if( i < 10  ) logName += "0";
-            logName += Integer.toString(i);
-            logExists = checkFileExists(logName,directoryPath);
-            }
-            }
-            else
-        */    {
+        {
 
             // If the log Id is provided is not an Alias make make sure it
             // meets the FAT file system requirements
 
-            /*    if( logFileName.length() != LogHandle.NAME_LENGTH )
-                  throw new LogException(null,LogException.LOG_INVALID_FILE_DESCRIPTOR,19);
-            */
+            /*
+             * if( logFileName.length() != LogHandle.NAME_LENGTH ) throw new
+             * LogException(null,LogException.LOG_INVALID_FILE_DESCRIPTOR,19);
+             */
             logName = logFileName;
-            File logDir = directory(logName,directoryPath);
-            if( !logDir.exists() ) {
+            File logDir = directory(logName, directoryPath);
+            if (!logDir.exists()) {
                 boolean created = logDir.mkdirs();
-                if (!created)
-                     _logger.log(Level.WARNING,"jts.exception_creating_log_directory",logDir);
+                if (!created) {
+                    _logger.log(WARNING, "jts.exception_creating_log_directory", logDir);
+                }
             }
         }
 
@@ -214,70 +183,64 @@ public class LogControl {
         // Issue OPEN request for control file, specifying Read/Write, Create,
         // No-share and 'guaranteed write to disk' options
         // IF OPEN is not successful
-        //   Return LOG_OPEN_FAILURE
+        // Return LOG_OPEN_FAILURE
 
-        controlFile = controlFile(logName,directoryPath);
+        controlFile = controlFile(logName, directoryPath);
         cushionFile = cushionFile(logName);
 
-        int openOptions = LogFileHandle.OPEN_RDWR  |
-            LogFileHandle.OPEN_CREAT |
-            LogFileHandle.OPEN_SYNC; // Default open options
-        if( logReadOnly )
-            openOptions = LogFileHandle.OPEN_RDONLY;
+        int openOptions = OPEN_RDWR | OPEN_CREAT | OPEN_SYNC; // Default open options
+        if (logReadOnly) {
+            openOptions = OPEN_RDONLY;
+        }
 
         LogFileHandle controlFH;
         try {
-            controlFH = new LogFileHandle(controlFile,openOptions);
-        } catch( LogException le ) {
-            throw new LogException(LogException.LOG_OPEN_FAILURE, 3,
-                sm.getString("jts.log_create_LogFileHandle_failed", controlFile), le);
+            controlFH = new LogFileHandle(controlFile, openOptions);
+        } catch (LogException le) {
+            throw new LogException(LogException.LOG_OPEN_FAILURE, 3, "jts.log_create_LogFileHandle_failed", le);
         }
 
         // Allocate a Log_FileDescriptor block and initialise it
         // IF allocate fails
-        //   Close the control file
-        //   Return LOG_INSUFFICIENT_MEMORY
+        // Close the control file
+        // Return LOG_INSUFFICIENT_MEMORY
 
         LogHandle logHandle = null;
         try {
-            logHandle = new LogHandle(this,logName,controlFH,upcallTarget); }
-        catch( LogException le ) {
+            logHandle = new LogHandle(this, logName, controlFH, upcallTarget);
+        } catch (LogException le) {
             controlFH.destroy();
-            throw new LogException(LogException.LOG_INSUFFICIENT_MEMORY,4,
-                    sm.getString("jts.log_create_LogHandle_failed", logName), le);
+            throw new LogException(LogException.LOG_INSUFFICIENT_MEMORY, 4, "jts.log_create_LogHandle_failed", le);
         }
-
 
         // Call Log_RestoreCushion to create/check the cushion file exists
         // for this logfile. If this fails the log cannot be opened.
 
         try {
             logHandle.restoreCushion(false);
-        } catch( LogException le ) {
+        } catch (LogException le) {
             controlFH.destroy();
-            throw new LogException(LogException.LOG_INSUFFICIENT_MEMORY,9,
-                    sm.getString("jts.log_cushion_file_failed"), le);
+            throw new LogException(LogException.LOG_INSUFFICIENT_MEMORY, 9, "jts.log_cushion_file_failed", le);
         }
 
         // Issue a READ request for the control file, specifying the
         // Log_ControlDescriptor structure within the Log_FileDescriptor
         // block as the input buffer
         // IF not successful (rc == -1)
-        //   Close the control file
-        //   Deallocate the Log_FileDescriptor block
-        //   Return LOG_READ_FAILURE
+        // Close the control file
+        // Deallocate the Log_FileDescriptor block
+        // Return LOG_READ_FAILURE
 
         byte[] controlBytes = new byte[LogControlDescriptor.SIZEOF];
         int bytesRead = 0;
         try {
             bytesRead = controlFH.fileRead(controlBytes);
-        } catch( LogException le ) {
+        } catch (LogException le) {
             controlFH.destroy();
-            throw new LogException(LogException.LOG_READ_FAILURE,5,
-                    sm.getString("jts.log_control_file_read_failed"), le);
+            throw new LogException(LogException.LOG_READ_FAILURE, 5, "jts.log_control_file_read_failed", le);
         }
 
-        if( bytesRead == 0 ) {
+        if (bytesRead == 0) {
 
             // IF the READ returned EOF (rc == 0), continue with initialisation of
             // the Log_ControlDescriptor structure within the
@@ -286,7 +249,7 @@ public class LogControl {
             // - Initialise the log tail LSN to LOG_FIRST_LSN
             // - Initialise the next free LSN to LOG_FIRST_LSN
             // - Initialise the RestartDataLength in the Log_FileDescriptor
-            //   block to 0
+            // block to 0
             //
             // Set NewlyCreated parameter to TRUE
             //
@@ -309,41 +272,37 @@ public class LogControl {
             logHandle.recordsWritten = LogHandle.CONTROL_FORCE_INTERVAL;
             newlyCreated[0] = true;
 
-            if( !logReadOnly ) {
+            if (!logReadOnly) {
                 int bytesWritten;
 
                 try {
                     controlFH.allocFileStorage(LogHandle.CONTROL_FILE_SIZE);
-                } catch( LogException le ) {
+                } catch (LogException le) {
                     controlFH.destroy();
-                    throw new LogException(LogException.LOG_WRITE_FAILURE,6,
-                            sm.getString("jts.log_allocate_failed"), le);
+                    throw new LogException(LogException.LOG_WRITE_FAILURE, 6, "jts.log_allocate_failed", le);
                 }
 
-                logHandle.logControlDescriptor.toBytes(controlBytes,0);
+                logHandle.logControlDescriptor.toBytes(controlBytes, 0);
                 try {
                     bytesWritten = controlFH.fileWrite(controlBytes);
-                } catch( LogException le ) {
+                } catch (LogException le) {
                     controlFH.destroy();
-                    throw new LogException(LogException.LOG_WRITE_FAILURE,7,
-                            sm.getString("jts.log_control_file_write_failed"), le);
+                    throw new LogException(LogException.LOG_WRITE_FAILURE, 7, "jts.log_control_file_write_failed", le);
                 }
 
                 LogExtent logEDP = null;
                 try {
                     logEDP = logHandle.openExtent(logHandle.logControlDescriptor.nextLSN.extent);
-                } catch( LogException le ) {
+                } catch (LogException le) {
                     controlFH.destroy();
-                    throw new LogException(LogException.LOG_NO_SPACE,10,
-                            sm.getString("jts.log_open_extend_failed"), le);
+                    throw new LogException(LogException.LOG_NO_SPACE, 10, "jts.log_open_extend_failed", le);
                 }
 
                 try {
                     logEDP.fileHandle.allocFileStorage(LogHandle.ALLOCATE_SIZE);
-                } catch( LogException le ) {
+                } catch (LogException le) {
                     controlFH.destroy();
-                    throw new LogException(LogException.LOG_NO_SPACE,11,
-                            sm.getString("jts.log_allocate_failed"), le);
+                    throw new LogException(LogException.LOG_NO_SPACE, 11, "jts.log_allocate_failed", le);
                 }
 
                 logHandle.chunkRemaining = LogHandle.ALLOCATE_SIZE;
@@ -353,10 +312,10 @@ public class LogControl {
         // Otherwise the log already exists.
 
         else {
-            int timeStampRec1;                    // The time stamp in restart rec 1
-            int timeStampRec2;                    // The time stamp in restart rec 2
-            int lengthRec1;                       // The length of restart record 1
-            int lengthRec2;                       // The length of restart record 1
+            int timeStampRec1; // The time stamp in restart rec 1
+            int timeStampRec2; // The time stamp in restart rec 2
+            int lengthRec1; // The length of restart record 1
+            int lengthRec2; // The length of restart record 1
 
             // Set NewlyCreated parameter to FALSE
 
@@ -367,44 +326,41 @@ public class LogControl {
             // containing the Tail LSN and finishing with the extent
             // containing the Head LSN
 
-            logHandle.logControlDescriptor = new LogControlDescriptor(controlBytes,0);
+            logHandle.logControlDescriptor = new LogControlDescriptor(controlBytes, 0);
 
             LogExtent logEDP = null;
-            for( int currentExtent = logHandle.logControlDescriptor.tailLSN.extent;
-                 currentExtent <= logHandle.logControlDescriptor.headLSN.extent ||
-                     currentExtent <= logHandle.logControlDescriptor.nextLSN.extent;
-                 currentExtent++)
+            for (int currentExtent = logHandle.logControlDescriptor.tailLSN.extent; currentExtent <= logHandle.logControlDescriptor.headLSN.extent
+                    || currentExtent <= logHandle.logControlDescriptor.nextLSN.extent; currentExtent++) {
                 try {
                     logEDP = logHandle.openExtent(currentExtent);
-                } catch( LogException le ) {
+                } catch (LogException le) {
                     controlFH.destroy();
-                    throw new LogException(LogException.LOG_OPEN_EXTENT_FAILURE,19,
-                            sm.getString("jts.log_open_extend_failed"), le);
+                    throw new LogException(LogException.LOG_OPEN_EXTENT_FAILURE, 19, "jts.log_open_extend_failed", le);
                 }
+            }
 
             // Read the restart data for restart record one
             // If the read failed then
-            //   Close the control file
-            //   Deallocate the Log_FileDescriptor block
-            //   Return LOG_READ_FAILURE
+            // Close the control file
+            // Deallocate the Log_FileDescriptor block
+            // Return LOG_READ_FAILURE
 
             int[] restartValues1 = new int[2];
             int[] restartValues2 = new int[2];
 
             try {
-                logHandle.checkRestart(controlFH,1,restartValues1);
-            } catch( LogException le ) {
+                LogHandle.checkRestart(controlFH, 1, restartValues1);
+            } catch (LogException le) {
                 controlFH.destroy();
-                throw new LogException(LogException.LOG_READ_FAILURE,8,
-                        sm.getString("jts.log_read_restart_data_failed"), le);
+                throw new LogException(LogException.LOG_READ_FAILURE, 8, "jts.log_read_restart_data_failed", le);
             }
 
             // Check that the record length was not equal to zero
             // IF the record length was not equal to zero
-            //   READ the next restart record
-            //   IF ( (Length2 !=0) && (Time2 > Time1)
-            //   THEN CurrentValid is 2
-            //   ELSE CurrentValid is 1
+            // READ the next restart record
+            // IF ( (Length2 !=0) && (Time2 > Time1)
+            // THEN CurrentValid is 2
+            // ELSE CurrentValid is 1
 
             // BUGFIX(Ram Jeyaraman) Always check both the restart records,
             // even though the first record might have zero data length.
@@ -412,34 +368,33 @@ public class LogControl {
             // have non-zero data length with a later
             // timestamp, even though the first record has zero data length.
             // Fix is to comment out the check below.
-            //if (restartValues1[0] != 0)
+            // if (restartValues1[0] != 0)
             {
 
                 // If the read failed then
-                //   Close the control file
-                //   Deallocate the Log_FileDescriptor block
-                //   Return LOG_READ_FAILURE
+                // Close the control file
+                // Deallocate the Log_FileDescriptor block
+                // Return LOG_READ_FAILURE
 
                 try {
-                    logHandle.checkRestart(controlFH,2,restartValues2);
-                } catch( LogException le ) {
+                    LogHandle.checkRestart(controlFH, 2, restartValues2);
+                } catch (LogException le) {
                     controlFH.destroy();
-                    throw new LogException(LogException.LOG_READ_FAILURE,9,
-                            sm.getString("jts.log_check_restart_failed"), le);
+                    throw new LogException(LogException.LOG_READ_FAILURE, 9, "jts.log_check_restart_failed", le);
                 }
 
-                if( restartValues2[0] != 0 &&
-                    restartValues2[1] > restartValues1[1] ) {
+                if (restartValues2[0] != 0 && restartValues2[1] > restartValues1[1]) {
                     logHandle.activeRestartVersion = 2;
-                    logHandle.restartDataLength    = restartValues2[0];
+                    logHandle.restartDataLength = restartValues2[0];
                 } else {
                     logHandle.activeRestartVersion = 1;
-                    logHandle.restartDataLength    = restartValues1[0];
+                    logHandle.restartDataLength = restartValues1[0];
                 }
             }
 
-            if( logHandle.logControlDescriptor.headLSN.isNULL() )
+            if (logHandle.logControlDescriptor.headLSN.isNULL()) {
                 logHandle.recordsWritten = LogHandle.CONTROL_FORCE_INTERVAL;
+            }
         }
 
         // Add the Log_FileDescriptor block to the head of the
@@ -452,18 +407,18 @@ public class LogControl {
         // Build the extent file name from the head LSN
         // Issue an OPEN request for the file
 
-        if( !logHandle.logControlDescriptor.headLSN.isNULL() ) {
-            int offset;                           // Present offset in the open extent
-            LogRecordHeader extentRec,            // An extent record header
-                headRec,              // An extent record header
-                linkRec;              // An extent record header
-            boolean lastValidRead = false;        // Has the last valid record be read
+        if (!logHandle.logControlDescriptor.headLSN.isNULL()) {
+            int offset; // Present offset in the open extent
+            LogRecordHeader extentRec, // An extent record header
+                    headRec, // An extent record header
+                    linkRec; // An extent record header
+            boolean lastValidRead = false; // Has the last valid record be read
             LogExtent logEDP = null;
 
             // IF not successful (rc == -1)
-            //   Close the control file
-            //   Unchain the LogFDP and free up the storage
-            //   Return LOG_OPEN_FAILURE
+            // Close the control file
+            // Unchain the LogFDP and free up the storage
+            // Return LOG_OPEN_FAILURE
 
             // Allocate a Log_ExtentDescriptor block and initialise it
             // Hash the extent number to find the anchor for this extent in the
@@ -471,42 +426,39 @@ public class LogControl {
             // Move the file pointer to the head LSN record (using LSEEK)
 
             try {
-                logEDP = logHandle.positionFilePointer(logHandle.logControlDescriptor.headLSN,
-                                                       0,LogExtent.ACCESSTYPE_READ); }
-            catch( LogException le ) {
+                logEDP = logHandle.positionFilePointer(logHandle.logControlDescriptor.headLSN, 0, LogExtent.ACCESSTYPE_READ);
+            } catch (LogException le) {
                 controlFH.destroy();
                 removeFile(logHandle);
-                throw new LogException(LogException.LOG_OPEN_FAILURE,10,
-                        sm.getString("jts.log_position_file_pointer_failed"), le);
+                throw new LogException(LogException.LOG_OPEN_FAILURE, 10, "jts.log_position_file_pointer_failed", le);
             }
 
             // Issue a READ for the record header
             // IF the read is not successful (rc <= 0)
-            //   Close the control file
-            //   Deallocate newly acquired control blocks
-            //   Return LOG_READ_FAILURE
+            // Close the control file
+            // Deallocate newly acquired control blocks
+            // Return LOG_READ_FAILURE
             //
             // Check that the LSN in the record header matches the head LSN
             // IF there is a mismatch
-            //   Deallocate newly acquired control blocks
-            //   Return LOG_CORRUPTED
+            // Deallocate newly acquired control blocks
+            // Return LOG_CORRUPTED
 
             byte[] headerBytes = new byte[LogRecordHeader.SIZEOF];
 
             try {
                 bytesRead = logEDP.fileHandle.fileRead(headerBytes);
-            } catch( LogException le ) {
+            } catch (LogException le) {
                 controlFH.destroy();
                 removeFile(logHandle);
-                throw new LogException(le.errorCode,11,
-                        sm.getString("jts.log_read_header_failed"), le);
+                throw new LogException(le.errorCode, 11, "jts.log_read_header_failed", le);
             }
-            extentRec = new LogRecordHeader(headerBytes,0);
+            extentRec = new LogRecordHeader(headerBytes, 0);
 
-            if( !extentRec.currentLSN.equals(logHandle.logControlDescriptor.headLSN) ) {
+            if (!extentRec.currentLSN.equals(logHandle.logControlDescriptor.headLSN)) {
                 controlFH.destroy();
                 removeFile(logHandle);
-                throw new LogException(null,LogException.LOG_CORRUPTED,12);
+                throw new LogException(null, LogException.LOG_CORRUPTED, 12);
             }
 
             // Copy the record header to HEADERCOPY
@@ -518,12 +470,11 @@ public class LogControl {
             offset = headRec.nextLSN.offset;
 
             try {
-                logEDP = logHandle.positionFilePointer(extentRec.nextLSN,0,LogExtent.ACCESSTYPE_READ);
-            } catch( LogException le ) {
+                logEDP = logHandle.positionFilePointer(extentRec.nextLSN, 0, LogExtent.ACCESSTYPE_READ);
+            } catch (LogException le) {
                 controlFH.destroy();
                 removeFile(logHandle);
-                throw new LogException(LogException.LOG_OPEN_FAILURE,13,
-                        sm.getString("jts.log_position_file_pointer_failed"), le);
+                throw new LogException(LogException.LOG_OPEN_FAILURE, 13, "jts.log_position_file_pointer_failed", le);
             }
 
             linkRec = new LogRecordHeader();
@@ -538,60 +489,59 @@ public class LogControl {
 
                 try {
                     bytesRead = logEDP.fileHandle.fileRead(headerBytes);
-                } catch( LogException le ) {
+                } catch (LogException le) {
                     controlFH.destroy();
                     removeFile(logHandle);
-                    throw new LogException(LogException.LOG_READ_FAILURE,14,
-                            sm.getString("jts.log_read_header_failed"), le);
+                    throw new LogException(LogException.LOG_READ_FAILURE, 14, "jts.log_read_header_failed", le);
                 }
-                if( bytesRead == -1 ) {
+                if (bytesRead == -1) {
                     controlFH.destroy();
                     removeFile(logHandle);
-                    throw new LogException(null,LogException.LOG_READ_FAILURE,14);
+                    throw new LogException(null, LogException.LOG_READ_FAILURE, 14);
                 }
 
-                extentRec = new LogRecordHeader(headerBytes,0);
+                extentRec = new LogRecordHeader(headerBytes, 0);
                 logEDP.cursorPosition += bytesRead;
 
                 // IF the LSN in the record header matches the LSN of the
                 // current position in the extent file
 
-                if( extentRec.currentLSN.offset == offset ) {
+                if (extentRec.currentLSN.offset == offset) {
                     // IF its a link record
 
-                    if( extentRec.recordType == LogHandle.LINK ) {
+                    if (extentRec.recordType == LogHandle.LINK) {
                         // Copy it to LINKCOPY
                         // 'Move' the file pointer to the NextRecord value (in the next extent file)
                         // Iterate.
 
                         linkRec.copy(extentRec);
                         try {
-                            logEDP = logHandle.positionFilePointer(extentRec.nextLSN,0,LogExtent.ACCESSTYPE_READ);
-                        } catch( LogException le ) {
+                            logEDP = logHandle.positionFilePointer(extentRec.nextLSN, 0, LogExtent.ACCESSTYPE_READ);
+                        } catch (LogException le) {
                             controlFH.destroy();
                             removeFile(logHandle);
-                            throw new LogException(le.errorCode,15,
-                                    sm.getString("jts.log_position_file_pointer_failed"), le);
+                            throw new LogException(le.errorCode, 15, "jts.log_position_file_pointer_failed", le);
                         }
                         continue;
                     } else
 
-                        // IF LINKCOPY is not null AND LINKCOPY.NextRecord LSN &lnot.= ThisRecord LSN
-                        //   Set LINKCOPY to null
+                    // IF LINKCOPY is not null AND LINKCOPY.NextRecord LSN &lnot.= ThisRecord LSN
+                    // Set LINKCOPY to null
 
-                        if( !linkRec.currentLSN.isNULL() &&
-                            !linkRec.nextLSN.equals(extentRec.currentLSN) )
-                            linkRec = new LogRecordHeader();
+                    if (!linkRec.currentLSN.isNULL() && !linkRec.nextLSN.equals(extentRec.currentLSN)) {
+                        linkRec = new LogRecordHeader();
+                    }
 
                     // Copy the record header to HEADERCOPY
                     // Use the NextRecord value to move the file pointer to the next record header
 
                     headRec.copy(extentRec);
                     try {
-                        logEDP = logHandle.positionFilePointer(extentRec.nextLSN,0,LogExtent.ACCESSTYPE_READ);
-                    } catch( Throwable e ) {}
+                        logEDP = logHandle.positionFilePointer(extentRec.nextLSN, 0, LogExtent.ACCESSTYPE_READ);
+                    } catch (Throwable e) {
+                    }
                 } else {
-                    LogRecordEnding endRec;           // An ending record type
+                    LogRecordEnding endRec; // An ending record type
 
                     lastValidRead = true;
 
@@ -602,27 +552,25 @@ public class LogControl {
                     // LSEEK to this position and read it
 
                     try {
-                        logEDP = logHandle.positionFilePointer(headRec.currentLSN,
-                                                               LogRecordHeader.SIZEOF+headRec.recordLength,
-                                                               LogExtent.ACCESSTYPE_READ);
-                    } catch( LogException le ) {
+                        logEDP = logHandle.positionFilePointer(headRec.currentLSN, LogRecordHeader.SIZEOF + headRec.recordLength,
+                                LogExtent.ACCESSTYPE_READ);
+                    } catch (LogException le) {
                         controlFH.destroy();
                         removeFile(logHandle);
-                        throw new LogException(le.errorCode,16,
-                                sm.getString("jts.log_position_file_pointer_failed"), le);
+                        throw new LogException(le.errorCode, 16, "jts.log_position_file_pointer_failed", le);
                     }
 
                     byte[] endingBytes = new byte[LogRecordEnding.SIZEOF];
 
                     try {
                         bytesRead = logEDP.fileHandle.fileRead(endingBytes);
-                    } catch( LogException le ) {
+                    } catch (LogException le) {
                         controlFH.destroy();
                         removeFile(logHandle);
-                        throw new LogException(le.errorCode,17, null, le);
+                        throw new LogException(le.errorCode, 17, null, le);
                     }
 
-                    endRec = new LogRecordEnding(endingBytes,0);
+                    endRec = new LogRecordEnding(endingBytes, 0);
 
                     logEDP.cursorPosition += bytesRead;
 
@@ -630,36 +578,26 @@ public class LogControl {
                     // Update head LSN in control data with ThisRecord LSN
                     // Update next LSN in control data with the NextRecord LSN
 
-                    if( endRec.currentLSN.equals(headRec.currentLSN) ) {
+                    if (endRec.currentLSN.equals(headRec.currentLSN)) {
                         logHandle.logControlDescriptor.headLSN.copy(headRec.currentLSN);
                         logHandle.logControlDescriptor.nextLSN.copy(headRec.nextLSN);
+                    } else if (linkRec.currentLSN.isNULL()) {
+                        logHandle.logControlDescriptor.headLSN.copy(headRec.previousLSN);
+                        logHandle.logControlDescriptor.nextLSN.copy(headRec.currentLSN);
                     }
 
-                    // This is an invalid record, so record details of previous valid record
-                    // IF LINKCOPY is null
-                    // Update head LSN in control data with the PreviousRecord LSN
-                    // Update next LSN in control data with ThisRecord LSN
+                    // Otherwise update head LSN in control data with value from LINKCOPY
 
                     else {
-                        if( linkRec.currentLSN.isNULL() ) {
-                            logHandle.logControlDescriptor.headLSN.copy(headRec.previousLSN);
-                            logHandle.logControlDescriptor.nextLSN.copy(headRec.currentLSN);
-                        }
-
-                        // Otherwise update head LSN in control data with value from LINKCOPY
-
-                        else {
-                            logHandle.logControlDescriptor.headLSN.copy(linkRec.previousLSN);
-                            logHandle.logControlDescriptor.nextLSN.copy(linkRec.currentLSN);
-                        }
+                        logHandle.logControlDescriptor.headLSN.copy(linkRec.previousLSN);
+                        logHandle.logControlDescriptor.nextLSN.copy(linkRec.currentLSN);
                     }
                 }
 
                 // Increase the number of records written since the last force
 
                 logHandle.recordsWritten++;
-            }
-            while( !lastValidRead );
+            } while (!lastValidRead);
         }
 
         // Store the address of the Log_FileDescriptor block into its BlockValid field
@@ -669,32 +607,34 @@ public class LogControl {
         return logHandle;
     }
 
-    /**Cleans up the given log file.
+    /**
+     * Cleans up the given log file.
      *
-     * @param logHandle  The log to clean up.
+     * @param logHandle The log to clean up.
      *
      * @return
      *
-     * @exception LogException  The operation failed.
+     * @exception LogException The operation failed.
      *
      * @see
      */
-    synchronized void cleanUp( LogHandle logHandle )
-        throws LogException {
+    synchronized void cleanUp(LogHandle logHandle) throws LogException {
 
         // IF not LogInitialised Return LOG_NOT_INITIALISED
 
-        if( !logInitialised )
-            throw new LogException(null,LogException.LOG_NOT_INITIALISED,1);
+        if (!logInitialised) {
+            throw new LogException(null, LogException.LOG_NOT_INITIALISED, 1);
+        }
 
         // Check BlockValid field in Log_FileDescriptor block and
         // ensure it is valid
         // IF not valid Log_FileDescriptor
-        //   Return LOG_INVALID_FILE_DESCRIPTOR
+        // Return LOG_INVALID_FILE_DESCRIPTOR
 
-        if( logHandle == null || logHandle.blockValid != logHandle )
-            throw new LogException(LogException.LOG_INVALID_FILE_DESCRIPTOR,2,
-                sm.getString("jts.log_invalid_file_descriptor", logHandle), (Throwable) null);
+        if (logHandle == null || logHandle.blockValid != logHandle) {
+            throw new LogException(LogException.LOG_INVALID_FILE_DESCRIPTOR, 2, "jts.log_invalid_file_descriptor",
+                    (Throwable) null);
+        }
 
         // Set the block valid to NULL
 
@@ -704,38 +644,36 @@ public class LogControl {
 
         logHandle.cleanUpExtents();
 
-        // Unchain the Log_FileDescriptor block from the RCA chain.  The
+        // Unchain the Log_FileDescriptor block from the RCA chain. The
         // mutices contained in the FD latch structure will already have been
-        // freed up when the AS process which owned them died.  We indicate this
+        // freed up when the AS process which owned them died. We indicate this
         // by setting the ProcessOwnsLatch parameter to FALSE.
 
         removeFile(logHandle);
 
     }
 
-    /**Determines whether the given named log exists in the given directory.
+    /**
+     * Determines whether the given named log exists in the given directory.
      *
-     * @param logId         The log identifier.
-     * @param logDirectory  The log directory.
+     * @param logId The log identifier.
+     * @param logDirectory The log directory.
      *
-     * @return  Indicates whether the file exists.
+     * @return Indicates whether the file exists.
      *
      * @see
      */
 
-    static boolean checkFileExists( String logId,
-                                    String logDirectory ) {
-
-        //START IASRI 4730519
-        if(logDirectory==null)
+    static boolean checkFileExists(String logId, String logDirectory) {
+        if (logDirectory == null) {
             return false;
-        //END IASRI 4730519
-        boolean exists = controlFile(logId,logDirectory).exists();
+        }
 
-        return exists;
+        return controlFile(logId, logDirectory).exists();
     }
 
-    /**Removes the log file from the chain.
+    /**
+     * Removes the log file from the chain.
      *
      * @param logHandle
      *
@@ -743,7 +681,7 @@ public class LogControl {
      *
      * @see
      */
-    synchronized void removeFile( LogHandle logHandle ) {
+    synchronized void removeFile(LogHandle logHandle) {
 
         // Unchain the Log_FileDescriptor block from the RCA chain
 
@@ -755,7 +693,8 @@ public class LogControl {
 
     }
 
-    /**Dumps the state of the object.
+    /**
+     * Dumps the state of the object.
      *
      * @param
      *
@@ -763,14 +702,15 @@ public class LogControl {
      *
      * @see
      */
-    //----------------------------------------------------------------------------
+    // ----------------------------------------------------------------------------
     void dump() {
         // If the log has been initialised the pointer to the global
         // data will have been initialised. So, if the pointer to the
         // global data is not NULL, dump out the its contents.
     }
 
-    /**Clears out all log files from the given directory.
+    /**
+     * Clears out all log files from the given directory.
      *
      * @param logDir
      *
@@ -778,7 +718,7 @@ public class LogControl {
      *
      * @see
      */
-    static void clearDirectory( String logDir ) {
+    static void clearDirectory(String logDir) {
         // Find each control file in turn and then delete all files that
         // begin with the same name. This will delete all files associated
         // with that log (including the control file so that it is not found
@@ -787,137 +727,138 @@ public class LogControl {
         File directory = new File(logDir);
         String[] allFiles = directory.list();
         if (allFiles != null) {
-            for (int i = 0; i < allFiles.length; i++) {
+            for (String file : allFiles) {
 
-                // Determine if the file is actually a log subdirectory.  If so, use it's name
+                // Determine if the file is actually a log subdirectory. If so, use it's name
                 // to delete all associated log files.
-                if (allFiles[i].endsWith(LOG_EXTENSION)) {
-                    //Start IASRI 4720539
-                    final File logFileDir = new File(directory, allFiles[i]);
+                if (file.endsWith(LOG_EXTENSION)) {
+                    // Start IASRI 4720539
+                    final File logFileDir = new File(directory, file);
                     if (logFileDir.isDirectory()) {
                         final String[] logFiles = logFileDir.list();
-                    /*
-                    for( int j = 0; j < logFiles.length; j++ )
-                        new File(logFileDir,logFiles[j]).delete();
-                    logFileDir.delete();
-                    */
-                        java.security.AccessController.doPrivileged(
-                                new java.security.PrivilegedAction() {
-                                    public Object run() {
-                                        for (int j = 0; j < logFiles.length; j++) {
-                                            new File(logFileDir, logFiles[j]).delete();
-                                        }
-                                        return null;
-                                    }
+                        /*
+                         * for( int j = 0; j < logFiles.length; j++ ) new File(logFileDir,logFiles[j]).delete(); logFileDir.delete();
+                         */
+                        java.security.AccessController.doPrivileged(new java.security.PrivilegedAction() {
+                            @Override
+                            public Object run() {
+                                for (String logFile : logFiles) {
+                                    new File(logFileDir, logFile).delete();
                                 }
-                        );
-                        java.security.AccessController.doPrivileged(
-                                new java.security.PrivilegedAction() {
-                                    public Object run() {
-                                        logFileDir.delete();
-                                        return null;
-                                    }
-                                }
-                        );
+                                return null;
+                            }
+                        });
+                        java.security.AccessController.doPrivileged(new java.security.PrivilegedAction() {
+                            @Override
+                            public Object run() {
+                                logFileDir.delete();
+                                return null;
+                            }
+                        });
                     }
-                    //End IASRI 4720539
+                    // End IASRI 4720539
                 }
             }
         }
 
     }
 
-    /**Builds a log extent file.
+    /**
+     * Builds a log extent file.
      *
-     * @param logId   Log identifier.
-     * @param extent  Extent number.
+     * @param logId Log identifier.
+     * @param extent Extent number.
      *
-     * @return  A File object representing the extent file.
+     * @return A File object representing the extent file.
      *
      * @see
      */
-    File extentFile( String logId,
-                     int    extent ) {
+    File extentFile(String logId, int extent) {
 
-        char[] buff = (char[])EXTENT_CHARS.clone();
+        char[] buff = EXTENT_CHARS.clone();
 
-        int tmpExtent   = extent / LogExtent.EXTENT_RADIX;
-        int extentLow  = extent % LogExtent.EXTENT_RADIX;
-        int extentMid  = tmpExtent % LogExtent.EXTENT_RADIX;
+        int tmpExtent = extent / LogExtent.EXTENT_RADIX;
+        int extentLow = extent % LogExtent.EXTENT_RADIX;
+        int extentMid = tmpExtent % LogExtent.EXTENT_RADIX;
         int extentHigh = tmpExtent / LogExtent.EXTENT_RADIX;
 
-        buff[7]  = (char)(extentHigh + (extentHigh > 9 ? 'A'-10 : '0'));
-        buff[8]  = (char)(extentMid  + (extentMid  > 9 ? 'A'-10 : '0'));
-        buff[9] = (char)(extentLow  + (extentLow  > 9 ? 'A'-10 : '0'));
+        buff[7] = (char) (extentHigh + (extentHigh > 9 ? 'A' - 10 : '0'));
+        buff[8] = (char) (extentMid + (extentMid > 9 ? 'A' - 10 : '0'));
+        buff[9] = (char) (extentLow + (extentLow > 9 ? 'A' - 10 : '0'));
 
         String fileName = new String(buff);
-        File result = new File(directory(logId,directoryPath),fileName);
+        File result = new File(directory(logId, directoryPath), fileName);
 
         return result;
     }
 
-    /**Builds a log control file.
+    /**
+     * Builds a log control file.
      *
-     * @param logId   Log identifier.
-     * @param logDir  Log directory.
+     * @param logId Log identifier.
+     * @param logDir Log directory.
      *
-     * @return  A File object representing the control file.
+     * @return A File object representing the control file.
      *
      * @see
      */
-    final static File controlFile( String logId, String logDir ) {
-        File result = new File(directory(logId,logDir),CONTROL_NAME);
+    final static File controlFile(String logId, String logDir) {
+        File result = new File(directory(logId, logDir), CONTROL_NAME);
         return result;
     }
 
-    /**Builds a log cushion file.
+    /**
+     * Builds a log cushion file.
      *
-     * @param logId  Log identifier.
+     * @param logId Log identifier.
      *
-     * @return  A File object representing the cushion file.
+     * @return A File object representing the cushion file.
      *
      * @see
      */
-    final File cushionFile( String logId ) {
+    final File cushionFile(String logId) {
 
-        File result = new File(directory(logId,directoryPath),CUSHION_NAME);
+        File result = new File(directory(logId, directoryPath), CUSHION_NAME);
 
         return result;
     }
 
-    /**Builds a log directory file.
+    /**
+     * Builds a log directory file.
      *
-     * @param logId   Log identifier.
-     * @param logDir  Base log directory.
+     * @param logId Log identifier.
+     * @param logDir Base log directory.
      *
-     * @return  A File object representing the directory.
+     * @return A File object representing the directory.
      *
      * @see
      */
-    final static File directory( String logId, String logDir ) {
+    final static File directory(String logId, String logDir) {
 
-    //START IASRI 4721336
-    //START IASRI 4730519
-    if(logDir==null) //It should not be null
-           return new File( "." + File.separator + logId + LOG_EXTENSION);
-    //END IASRI 4730519
-    return new File(logDir);
-    //END IASRI 4721336
+        // START IASRI 4721336
+        // START IASRI 4730519
+        if (logDir == null) { // It should not be null
+        	return new File("." + File.separator + logId + LOG_EXTENSION);
+        }
+        // END IASRI 4730519
+        return new File(logDir);
+        // END IASRI 4721336
     }
 
     final static File recoveryIdentifierFile(String logId, String logDir) {
-        File result = new File(directory(logId,logDir),RECOVERY_STRING_FILE_NAME);
+        File result = new File(directory(logId, logDir), RECOVERY_STRING_FILE_NAME);
         return result;
     }
 
     public final static File recoveryLockFile(String logId, String logDir) {
-        File dir = directory(logId,logDir);
-        if( !dir.exists() ) {
+        File dir = directory(logId, logDir);
+        if (!dir.exists()) {
             boolean created = dir.mkdirs();
-            if (!created)
-                 _logger.log(Level.WARNING,"jts.exception_creating_log_directory",dir);
+            if (!created) {
+                _logger.log(WARNING, "jts.exception_creating_log_directory", dir);
+            }
         }
-        File result = new File(dir,RECOVERY_LOCK_FILE_NAME);
+        File result = new File(dir, RECOVERY_LOCK_FILE_NAME);
         return result;
     }
 
@@ -927,28 +868,25 @@ public class LogControl {
     public static String getLogPath() {
         String logPath = null;
         int[] result = new int[1];
-        logPath = Configuration.getDirectory(Configuration.LOG_DIRECTORY,
-                                                 Configuration.JTS_SUBDIRECTORY,
-                                                 result);
+        logPath = Configuration.getDirectory(Configuration.LOG_DIRECTORY, Configuration.JTS_SUBDIRECTORY, result);
 
         // If a default was used, display a message.
 
-        if( result[0] == Configuration.DEFAULT_USED ||
-                result[0] == Configuration.DEFAULT_INVALID ) {
+        if (result[0] == Configuration.DEFAULT_USED || result[0] == Configuration.DEFAULT_INVALID) {
 
             // In the case where the SOMBASE default is used, only display a message
             // if an invalid value was specified in the environment value.
 
-            if( logPath.length() > 0 ) {
-                 _logger.log(Level.WARNING,"jts.invalid_log_path",logPath);
+            if (logPath.length() > 0) {
+                _logger.log(WARNING, "jts.invalid_log_path", logPath);
             }
 
             // In the case where the SOMBASE default is invalid, the value returned is
             // the invalid default. We then default to the current directory.
 
-            if( result[0] == Configuration.DEFAULT_INVALID ) {
-                _logger.log(Level.WARNING,"jts.invalid_default_log_path");
-                logPath = "."/*#Frozen*/;
+            if (result[0] == Configuration.DEFAULT_INVALID) {
+                _logger.log(WARNING, "jts.invalid_default_log_path");
+                logPath = "."/* #Frozen */;
             }
         }
         return logPath;

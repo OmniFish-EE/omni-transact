@@ -17,27 +17,34 @@
 
 package com.sun.enterprise.transaction.jts;
 
-import com.sun.enterprise.config.serverbeans.ServerTags;
+import static org.hamcrest.MatcherAssert.assertThat;
+import static org.hamcrest.Matchers.instanceOf;
+import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertFalse;
+import static org.junit.jupiter.api.Assertions.assertNotNull;
+import static org.junit.jupiter.api.Assertions.assertNull;
+import static org.junit.jupiter.api.Assertions.assertThrows;
+import static org.junit.jupiter.api.Assertions.assertTrue;
+
+import javax.transaction.xa.XAException;
+import javax.transaction.xa.XAResource;
+import javax.transaction.xa.Xid;
+
+import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.Test;
+
 import com.sun.enterprise.resource.ClientSecurityInfo;
 import com.sun.enterprise.resource.ResourceHandle;
 import com.sun.enterprise.resource.ResourceSpec;
 import com.sun.enterprise.resource.allocator.ResourceAllocator;
 import com.sun.enterprise.resource.pool.PoolManagerImpl;
-import com.sun.enterprise.transaction.JavaEETransactionManagerSimplified;
+import com.sun.enterprise.transaction.JavaEETransactionManagerImpl;
 import com.sun.enterprise.transaction.JavaEETransactionManagerSimplifiedDelegate;
-import com.sun.enterprise.transaction.TransactionServiceConfigListener;
 import com.sun.enterprise.transaction.TransactionSynchronizationRegistryImpl;
 import com.sun.enterprise.transaction.UserTransactionImpl;
+import com.sun.enterprise.transaction.api.InvocationManager;
+import com.sun.enterprise.transaction.impl.InvocationManagerImpl;
 import com.sun.enterprise.transaction.spi.JavaEETransactionManagerDelegate;
-import java.beans.PropertyChangeEvent;
-import javax.transaction.xa.XAException;
-import javax.transaction.xa.XAResource;
-import javax.transaction.xa.Xid;
-
-import org.glassfish.api.invocation.InvocationManager;
-import org.junit.jupiter.api.BeforeEach;
-import org.junit.jupiter.api.Disabled;
-import org.junit.jupiter.api.Test;
 
 import jakarta.transaction.HeuristicMixedException;
 import jakarta.transaction.HeuristicRollbackException;
@@ -52,25 +59,16 @@ import jakarta.transaction.TransactionManager;
 import jakarta.transaction.TransactionSynchronizationRegistry;
 import jakarta.transaction.UserTransaction;
 
-import static org.hamcrest.MatcherAssert.assertThat;
-import static org.hamcrest.Matchers.instanceOf;
-import static org.junit.jupiter.api.Assertions.assertEquals;
-import static org.junit.jupiter.api.Assertions.assertFalse;
-import static org.junit.jupiter.api.Assertions.assertNotNull;
-import static org.junit.jupiter.api.Assertions.assertNull;
-import static org.junit.jupiter.api.Assertions.assertThrows;
-import static org.junit.jupiter.api.Assertions.assertTrue;
-
 /**
  * Unit test for simple App.
  */
 public class JavaEETransactionManagerTest {
 
-    private JavaEETransactionManagerSimplified txManager;
+    private JavaEETransactionManagerImpl txManager;
 
     @BeforeEach
     public void setUp() {
-        txManager = new JavaEETransactionManagerSimplified();
+        txManager = new JavaEETransactionManagerImpl();
         JavaEETransactionManagerDelegate d = new JavaEETransactionManagerJTSDelegate();
         txManager.setDelegate(d);
         d.setTransactionManager(txManager);
@@ -98,14 +96,14 @@ public class JavaEETransactionManagerTest {
     /**
      * Test ConfigListener call
      */
-    @Test
-    public void testTransactionServiceConfigListener() {
-        PropertyChangeEvent e1 = new PropertyChangeEvent("", ServerTags.KEYPOINT_INTERVAL, "1", "10");
-        PropertyChangeEvent e2 = new PropertyChangeEvent("", ServerTags.RETRY_TIMEOUT_IN_SECONDS, "1", "10");
-        TransactionServiceConfigListener listener = new TransactionServiceConfigListener();
-        listener.setTM(txManager);
-        listener.changed(new PropertyChangeEvent[] {e1, e2});
-    }
+//    @Test
+//    public void testTransactionServiceConfigListener() {
+//        PropertyChangeEvent e1 = new PropertyChangeEvent("", ServerTags.KEYPOINT_INTERVAL, "1", "10");
+//        PropertyChangeEvent e2 = new PropertyChangeEvent("", ServerTags.RETRY_TIMEOUT_IN_SECONDS, "1", "10");
+//        TransactionServiceConfigListener listener = new TransactionServiceConfigListener();
+//        listener.setTM(txManager);
+//        listener.changed(new PropertyChangeEvent[] {e1, e2});
+//    }
 
     @Test
     public void testWrongTMCommit() {
@@ -122,35 +120,6 @@ public class JavaEETransactionManagerTest {
         UserTransaction utx = createUtx();
         assertThrows(IllegalStateException.class, utx::commit);
     }
-
-    @Test
-    @Disabled("No exception throws. This test was commented out for years, but ... I would expect the exception too")
-    public void testUTXTimeout() {
-        final TestSync sync = new TestSync(false);
-        final long start = System.currentTimeMillis();
-        assertThrows(RollbackException.class, () -> {
-            UserTransaction utx = createUtx();
-            System.out.println("**Calling UTX setTransactionTimeout ===>");
-            utx.setTransactionTimeout(1);
-            utx.begin();
-
-            Transaction tx = txManager.getTransaction();
-            System.out.println("**Registering Synchronization ....");
-            tx.registerSynchronization(sync);
-
-            TestResource theResource = new TestResource(tx);
-            txManager.enlistResource(tx, new TestResourceHandle(theResource));
-
-            Thread.sleep(1100);
-            txManager.delistResource(tx, new TestResourceHandle(theResource), XAResource.TMSUCCESS);
-
-            utx.commit();
-            System.out.println("**UTX commit successful after <===" + (System.currentTimeMillis() - start) + "millis");
-        });
-        assertFalse(sync.called_beforeCompletion, "beforeCompletion was called");
-        assertTrue(sync.called_afterCompletion, "afterCompletion was not called");
-    }
-
 
     @Test
     public void testWrongTMOperationsAfterCommit() throws Exception {
@@ -178,7 +147,7 @@ public class JavaEETransactionManagerTest {
             txManager.delistResource(tx, new TestResourceHandle(theResource1), XAResource.TMSUCCESS);
             txManager.commit();
 
-            assertEquals("NoTransaction", JavaEETransactionManagerSimplified.getStatusAsString(tx.getStatus()));
+            assertEquals("NoTransaction", JavaEETransactionManagerImpl.getStatusAsString(tx.getStatus()));
             assertTrue(theResource.prepareStatusOK());
             assertTrue(theResource1.prepareStatusOK());
             assertTrue(theResource.commitStatusOK());
@@ -200,7 +169,7 @@ public class JavaEETransactionManagerTest {
 
             txManager.rollback();
 
-            assertEquals("NoTransaction", JavaEETransactionManagerSimplified.getStatusAsString(tx.getStatus()));
+            assertEquals("NoTransaction", JavaEETransactionManagerImpl.getStatusAsString(tx.getStatus()));
             assertTrue(theResource.rollbackStatusOK());
             assertTrue(theResource1.rollbackStatusOK());
             assertFalse(theResource2.isAssociated());
@@ -214,8 +183,8 @@ public class JavaEETransactionManagerTest {
             txManager.delistResource(tx, new TestResourceHandle(theResource), XAResource.TMSUCCESS);
             txManager.commit();
 
-            String status = JavaEETransactionManagerSimplified.getStatusAsString(tx.getStatus());
-            assertEquals("NoTransaction", JavaEETransactionManagerSimplified.getStatusAsString(tx.getStatus()));
+            String status = JavaEETransactionManagerImpl.getStatusAsString(tx.getStatus());
+            assertEquals("NoTransaction", JavaEETransactionManagerImpl.getStatusAsString(tx.getStatus()));
             assertTrue(theResource.commitStatusOK());
         }
     }
@@ -226,15 +195,15 @@ public class JavaEETransactionManagerTest {
             txManager.begin();
             Transaction tx = txManager.getTransaction();
             tx.setRollbackOnly();
-            assertEquals("MarkedRollback", JavaEETransactionManagerSimplified.getStatusAsString(tx.getStatus()));
+            assertEquals("MarkedRollback", JavaEETransactionManagerImpl.getStatusAsString(tx.getStatus()));
 
             TestResource theResource = new TestResource(tx);
             assertThrows(RollbackException.class,() ->  txManager.enlistResource(tx, new TestResourceHandle(theResource)));
             txManager.delistResource(tx, new TestResourceHandle(theResource), XAResource.TMSUCCESS);
-            assertEquals("MarkedRollback", JavaEETransactionManagerSimplified.getStatusAsString(tx.getStatus()));
+            assertEquals("MarkedRollback", JavaEETransactionManagerImpl.getStatusAsString(tx.getStatus()));
         } finally {
             txManager.rollback();
-            assertEquals("NoTransaction", JavaEETransactionManagerSimplified.getStatusAsString(txManager.getStatus()));
+            assertEquals("NoTransaction", JavaEETransactionManagerImpl.getStatusAsString(txManager.getStatus()));
         }
     }
 
@@ -247,7 +216,7 @@ public class JavaEETransactionManagerTest {
         txManager.delistResource(tx, new TestResourceHandle(theResource), XAResource.TMSUCCESS);
         txManager.commit();
 
-        assertEquals("NoTransaction", JavaEETransactionManagerSimplified.getStatusAsString(tx.getStatus()));
+        assertEquals("NoTransaction", JavaEETransactionManagerImpl.getStatusAsString(tx.getStatus()));
         assertThrows(IllegalStateException.class, tx::commit);
         assertThrows(IllegalStateException.class, tx::rollback);
         assertThrows(IllegalStateException.class, tx::setRollbackOnly);
@@ -285,25 +254,25 @@ public class JavaEETransactionManagerTest {
 
     @Test
     public void testBegin() throws Exception {
-        assertEquals("NoTransaction", JavaEETransactionManagerSimplified.getStatusAsString(txManager.getStatus()));
+        assertEquals("NoTransaction", JavaEETransactionManagerImpl.getStatusAsString(txManager.getStatus()));
         txManager.begin();
-        assertEquals("Active", JavaEETransactionManagerSimplified.getStatusAsString(txManager.getStatus()));
+        assertEquals("Active", JavaEETransactionManagerImpl.getStatusAsString(txManager.getStatus()));
     }
 
     @Test
     public void testCommit() throws Exception {
         txManager.begin();
-        assertEquals("Active", JavaEETransactionManagerSimplified.getStatusAsString(txManager.getStatus()));
+        assertEquals("Active", JavaEETransactionManagerImpl.getStatusAsString(txManager.getStatus()));
         txManager.commit();
-        assertEquals("NoTransaction", JavaEETransactionManagerSimplified.getStatusAsString(txManager.getStatus()));
+        assertEquals("NoTransaction", JavaEETransactionManagerImpl.getStatusAsString(txManager.getStatus()));
     }
 
     @Test
     public void testRollback() throws Exception {
         txManager.begin();
-        assertEquals("Active", JavaEETransactionManagerSimplified.getStatusAsString(txManager.getStatus()));
+        assertEquals("Active", JavaEETransactionManagerImpl.getStatusAsString(txManager.getStatus()));
         txManager.rollback();
-        assertEquals("NoTransaction", JavaEETransactionManagerSimplified.getStatusAsString(txManager.getStatus()));
+        assertEquals("NoTransaction", JavaEETransactionManagerImpl.getStatusAsString(txManager.getStatus()));
     }
 
     @Test
@@ -313,10 +282,10 @@ public class JavaEETransactionManagerTest {
 
         TestSync sync = new TestSync(false);
         tx.registerSynchronization(sync);
-        assertEquals("Active", JavaEETransactionManagerSimplified.getStatusAsString(txManager.getStatus()));
+        assertEquals("Active", JavaEETransactionManagerImpl.getStatusAsString(txManager.getStatus()));
 
         tx.commit();
-        assertEquals("NoTransaction", JavaEETransactionManagerSimplified.getStatusAsString(txManager.getStatus()));
+        assertEquals("NoTransaction", JavaEETransactionManagerImpl.getStatusAsString(txManager.getStatus()));
         assertTrue(sync.called_beforeCompletion, "beforeCompletion was not called");
         assertTrue(sync.called_afterCompletion, "afterCompletion was not called");
     }
@@ -330,11 +299,11 @@ public class JavaEETransactionManagerTest {
         assertNull(txManager.suspend());
 
         txManager.resume(tx);
-        assertEquals("Active", JavaEETransactionManagerSimplified.getStatusAsString(txManager.getStatus()));
+        assertEquals("Active", JavaEETransactionManagerImpl.getStatusAsString(txManager.getStatus()));
 
         tx.commit();
-        assertEquals("Committed", JavaEETransactionManagerSimplified.getStatusAsString(tx.getStatus()));
-        assertEquals("NoTransaction", JavaEETransactionManagerSimplified.getStatusAsString(txManager.getStatus()));
+        assertEquals("Committed", JavaEETransactionManagerImpl.getStatusAsString(tx.getStatus()));
+        assertEquals("NoTransaction", JavaEETransactionManagerImpl.getStatusAsString(txManager.getStatus()));
     }
 
     @Test
@@ -343,10 +312,10 @@ public class JavaEETransactionManagerTest {
         final Transaction tx = txManager.getTransaction();
         final TestSync sync = new TestSync(false);
         tx.registerSynchronization(sync);
-        assertEquals("Active", JavaEETransactionManagerSimplified.getStatusAsString(txManager.getStatus()));
+        assertEquals("Active", JavaEETransactionManagerImpl.getStatusAsString(txManager.getStatus()));
 
         tx.rollback();
-        assertEquals("RolledBack", JavaEETransactionManagerSimplified.getStatusAsString(tx.getStatus()));
+        assertEquals("RolledBack", JavaEETransactionManagerImpl.getStatusAsString(tx.getStatus()));
         assertFalse(sync.called_beforeCompletion, "beforeCompletion was called");
         assertTrue(sync.called_afterCompletion, "afterCompletion was not called");
     }
@@ -355,20 +324,20 @@ public class JavaEETransactionManagerTest {
     public void testUTxCommit() throws Exception {
         final UserTransaction utx = createUtx();
         utx.begin();
-        assertEquals("Active", JavaEETransactionManagerSimplified.getStatusAsString(utx.getStatus()));
+        assertEquals("Active", JavaEETransactionManagerImpl.getStatusAsString(utx.getStatus()));
 
         utx.commit();
-        assertEquals("NoTransaction", JavaEETransactionManagerSimplified.getStatusAsString(utx.getStatus()));
+        assertEquals("NoTransaction", JavaEETransactionManagerImpl.getStatusAsString(utx.getStatus()));
     }
 
     @Test
     public void testUTxRollback() throws Exception {
         final UserTransaction utx = createUtx();
         utx.begin();
-        assertEquals("Active", JavaEETransactionManagerSimplified.getStatusAsString(utx.getStatus()));
+        assertEquals("Active", JavaEETransactionManagerImpl.getStatusAsString(utx.getStatus()));
 
         utx.rollback();
-        assertEquals("NoTransaction", JavaEETransactionManagerSimplified.getStatusAsString(utx.getStatus()));
+        assertEquals("NoTransaction", JavaEETransactionManagerImpl.getStatusAsString(utx.getStatus()));
     }
 
     @Test
@@ -377,7 +346,7 @@ public class JavaEETransactionManagerTest {
         final Transaction tx = txManager.getTransaction();
         final TestSync sync = new TestSync(true);
         tx.registerSynchronization(sync);
-        assertEquals("Active", JavaEETransactionManagerSimplified.getStatusAsString(txManager.getStatus()));
+        assertEquals("Active", JavaEETransactionManagerImpl.getStatusAsString(txManager.getStatus()));
 
         final TestResource theResource = new TestResource();
         final TestResource theResource1 = new TestResource();
@@ -390,8 +359,8 @@ public class JavaEETransactionManagerTest {
 
         final RollbackException e = assertThrows(RollbackException.class, tx::commit);
         assertThat("e.cause", e.getCause(), instanceOf(MyRuntimeException.class));
-        assertEquals("NoTransaction", JavaEETransactionManagerSimplified.getStatusAsString(tx.getStatus()));
-        assertEquals("NoTransaction", JavaEETransactionManagerSimplified.getStatusAsString(txManager.getStatus()));
+        assertEquals("NoTransaction", JavaEETransactionManagerImpl.getStatusAsString(tx.getStatus()));
+        assertEquals("NoTransaction", JavaEETransactionManagerImpl.getStatusAsString(txManager.getStatus()));
         assertTrue(sync.called_beforeCompletion, "beforeCompletion was not called");
         assertTrue(sync.called_afterCompletion, "afterCompletion was not called");
     }
@@ -402,7 +371,7 @@ public class JavaEETransactionManagerTest {
         final Transaction tx = txManager.getTransaction();
         final TestSync sync = new TestSync(true);
         tx.registerSynchronization(sync);
-        assertEquals("Active", JavaEETransactionManagerSimplified.getStatusAsString(txManager.getStatus()));
+        assertEquals("Active", JavaEETransactionManagerImpl.getStatusAsString(txManager.getStatus()));
 
         final TestResource theResource = new TestResource();
         final TestResource theResource1 = new TestResource();
@@ -415,7 +384,7 @@ public class JavaEETransactionManagerTest {
 
         final RollbackException e = assertThrows(RollbackException.class, txManager::commit);
         assertThat("e.cause", e.getCause(), instanceOf(MyRuntimeException.class));
-        assertEquals("NoTransaction", JavaEETransactionManagerSimplified.getStatusAsString(txManager.getStatus()));
+        assertEquals("NoTransaction", JavaEETransactionManagerImpl.getStatusAsString(txManager.getStatus()));
         assertTrue(sync.called_beforeCompletion, "beforeCompletion was not called");
         assertTrue(sync.called_afterCompletion, "afterCompletion was not called");
     }
@@ -426,7 +395,7 @@ public class JavaEETransactionManagerTest {
         final Transaction tx = txManager.getTransaction();
         final TestSync sync = new TestSync(true);
         tx.registerSynchronization(sync);
-        assertEquals("Active", JavaEETransactionManagerSimplified.getStatusAsString(txManager.getStatus()));
+        assertEquals("Active", JavaEETransactionManagerImpl.getStatusAsString(txManager.getStatus()));
 
         final TestResource theResource = new TestResource();
         txManager.enlistResource(tx, new TestResourceHandle(theResource));
@@ -435,7 +404,7 @@ public class JavaEETransactionManagerTest {
 
         final RollbackException e = assertThrows(RollbackException.class, tx::commit);
         assertThat("e.cause", e.getCause(), instanceOf(MyRuntimeException.class));
-        assertEquals("NoTransaction", JavaEETransactionManagerSimplified.getStatusAsString(tx.getStatus()));
+        assertEquals("NoTransaction", JavaEETransactionManagerImpl.getStatusAsString(tx.getStatus()));
         assertTrue(sync.called_beforeCompletion, "beforeCompletion was not called");
         assertTrue(sync.called_afterCompletion, "afterCompletion was not called");
     }
@@ -447,7 +416,7 @@ public class JavaEETransactionManagerTest {
         final TestSync sync = new TestSync(true);
         final TransactionSynchronizationRegistry ts = new TransactionSynchronizationRegistryImpl(txManager);
         ts.registerInterposedSynchronization(sync);
-        assertEquals("Active", JavaEETransactionManagerSimplified.getStatusAsString(txManager.getStatus()));
+        assertEquals("Active", JavaEETransactionManagerImpl.getStatusAsString(txManager.getStatus()));
 
         final TestResource theResource = new TestResource();
         final TestResource theResource1 = new TestResource();
@@ -460,7 +429,7 @@ public class JavaEETransactionManagerTest {
 
         final RollbackException e = assertThrows(RollbackException.class, tx::commit);
         assertThat("e.cause", e.getCause(), instanceOf(MyRuntimeException.class));
-        assertEquals("NoTransaction", JavaEETransactionManagerSimplified.getStatusAsString(tx.getStatus()));
+        assertEquals("NoTransaction", JavaEETransactionManagerImpl.getStatusAsString(tx.getStatus()));
         assertTrue(sync.called_beforeCompletion, "beforeCompletion was not called");
         assertTrue(sync.called_afterCompletion, "afterCompletion was not called");
     }
@@ -472,7 +441,7 @@ public class JavaEETransactionManagerTest {
         final TestSync sync = new TestSync(true);
         final TransactionSynchronizationRegistry ts = new TransactionSynchronizationRegistryImpl(txManager);
         ts.registerInterposedSynchronization(sync);
-        assertEquals("Active", JavaEETransactionManagerSimplified.getStatusAsString(txManager.getStatus()));
+        assertEquals("Active", JavaEETransactionManagerImpl.getStatusAsString(txManager.getStatus()));
 
         final TestResource theResource = new TestResource();
         txManager.enlistResource(tx, new TestResourceHandle(theResource));
@@ -480,7 +449,7 @@ public class JavaEETransactionManagerTest {
         txManager.delistResource(tx, new TestResourceHandle(theResource), XAResource.TMSUCCESS);
         final RollbackException e = assertThrows(RollbackException.class, tx::commit);
         assertThat("e.cause", e.getCause(), instanceOf(MyRuntimeException.class));
-        assertEquals("NoTransaction", JavaEETransactionManagerSimplified.getStatusAsString(tx.getStatus()));
+        assertEquals("NoTransaction", JavaEETransactionManagerImpl.getStatusAsString(tx.getStatus()));
         assertTrue(sync.called_beforeCompletion, "beforeCompletion was not called");
         assertTrue(sync.called_afterCompletion, "afterCompletion was not called");
     }
@@ -491,11 +460,11 @@ public class JavaEETransactionManagerTest {
         final Transaction tx = txManager.getTransaction();
         final TestSync sync = new TestSync(txManager);
         tx.registerSynchronization(sync);
-        assertEquals("Active", JavaEETransactionManagerSimplified.getStatusAsString(txManager.getStatus()));
+        assertEquals("Active", JavaEETransactionManagerImpl.getStatusAsString(txManager.getStatus()));
 
         final RollbackException e = assertThrows(RollbackException.class, tx::commit);
         assertNull(e.getCause(), "e.cause");
-        assertEquals("RolledBack", JavaEETransactionManagerSimplified.getStatusAsString(tx.getStatus()));
+        assertEquals("RolledBack", JavaEETransactionManagerImpl.getStatusAsString(tx.getStatus()));
         assertTrue(sync.called_beforeCompletion, "beforeCompletion was not called");
         assertTrue(sync.called_afterCompletion, "afterCompletion was not called");
     }
@@ -518,7 +487,7 @@ public class JavaEETransactionManagerTest {
     private void verifyCommit2PCWithRollbackException(int preapareErrCode, int... rollbackErrorCode) throws Exception {
         final TestResource theResourceP = new TestResource();
         txManager.begin();
-        assertEquals("Active", JavaEETransactionManagerSimplified.getStatusAsString(txManager.getStatus()));
+        assertEquals("Active", JavaEETransactionManagerImpl.getStatusAsString(txManager.getStatus()));
 
         assertNotNull(createUtx(), "createUtx()");
         final Transaction tx = txManager.getTransaction();
@@ -527,7 +496,7 @@ public class JavaEETransactionManagerTest {
         final TestResource[] theResourceR = enlistForRollback(tx, rollbackErrorCode);
         txManager.delistResource(tx, new TestResourceHandle(theResourceP), XAResource.TMSUCCESS);
         final RollbackException e = assertThrows(RollbackException.class, txManager::commit);
-        assertEquals("NoTransaction", JavaEETransactionManagerSimplified.getStatusAsString(txManager.getStatus()));
+        assertEquals("NoTransaction", JavaEETransactionManagerImpl.getStatusAsString(txManager.getStatus()));
         final boolean status = theResourceP.forgetCalled();
         assertTrue(status, "result of theResourceP.forgetCalled()");
 
@@ -586,14 +555,14 @@ public class JavaEETransactionManagerTest {
         for (int errorCode : falures) {
             final TestResource theResource = new TestResource();
             txManager.begin();
-            assertEquals("Active", JavaEETransactionManagerSimplified.getStatusAsString(txManager.getStatus()));
+            assertEquals("Active", JavaEETransactionManagerImpl.getStatusAsString(txManager.getStatus()));
             assertNotNull(createUtx());
             final Transaction tx = txManager.getTransaction();
             theResource.setStartErrorCode(errorCode);
             assertThrows(SystemException.class, () -> txManager.enlistResource(tx, new TestResourceHandle(theResource)));
             txManager.delistResource(tx, new TestResourceHandle(theResource), XAResource.TMSUCCESS);
             txManager.commit();
-            assertEquals("NoTransaction", JavaEETransactionManagerSimplified.getStatusAsString(txManager.getStatus()));
+            assertEquals("NoTransaction", JavaEETransactionManagerImpl.getStatusAsString(txManager.getStatus()));
         }
     }
 
@@ -606,14 +575,14 @@ public class JavaEETransactionManagerTest {
     public void testCommitOnePhaseWithXAExc2() throws Exception {
         final TestResource theResource = new TestResource();
         txManager.begin();
-        assertEquals("Active", JavaEETransactionManagerSimplified.getStatusAsString(txManager.getStatus()));
+        assertEquals("Active", JavaEETransactionManagerImpl.getStatusAsString(txManager.getStatus()));
         final Transaction tx = txManager.getTransaction();
         theResource.setCommitErrorCode(XAException.XA_HEURCOM);
         txManager.enlistResource(tx, new TestResourceHandle(theResource));
         txManager.delistResource(tx, new TestResourceHandle(theResource), XAResource.TMSUCCESS);
         txManager.commit();
-        assertEquals("NoTransaction", JavaEETransactionManagerSimplified.getStatusAsString(txManager.getStatus()));
-        assertEquals("NoTransaction", JavaEETransactionManagerSimplified.getStatusAsString(tx.getStatus()));
+        assertEquals("NoTransaction", JavaEETransactionManagerImpl.getStatusAsString(txManager.getStatus()));
+        assertEquals("NoTransaction", JavaEETransactionManagerImpl.getStatusAsString(tx.getStatus()));
     }
 
     @Test
@@ -649,7 +618,7 @@ public class JavaEETransactionManagerTest {
     private void verifyCommitOnePhaseWithException(int errorCode, Class<? extends Exception> exType, boolean setRollbackOnly) throws Exception {
         final TestResource theResource = new TestResource();
         txManager.begin();
-        assertEquals("Active", JavaEETransactionManagerSimplified.getStatusAsString(txManager.getStatus()));
+        assertEquals("Active", JavaEETransactionManagerImpl.getStatusAsString(txManager.getStatus()));
 
         final UserTransaction utx = createUtx();
         final Transaction tx = txManager.getTransaction();
@@ -664,19 +633,19 @@ public class JavaEETransactionManagerTest {
             txManager.setRollbackOnly();
         }
         assertThrows(exType, txManager::commit);
-        assertEquals("NoTransaction", JavaEETransactionManagerSimplified.getStatusAsString(txManager.getStatus()));
-        assertEquals("NoTransaction", JavaEETransactionManagerSimplified.getStatusAsString(utx.getStatus()));
+        assertEquals("NoTransaction", JavaEETransactionManagerImpl.getStatusAsString(txManager.getStatus()));
+        assertEquals("NoTransaction", JavaEETransactionManagerImpl.getStatusAsString(utx.getStatus()));
         assertTrue(theResource.forgetCalled(), "theResource.forgetCalled()");
     }
 
     private void verifyXARollback(int... errorCode) throws Exception {
         txManager.begin();
-        assertEquals("Active", JavaEETransactionManagerSimplified.getStatusAsString(txManager.getStatus()));
+        assertEquals("Active", JavaEETransactionManagerImpl.getStatusAsString(txManager.getStatus()));
         createUtx();
         Transaction tx = txManager.getTransaction();
         enlistForRollback(tx, errorCode);
         txManager.rollback();
-        assertEquals("NoTransaction", JavaEETransactionManagerSimplified.getStatusAsString(txManager.getStatus()));
+        assertEquals("NoTransaction", JavaEETransactionManagerImpl.getStatusAsString(txManager.getStatus()));
     }
 
     @Test
@@ -748,7 +717,7 @@ public class JavaEETransactionManagerTest {
         final TestResource theResource2 = new TestResource();
         final TestSync s = new TestSync(false);
         txManager.begin();
-        assertEquals("Active", JavaEETransactionManagerSimplified.getStatusAsString(txManager.getStatus()));
+        assertEquals("Active", JavaEETransactionManagerImpl.getStatusAsString(txManager.getStatus()));
 
         createUtx();
         final Transaction tx = txManager.getTransaction();
@@ -769,7 +738,7 @@ public class JavaEETransactionManagerTest {
         } else {
             assertThrows(exType, txManager::commit);
         }
-        assertEquals("NoTransaction", JavaEETransactionManagerSimplified.getStatusAsString(txManager.getStatus()));
+        assertEquals("NoTransaction", JavaEETransactionManagerImpl.getStatusAsString(txManager.getStatus()));
         assertTrue(s.called_beforeCompletion, "beforeCompletion was not called");
         assertTrue(s.called_afterCompletion, "afterCompletion was not called");
         assertTrue(theResource1.forgetCalled());
@@ -778,7 +747,7 @@ public class JavaEETransactionManagerTest {
 
     private UserTransaction createUtx() throws javax.naming.NamingException {
         UserTransaction utx = new UserTransactionImpl();
-        InvocationManager im = new org.glassfish.api.invocation.InvocationManagerImpl();
+        InvocationManager im = new InvocationManagerImpl();
         ((UserTransactionImpl)utx).setForTesting(txManager, im);
         return utx;
     }
@@ -802,11 +771,11 @@ public class JavaEETransactionManagerTest {
     static class TestSync implements Synchronization {
 
         // Used to validate the calls
-        private boolean fail = false;
-        private TransactionManager t = null;
+        private boolean fail;
+        private TransactionManager t;
 
-        protected boolean called_beforeCompletion = false;
-        protected boolean called_afterCompletion = false;
+        protected boolean called_beforeCompletion;
+        protected boolean called_afterCompletion;
 
         public TestSync(boolean fail) {
             this.fail = fail;
@@ -839,7 +808,7 @@ public class JavaEETransactionManagerTest {
         @Override
         public void afterCompletion(int status) {
             System.out.println("**Called afterCompletion with status:  "
-                    + JavaEETransactionManagerSimplified.getStatusAsString(status));
+                    + JavaEETransactionManagerImpl.getStatusAsString(status));
             called_afterCompletion = true;
         }
     }
@@ -1021,7 +990,7 @@ public class JavaEETransactionManagerTest {
             try {
                 if (tx != null) {
                     status = tx.getStatus();
-                    System.out.println("Status in " + name + ": " + JavaEETransactionManagerSimplified.getStatusAsString(status));
+                    System.out.println("Status in " + name + ": " + JavaEETransactionManagerImpl.getStatusAsString(status));
                 }
             } catch (Exception ex) {
                 ex.printStackTrace();

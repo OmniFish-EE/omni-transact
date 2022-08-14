@@ -16,49 +16,55 @@
 
 package com.sun.jts.pi;
 
-import org.omg.IOP.*;
-import org.omg.IOP.CodecFactoryPackage.UnknownEncoding;
-
-import org.omg.CORBA.*;
-
-import org.omg.CosTransactions.OTS_POLICY_TYPE;
+import org.omg.CORBA.BAD_INV_ORDER;
+import org.omg.CORBA.CompletionStatus;
+import org.omg.CORBA.INTERNAL;
+import org.omg.CORBA.LocalObject;
+import org.omg.CORBA.TSIdentification;
 import org.omg.CosTransactions.INVOCATION_POLICY_TYPE;
-
+import org.omg.CosTransactions.OTS_POLICY_TYPE;
+import org.omg.IOP.Codec;
+import org.omg.IOP.CodecFactory;
+import org.omg.IOP.ENCODING_CDR_ENCAPS;
+import org.omg.IOP.Encoding;
+import org.omg.IOP.CodecFactoryPackage.UnknownEncoding;
 import org.omg.PortableInterceptor.Current;
-import org.omg.PortableInterceptor.*;
+import org.omg.PortableInterceptor.ORBInitInfo;
+import org.omg.PortableInterceptor.ORBInitializer;
+import org.omg.PortableInterceptor.ORBInitInfoPackage.DuplicateName;
 //import org.omg.CORBA.ORBPackage.InvalidName;
 import org.omg.PortableInterceptor.ORBInitInfoPackage.InvalidName;
-import org.omg.PortableInterceptor.ORBInitInfoPackage.DuplicateName;
 
 import com.sun.jts.CosTransactions.MinorCode;
 
 /**
- * This class implements the ORBInitializer for JTS. When an instance of this
- * class is called during ORB initialization, it registers the IORInterceptors
- * and the JTS request/reply interceptors with the ORB.
+ * This class implements the ORBInitializer for JTS. When an instance of this class is called during ORB initialization,
+ * it registers the IORInterceptors and the JTS request/reply interceptors with the ORB.
  *
  * @author Ram Jeyaraman 11/11/2000
  * @version 1.0
  */
 public class ORBInitializerImpl extends LocalObject implements ORBInitializer {
 
-    public ORBInitializerImpl() {}
+    public ORBInitializerImpl() {
+    }
 
-    public void pre_init(ORBInitInfo info) {}
+    @Override
+    public void pre_init(ORBInitInfo info) {
+    }
 
+    @Override
     public void post_init(ORBInitInfo info) {
 
         // get hold of the codec instance to pass onto interceptors.
 
         CodecFactory codecFactory = info.codec_factory();
-        Encoding enc = new Encoding(
-                            ENCODING_CDR_ENCAPS.value, (byte) 1, (byte) 2);
+        Encoding enc = new Encoding(ENCODING_CDR_ENCAPS.value, (byte) 1, (byte) 2);
         Codec codec = null;
         try {
             codec = codecFactory.create_codec(enc);
         } catch (UnknownEncoding e) {
-            throw new INTERNAL(MinorCode.TSCreateFailed,
-                               CompletionStatus.COMPLETED_NO);
+            throw new INTERNAL(MinorCode.TSCreateFailed, CompletionStatus.COMPLETED_NO);
         }
 
         // get hold of PICurrent to allocate a slot for JTS service.
@@ -67,8 +73,7 @@ public class ORBInitializerImpl extends LocalObject implements ORBInitializer {
         try {
             pic = (Current) info.resolve_initial_references("PICurrent");
         } catch (InvalidName e) {
-            throw new INTERNAL(MinorCode.TSCreateFailed,
-                               CompletionStatus.COMPLETED_NO);
+            throw new INTERNAL(MinorCode.TSCreateFailed, CompletionStatus.COMPLETED_NO);
         }
 
         // allocate a PICurrent slotId for the transaction service.
@@ -78,16 +83,14 @@ public class ORBInitializerImpl extends LocalObject implements ORBInitializer {
             slotIds[0] = info.allocate_slot_id();
             slotIds[1] = info.allocate_slot_id();
         } catch (BAD_INV_ORDER e) {
-            throw new INTERNAL(MinorCode.TSCreateFailed,
-                               CompletionStatus.COMPLETED_NO);
+            throw new INTERNAL(MinorCode.TSCreateFailed, CompletionStatus.COMPLETED_NO);
         }
 
         // get hold of the TSIdentification instance to pass onto interceptors.
 
         TSIdentification tsi = null;
         try {
-            tsi = (TSIdentification)
-                    info.resolve_initial_references("TSIdentification");
+            tsi = (TSIdentification) info.resolve_initial_references("TSIdentification");
         } catch (InvalidName e) {
             // the TransactionService is unavailable.
         }
@@ -95,15 +98,13 @@ public class ORBInitializerImpl extends LocalObject implements ORBInitializer {
         // register the policy factories.
 
         try {
-            info.register_policy_factory(OTS_POLICY_TYPE.value,
-                                         new OTSPolicyFactory());
+            info.register_policy_factory(OTS_POLICY_TYPE.value, new OTSPolicyFactory());
         } catch (BAD_INV_ORDER e) {
             // ignore, policy factory already exists.
         }
 
         try {
-            info.register_policy_factory(INVOCATION_POLICY_TYPE.value,
-                                         new InvocationPolicyFactory());
+            info.register_policy_factory(INVOCATION_POLICY_TYPE.value, new InvocationPolicyFactory());
         } catch (BAD_INV_ORDER e) {
             // ignore, policy factory already exists.
         }
@@ -112,13 +113,11 @@ public class ORBInitializerImpl extends LocalObject implements ORBInitializer {
 
         try {
             info.add_ior_interceptor(new IORInterceptorImpl(codec));
-            InterceptorImpl interceptor =
-                new InterceptorImpl(pic, codec, slotIds, tsi);
+            InterceptorImpl interceptor = new InterceptorImpl(pic, codec, slotIds, tsi);
             info.add_client_request_interceptor(interceptor);
             info.add_server_request_interceptor(interceptor);
         } catch (DuplicateName e) {
-            throw new INTERNAL(MinorCode.TSCreateFailed,
-                               CompletionStatus.COMPLETED_NO);
+            throw new INTERNAL(MinorCode.TSCreateFailed, CompletionStatus.COMPLETED_NO);
         }
     }
 }

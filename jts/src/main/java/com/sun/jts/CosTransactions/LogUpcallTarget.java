@@ -31,9 +31,8 @@
 package com.sun.jts.CosTransactions;
 
 /**
- * The LogUpcallTarget interface provides an operation that the log will call
- * in the event it goes short-on-storage. This class must be sub-classed in
- * order to implement the method that will handle the situation.
+ * The LogUpcallTarget interface provides an operation that the log will call in the event it goes short-on-storage.
+ * This class must be sub-classed in order to implement the method that will handle the situation.
  *
  * @version 0.01
  *

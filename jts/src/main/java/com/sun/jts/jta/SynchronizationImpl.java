@@ -16,8 +16,7 @@
 
 package com.sun.jts.jta;
 
-import com.sun.jts.CosTransactions.Configuration;
-import com.sun.logging.LogDomains;
+import static java.util.logging.Level.WARNING;
 
 import java.util.Enumeration;
 import java.util.Vector;
@@ -35,38 +34,42 @@ import org.omg.CosTransactions.SynchronizationHelper;
 import org.omg.CosTransactions.SynchronizationPOA;
 import org.omg.PortableServer.POA;
 
+import com.sun.jts.CosTransactions.Configuration;
+
 import jakarta.transaction.Synchronization;
 
 /**
- * An implementation of org.omg.CosTransactions.Synchronization
- * this object is activated at creation time and de-activated
- * when after_completion is called
+ * An implementation of org.omg.CosTransactions.Synchronization this object is activated at creation time and
+ * de-activated when after_completion is called
  *
  * @author Tony Ng
  */
 public class SynchronizationImpl extends SynchronizationPOA implements org.omg.CosTransactions.Synchronization {
 
-    private Vector syncs;
-    private Vector interposedSyncs;
-    private POA poa;
-    private org.omg.CosTransactions.Synchronization corbaRef = null;
-    private TransactionState state = null;
+    private static final long serialVersionUID = 1L;
+
     /**
      * Logger to log transaction messages
      */
-    static Logger _logger = LogDomains.getLogger(SynchronizationImpl.class, LogDomains.TRANSACTION_LOGGER);
+    static Logger _logger = Logger.getLogger(SynchronizationImpl.class.getName());
+
+    private Vector syncs;
+    private Vector interposedSyncs;
+    private POA poa;
+    private org.omg.CosTransactions.Synchronization corbaRef;
+    private TransactionState state;
+
 
     public SynchronizationImpl() {
         syncs = new Vector();
         interposedSyncs = new Vector();
-        poa = Configuration.getPOA("transient"/*#Frozen*/);
+        poa = Configuration.getPOA("transient"/* #Frozen */);
     }
 
     public SynchronizationImpl(TransactionState state) {
         this();
         this.state = state;
     }
-
 
     public void addSynchronization(Synchronization sync, boolean interposed) {
         if (!interposed) {
@@ -75,7 +78,6 @@ public class SynchronizationImpl extends SynchronizationPOA implements org.omg.C
             interposedSyncs.addElement(sync);
         }
     }
-
 
     @Override
     public void before_completion() {
@@ -89,12 +91,12 @@ public class SynchronizationImpl extends SynchronizationPOA implements org.omg.C
                 try {
                     state.setRollbackOnly();
                 } catch (Exception ex1) {
-                    _logger.log(Level.WARNING, "jts.unexpected_error_occurred_in_after_completion", ex1);
+                    _logger.log(WARNING, "jts.unexpected_error_occurred_in_after_completion", ex1);
                 }
-                _logger.log(Level.WARNING, "jts.unexpected_error_occurred_in_after_completion", rex);
+                _logger.log(WARNING, "jts.unexpected_error_occurred_in_after_completion", rex);
                 throw rex;
             } catch (Exception ex) {
-                _logger.log(Level.WARNING, "jts.unexpected_error_occurred_in_after_completion", ex);
+                _logger.log(WARNING, "jts.unexpected_error_occurred_in_after_completion", ex);
             }
         }
         Enumeration e1 = interposedSyncs.elements();
@@ -106,17 +108,16 @@ public class SynchronizationImpl extends SynchronizationPOA implements org.omg.C
                 try {
                     state.setRollbackOnly();
                 } catch (Exception ex1) {
-                    _logger.log(Level.WARNING, "jts.unexpected_error_occurred_in_after_completion", ex1);
+                    _logger.log(WARNING, "jts.unexpected_error_occurred_in_after_completion", ex1);
                 }
-                _logger.log(Level.WARNING, "jts.unexpected_error_occurred_in_after_completion", rex);
+                _logger.log(WARNING, "jts.unexpected_error_occurred_in_after_completion", rex);
                 throw rex;
             } catch (Exception ex) {
-                _logger.log(Level.WARNING, "jts.unexpected_error_occurred_in_after_completion", ex);
+                _logger.log(WARNING, "jts.unexpected_error_occurred_in_after_completion", ex);
             }
         }
         state.beforeCompletion();
     }
-
 
     @Override
     public void after_completion(Status status) {
@@ -129,7 +130,7 @@ public class SynchronizationImpl extends SynchronizationPOA implements org.omg.C
                 try {
                     sync.afterCompletion(result);
                 } catch (Exception ex) {
-                    _logger.log(Level.WARNING, "jts.unexpected_error_occurred_in_after_completion", ex);
+                    _logger.log(WARNING, "jts.unexpected_error_occurred_in_after_completion", ex);
                 }
             }
             Enumeration e = syncs.elements();
@@ -138,7 +139,7 @@ public class SynchronizationImpl extends SynchronizationPOA implements org.omg.C
                 try {
                     sync.afterCompletion(result);
                 } catch (Exception ex) {
-                    _logger.log(Level.WARNING, "jts.unexpected_error_occurred_in_after_completion", ex);
+                    _logger.log(WARNING, "jts.unexpected_error_occurred_in_after_completion", ex);
                 }
             }
         } finally {
@@ -151,11 +152,10 @@ public class SynchronizationImpl extends SynchronizationPOA implements org.omg.C
                     poa.deactivate_object(poa.reference_to_id(corbaRef));
                 }
             } catch (Exception ex) {
-                _logger.log(Level.WARNING, "jts.unexpected_error_occurred_in_after_completion", ex);
+                _logger.log(WARNING, "jts.unexpected_error_occurred_in_after_completion", ex);
             }
         }
     }
-
 
     public org.omg.CosTransactions.Synchronization getCORBAReference() {
         if (poa == null) {
@@ -176,9 +176,8 @@ public class SynchronizationImpl extends SynchronizationPOA implements org.omg.C
     }
 
     /*
-     * These methods are there to satisy the compiler. At some point
-     * when we move towards a tie based model, the org.omg.Corba.Object
-     * interface method implementation below shall be discarded.
+     * These methods are there to satisy the compiler. At some point when we move towards a tie based model, the
+     * org.omg.Corba.Object interface method implementation below shall be discarded.
      */
 
     @Override
@@ -217,20 +216,13 @@ public class SynchronizationImpl extends SynchronizationPOA implements org.omg.C
     }
 
     @Override
-    public Request _create_request(Context ctx,
-                   String operation,
-                   NVList arg_list,
-                   NamedValue result) {
+    public Request _create_request(Context ctx, String operation, NVList arg_list, NamedValue result) {
         throw new org.omg.CORBA.NO_IMPLEMENT("This is a locally constrained object.");
     }
 
     @Override
-    public Request _create_request(Context ctx,
-                   String operation,
-                   NVList arg_list,
-                   NamedValue result,
-                   ExceptionList exceptions,
-                   ContextList contexts) {
+    public Request _create_request(Context ctx, String operation, NVList arg_list, NamedValue result, ExceptionList exceptions,
+            ContextList contexts) {
         throw new org.omg.CORBA.NO_IMPLEMENT("This is a locally constrained object.");
     }
 
@@ -250,9 +242,7 @@ public class SynchronizationImpl extends SynchronizationPOA implements org.omg.C
     }
 
     @Override
-    public org.omg.CORBA.Object _set_policy_override(
-            org.omg.CORBA.Policy[] policies,
-            org.omg.CORBA.SetOverrideType set_add) {
+    public org.omg.CORBA.Object _set_policy_override(org.omg.CORBA.Policy[] policies, org.omg.CORBA.SetOverrideType set_add) {
         throw new org.omg.CORBA.NO_IMPLEMENT("This is a locally constrained object.");
     }
 }

@@ -31,17 +31,17 @@
 package com.sun.jts.CosTransactions;
 
 // Import required classes
+import java.io.Serializable;
 
-import java.io.*;
-
-/**A class containing ending information for a log record.
+/**
+ * A class containing ending information for a log record.
  *
  * @version 0.01
  *
  * @author Simon Holdsworth, IBM Corporation
  *
  * @see LogHandle
-*/
+ */
 //----------------------------------------------------------------------------
 // CHANGE HISTORY
 //
@@ -50,15 +50,18 @@ import java.io.*;
 //-----------------------------------------------------------------------------
 
 class LogRecordEnding implements Serializable {
-    /**This constant holds the size of the LogRecordEnding object.
+    /**
+     * This constant holds the size of the LogRecordEnding object.
      */
     final static int SIZEOF = LogLSN.SIZEOF;
 
-    /**The log record ending contains the current LSN.
+    /**
+     * The log record ending contains the current LSN.
      */
     LogLSN currentLSN = null;
 
-    /**Default LogRecordEnding constructor.
+    /**
+     * Default LogRecordEnding constructor.
      *
      * @param
      *
@@ -69,7 +72,8 @@ class LogRecordEnding implements Serializable {
     LogRecordEnding() {
     }
 
-    /**Constructs a LogReocrdEnding from the given byte array.
+    /**
+     * Constructs a LogReocrdEnding from the given byte array.
      *
      * @param bytes The array of bytes from which the object is to be constructed.
      * @param index The index in the array where copy is to start.
@@ -78,36 +82,37 @@ class LogRecordEnding implements Serializable {
      *
      * @see
      */
-    LogRecordEnding( byte[] bytes,
-                     int  index ) {
-        currentLSN = new LogLSN(bytes,index);
+    LogRecordEnding(byte[] bytes, int index) {
+        currentLSN = new LogLSN(bytes, index);
     }
 
-    /**Makes a byte representation of the LogRecordEnding.
+    /**
+     * Makes a byte representation of the LogRecordEnding.
      *
      * @param bytes The array of bytes into which the object is to be copied.
      * @param index The index in the array where copy is to start.
      *
-     * @return  Number of bytes copied.
+     * @return Number of bytes copied.
      *
      * @see
      */
-    final int toBytes( byte[] bytes,
-                       int  index ) {
-        currentLSN.toBytes(bytes,index);
+    final int toBytes(byte[] bytes, int index) {
+        currentLSN.toBytes(bytes, index);
 
         return SIZEOF;
     }
 
-    /**This method is called to direct the object to format its state to a String.
+    /**
+     * This method is called to direct the object to format its state to a String.
      *
      * @param
      *
-     * @return  The formatted representation of the object.
+     * @return The formatted representation of the object.
      *
      * @see
      */
+    @Override
     public final String toString() {
-        return "LRE(curr="/*#Frozen*/+currentLSN+")"/*#Frozen*/;
+        return "LRE(curr="/* #Frozen */ + currentLSN + ")"/* #Frozen */;
     }
 }

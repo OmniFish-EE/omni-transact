@@ -17,26 +17,20 @@
 package com.sun.jts.CosTransactions;
 
 // Import required classes.
-
-import java.util.*;
-
+import java.util.Hashtable;
+import java.util.Stack;
 
 /**
- * The CoordinatorLogPool is used as a cache for CoordinatorLog objects.
- * This pool allows the re-use of these objects which are very expensive
- * to instantiate.
+ * The CoordinatorLogPool is used as a cache for CoordinatorLog objects. This pool allows the re-use of these objects
+ * which are very expensive to instantiate.
  *
- * The pool is used by replacing calls to 'new CoordinatorLog()' in the
- * TopCoordinator with calls to CoordinatorLogPool.getCoordinatorLog().
- * The getCoordinatorLog() method attempts to return a CoordinatorLog
- * from the pool. If the pool is empty it instantiates a new
- * CoordinatorLog.
+ * The pool is used by replacing calls to 'new CoordinatorLog()' in the TopCoordinator with calls to
+ * CoordinatorLogPool.getCoordinatorLog(). The getCoordinatorLog() method attempts to return a CoordinatorLog from the
+ * pool. If the pool is empty it instantiates a new CoordinatorLog.
  *
- * Objects are re-used by calling CoordinatorLogPool.putCoordinatorLog()
- * to return a CoordinatorLog object back to the pool. At this time a
- * check is made to ensure that the internal pool size doesn't exceed a
- * pre set limit. If it does, then the object is discarded and not put
- * back into the pool.
+ * Objects are re-used by calling CoordinatorLogPool.putCoordinatorLog() to return a CoordinatorLog object back to the
+ * pool. At this time a check is made to ensure that the internal pool size doesn't exceed a pre set limit. If it does,
+ * then the object is discarded and not put back into the pool.
  *
  * The pool was added to improve performance of transaction logging
  *
@@ -45,7 +39,7 @@ import java.util.*;
  * @author Arun Krishnan
  *
  * @see
-*/
+ */
 class CoordinatorLogPool {
 
     private Stack pool;
@@ -53,7 +47,6 @@ class CoordinatorLogPool {
 
     public static CoordinatorLogPool CLPool = new CoordinatorLogPool();
     public static Hashtable CLPooltable = new Hashtable();
-
 
     /**
      * constructor
@@ -64,29 +57,24 @@ class CoordinatorLogPool {
     }
 
     /**
-     * get a CoordinatorLog object from the cache. Instantiate a
-     * new CoordinatorLog object if the cache is empty.
+     * get a CoordinatorLog object from the cache. Instantiate a new CoordinatorLog object if the cache is empty.
      *
      */
     public static synchronized CoordinatorLog getCoordinatorLog() {
-        if (Configuration.isDBLoggingEnabled() ||
-            Configuration.isFileLoggingDisabled()) {
+        if (Configuration.isDBLoggingEnabled() || Configuration.isFileLoggingDisabled()) {
             return null;
         }
         if (CLPool.pool.empty()) {
             return new CoordinatorLog();
-        }
-        else {
+        } else {
             CoordinatorLog cl = (CoordinatorLog) CLPool.pool.pop();
             return cl;
         }
     }
 
     /**
-     * return a CoordinatorLog object to the cache. To limit the size of
-     * the cache a check is made to ensure that the cache doesn't
-     * already have more that MAXSTACKSIZE elements. If so the object
-     * being returned is discarded.
+     * return a CoordinatorLog object to the cache. To limit the size of the cache a check is made to ensure that the cache
+     * doesn't already have more that MAXSTACKSIZE elements. If so the object being returned is discarded.
      *
      */
     public static void putCoordinatorLog(CoordinatorLog cl) {
@@ -97,25 +85,24 @@ class CoordinatorLogPool {
 
     // Added to support delegated recovery: multiple logs should coexist
     public static synchronized CoordinatorLog getCoordinatorLog(String logPath) {
-        CoordinatorLogPool clpool = (CoordinatorLogPool)CLPooltable.get(logPath);
+        CoordinatorLogPool clpool = (CoordinatorLogPool) CLPooltable.get(logPath);
         if (clpool == null) {
             clpool = new CoordinatorLogPool();
-            CLPooltable.put(logPath,clpool);
+            CLPooltable.put(logPath, clpool);
         }
         if (clpool.pool.empty()) {
             return new CoordinatorLog(logPath);
-        }
-        else {
-            return (CoordinatorLog)clpool.pool.pop();
+        } else {
+            return (CoordinatorLog) clpool.pool.pop();
         }
     }
 
     // Added to support delegated recovery: multiple logs should coexist
     public static void putCoordinatorLog(CoordinatorLog cl, String logPath) {
-        CoordinatorLogPool clpool = (CoordinatorLogPool)CLPooltable.get(logPath);
+        CoordinatorLogPool clpool = (CoordinatorLogPool) CLPooltable.get(logPath);
         if (clpool == null) {
             clpool = new CoordinatorLogPool();
-            CLPooltable.put(logPath,clpool);
+            CLPooltable.put(logPath, clpool);
         }
         if (clpool.pool.size() <= MAXSTACKSIZE) {
             clpool.pool.push(cl);
@@ -123,4 +110,3 @@ class CoordinatorLogPool {
     }
 
 }
-

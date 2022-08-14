@@ -16,12 +16,11 @@
 
 package com.sun.jts.pi;
 
-import org.omg.CORBA.Policy;
 import org.omg.CORBA.LocalObject;
-
+import org.omg.CORBA.Policy;
 import org.omg.CosTransactions.EITHER;
-import org.omg.CosTransactions.InvocationPolicy;
 import org.omg.CosTransactions.INVOCATION_POLICY_TYPE;
+import org.omg.CosTransactions.InvocationPolicy;
 
 /**
  * This is the InvocationPolicy object which holds an appropriate policy value.
@@ -37,13 +36,11 @@ public class InvocationPolicyImpl extends LocalObject implements InvocationPolic
         this.value = EITHER.value;
     }
 
-
     public InvocationPolicyImpl(short value) {
         this.value = value;
     }
 
     // org.omg.CosTransactions.InvocationPolicyOperations implementation
-
 
     @Override
     public short value() {
@@ -52,24 +49,20 @@ public class InvocationPolicyImpl extends LocalObject implements InvocationPolic
 
     // org.omg.CORBA.PolicyOperations implementation
 
-
     @Override
     public int policy_type() {
         return INVOCATION_POLICY_TYPE.value;
     }
-
 
     @Override
     public Policy copy() {
         return new InvocationPolicyImpl(this.value);
     }
 
-
     @Override
     public void destroy() {
         value = EITHER.value;
     }
-
 
     @Override
     public String toString() {

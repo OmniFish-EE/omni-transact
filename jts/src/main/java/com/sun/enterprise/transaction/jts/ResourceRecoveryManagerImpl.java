@@ -21,43 +21,42 @@ import static java.util.logging.Level.FINE;
 import static java.util.logging.Level.SEVERE;
 import static java.util.logging.Level.WARNING;
 
-import java.util.*;
+import java.util.ArrayList;
+import java.util.Collection;
+import java.util.HashMap;
+import java.util.List;
+import java.util.Map;
+import java.util.Set;
+import java.util.Vector;
 import java.util.logging.Logger;
-import jakarta.inject.Inject;
+
 import javax.transaction.xa.XAResource;
 
-import com.sun.enterprise.config.serverbeans.Config;
-import com.sun.enterprise.transaction.config.TransactionService;
-import com.sun.enterprise.util.i18n.StringManager;
-import com.sun.logging.LogDomains;
-
+import com.sun.enterprise.transaction.JavaEETransactionManagerImpl;
 import com.sun.enterprise.transaction.api.JavaEETransactionManager;
-import com.sun.enterprise.transaction.api.ResourceRecoveryManager;
 import com.sun.enterprise.transaction.api.RecoveryResourceRegistry;
-import com.sun.enterprise.transaction.spi.RecoveryResourceListener;
-import com.sun.enterprise.transaction.spi.RecoveryResourceHandler;
+import com.sun.enterprise.transaction.api.ResourceRecoveryManager;
+import com.sun.enterprise.transaction.api.TransactionServiceConfig;
 import com.sun.enterprise.transaction.spi.RecoveryEventListener;
-import com.sun.enterprise.transaction.JavaEETransactionManagerSimplified;
-
-import com.sun.jts.CosTransactions.DelegatedRecoveryManager;
+import com.sun.enterprise.transaction.spi.RecoveryResourceHandler;
+import com.sun.enterprise.transaction.spi.RecoveryResourceListener;
+import com.sun.enterprise.transaction.spi.ServiceLocator;
 import com.sun.jts.CosTransactions.Configuration;
+import com.sun.jts.CosTransactions.DelegatedRecoveryManager;
 import com.sun.jts.CosTransactions.RecoveryManager;
-import org.glassfish.api.admin.ServerEnvironment;
 
-import org.jvnet.hk2.annotations.Service;
-import org.glassfish.hk2.api.PostConstruct;
-import org.glassfish.hk2.api.ServiceLocator;
+import jakarta.enterprise.context.ApplicationScoped;
+import jakarta.inject.Inject;
 
 /**
  * Resource recovery manager to recover transactions.
  *
  * @author Jagadish Ramu
  */
-@Service
-public class ResourceRecoveryManagerImpl implements PostConstruct, ResourceRecoveryManager {
+@ApplicationScoped
+public class ResourceRecoveryManagerImpl implements ResourceRecoveryManager {
 
-    private static Logger _logger = LogDomains.getLogger(JavaEETransactionManagerSimplified.class, LogDomains.JTA_LOGGER);
-    private static StringManager localStrings = StringManager.getManager(JavaEETransactionManagerSimplified.class);
+    private static Logger _logger = Logger.getLogger(JavaEETransactionManagerImpl.class.getName());
 
     // Externally registered (ie not via habitat.getAllByContract) ResourceHandlers
     private static List<RecoveryResourceHandler> externallyRegisteredRecoveryResourceHandlers = new ArrayList<>();
@@ -65,7 +64,7 @@ public class ResourceRecoveryManagerImpl implements PostConstruct, ResourceRecov
     @Inject
     private ServiceLocator serviceLocator;
 
-    private TransactionService transactionService;
+    private TransactionServiceConfig transactionServiceConfig;
     private JavaEETransactionManager eeTransactionManager;
 
     private Collection<RecoveryResourceHandler> recoveryResourceHandlers;
@@ -93,6 +92,7 @@ public class ResourceRecoveryManagerImpl implements PostConstruct, ResourceRecov
      * @return boolean indicating the status of transaction recovery
      * @throws Exception when unable to recover
      */
+    @Override
     public boolean recoverIncompleteTx(boolean delegated, String logPath) throws Exception {
         return recoverIncompleteTx(delegated, logPath, ((delegated) ? null : Configuration.getPropertyValue(Configuration.INSTANCE_NAME)),
                 false);
@@ -108,8 +108,8 @@ public class ResourceRecoveryManagerImpl implements PostConstruct, ResourceRecov
      * @return boolean indicating the status of transaction recovery
      * @throws Exception when unable to recover
      */
-    public boolean recoverIncompleteTx(boolean delegated, String logPath, String instance, boolean notifyRecoveryListeners)
-            throws Exception {
+    @Override
+    public boolean recoverIncompleteTx(boolean delegated, String logPath, String instance, boolean notifyRecoveryListeners) throws Exception {
         boolean result = false;
         Map<RecoveryResourceHandler, Vector> handlerToXAResourcesMap = null;
         try {
@@ -132,11 +132,9 @@ public class ResourceRecoveryManagerImpl implements PostConstruct, ResourceRecov
             }
 
             if (_logger.isLoggable(FINE)) {
-                String msg = localStrings.getStringWithDefault("xaresource.recovering", "Recovering {0} XA resources...",
-                        new Object[] { String.valueOf(size) });
-
-                _logger.log(FINE, msg);
+                _logger.log(FINE, () -> "Recovering " + size + " XA resources...");
             }
+
             if (!delegated) {
                 RecoveryManager.recoverIncompleteTx(xaresArray);
                 result = true;
@@ -199,14 +197,15 @@ public class ResourceRecoveryManagerImpl implements PostConstruct, ResourceRecov
      *
      * @param force boolean to indicate if it has to be forced.
      */
+    @Override
     public void recoverXAResources(boolean force) {
         if (force) {
             try {
-                if (transactionService == null) {
-                    transactionService = serviceLocator.getService(Config.class, ServerEnvironment.DEFAULT_INSTANCE_NAME)
-                                                       .getExtensionByType(TransactionService.class);
+                if (transactionServiceConfig == null) {
+                    transactionServiceConfig = serviceLocator.getService(TransactionServiceConfig.class, "default-instance-name");
+
                 }
-                if (!Boolean.valueOf(transactionService.getAutomaticRecovery())) {
+                if (!Boolean.valueOf(transactionServiceConfig.getAutomaticRecovery())) {
                     return;
                 }
 
@@ -225,10 +224,7 @@ public class ResourceRecoveryManagerImpl implements PostConstruct, ResourceRecov
 
                 resourceRecoveryStarted();
                 if (_logger.isLoggable(FINE)) {
-                    String msg = localStrings.getStringWithDefault("xaresource.recovering", "Recovering {0} XA resources...",
-                            new Object[] { String.valueOf(size) });
-
-                    _logger.log(FINE, msg);
+                    _logger.log(FINE, "Recovering " + size + " XA resources...");
                 }
                 eeTransactionManager.recover(xaresArray);
                 resourceRecoveryCompleted();
@@ -291,6 +287,7 @@ public class ResourceRecoveryManagerImpl implements PostConstruct, ResourceRecov
      *
      * @param lazy boolean
      */
+    @Override
     public void setLazyRecovery(boolean lazy) {
         lazyRecovery = lazy;
     }
@@ -298,6 +295,7 @@ public class ResourceRecoveryManagerImpl implements PostConstruct, ResourceRecov
     /**
      * to recover xa resources
      */
+    @Override
     public void recoverXAResources() {
         recoverXAResources(!lazyRecovery);
     }
@@ -323,10 +321,12 @@ public class ResourceRecoveryManagerImpl implements PostConstruct, ResourceRecov
 
     public static void registerRecoveryResourceHandler(final XAResource xaResource) {
         RecoveryResourceHandler recoveryResourceHandler = new RecoveryResourceHandler() {
+            @Override
             public void loadXAResourcesAndItsConnections(List xaresList, List connList) {
                 xaresList.add(xaResource);
             }
 
+            @Override
             public void closeConnections(List connList) {
                 ;
             }

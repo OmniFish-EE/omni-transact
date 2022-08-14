@@ -16,57 +16,53 @@
 
 package com.sun.jts.utils.RecoveryHooks;
 
-import java.text.MessageFormat;
+import static java.util.logging.Level.WARNING;
+
 import java.util.Hashtable;
 import java.util.ResourceBundle;
-import com.sun.jts.jtsxa.Utility;
-import com.sun.jts.codegen.otsidl.JCoordinator;
-import com.sun.jts.codegen.otsidl.JCoordinatorHelper;
-import com.sun.jts.CosTransactions.GlobalTID;
-import com.sun.jts.CosTransactions.ControlImpl;
-import com.sun.jts.CosTransactions.CurrentTransaction;
+import java.util.logging.Level;
+import java.util.logging.Logger;
+
 import org.omg.CosTransactions.Coordinator;
 
-import java.util.logging.Logger;
-import java.util.logging.Level;
-import com.sun.logging.LogDomains;
-import com.sun.jts.utils.LogFormatter;
+import com.sun.jts.CosTransactions.ControlImpl;
+import com.sun.jts.CosTransactions.CurrentTransaction;
+import com.sun.jts.CosTransactions.GlobalTID;
+import com.sun.jts.codegen.otsidl.JCoordinator;
+import com.sun.jts.codegen.otsidl.JCoordinatorHelper;
+import com.sun.jts.jtsxa.Utility;
+
 /**
- * This class defines API's for the test harness to induce
- * recovery by setting crash points (in the case of TM crashes)
+ * This class defines APIs for the test harness to induce recovery by setting crash points (in the case of TM crashes)
  * and wait points (in the case of RM crashes).
  *
- * In order to induce TM crashes, the test harness sets the failure points
- * by calling setCrashPoint(), after transaction.begin() from each thread.
- * Thus, multiple threads involving different transactions can
- * set different points of failure, which will cause the TM to wait
- * at the failure points, until crash() method is invoked.
- * Note: Only those transactions calling setCrashPoint() will be affected.
+ * In order to induce TM crashes, the test harness sets the failure points by calling setCrashPoint(), after
+ * transaction.begin() from each thread. Thus, multiple threads involving different transactions can set different
+ * points of failure, which will cause the TM to wait at the failure points, until crash() method is invoked. Note: Only
+ * those transactions calling setCrashPoint() will be affected.
  *
- * The crash() method needs to be invoked from a seperate
- * thread. The TM would increment TestRecovery.waitCount field to
- * indicate the total number of failure points reached.
- * When the waitCount reaches the expected value
- * (obtained through getWaitCount()), the test harness shall call crash().
+ * The crash() method needs to be invoked from a seperate thread. The TM would increment TestRecovery.waitCount field to
+ * indicate the total number of failure points reached. When the waitCount reaches the expected value (obtained through
+ * getWaitCount()), the test harness shall call crash().
  *
- * In order to test RM recovery, the
- * test harness sets the failure points by calling setWaitPoint(),
- * after transaction.begin() from each thread. The TM  waits at predefined
- * failure points for the stipulated time duration, during which the RM is
- * expected to crash; after which the TM will proceed with regular
- * completion (a human is expected to crash the RM manually during the
- * wait duration). As in the TM recovery case, the  waitCount will be
+ * In order to test RM recovery, the test harness sets the failure points by calling setWaitPoint(), after
+ * transaction.begin() from each thread. The TM waits at predefined failure points for the stipulated time duration,
+ * during which the RM is expected to crash; after which the TM will proceed with regular completion (a human is
+ * expected to crash the RM manually during the wait duration). As in the TM recovery case, the waitCount will be
  * incremented to indicate the total number of failure points reached.
  *
- * If the RM does not crash during the stipulated time
- * duration, the TM will proceed with normal completion for the specific
- * transaction. It does not matter if the RM
- * comes back alive, since the TM would anyway retry completion.
+ * If the RM does not crash during the stipulated time duration, the TM will proceed with normal completion for the
+ * specific transaction. It does not matter if the RM comes back alive, since the TM would anyway retry completion.
  * Note: Only those transactions calling setWaitPoint() will be affected.
  *
  * @author Ram Jeyaraman 04/21/1999
  */
 public class FailureInducer {
+
+    /*
+     * Logger to log transaction messages
+     */
+    static Logger _logger = Logger.getLogger(FailureInducer.class.getName());
 
     // static finals
     public static final int ACTIVE = 0;
@@ -77,41 +73,30 @@ public class FailureInducer {
 
     // static fields
 
-    private static boolean failureInducerIsActive = false;
-    private static boolean crash = false;
+    private static boolean failureInducerIsActive;
+    private static boolean crash;
     private static int waitPeriod = 0;
     private static int waitCount = 0;
     private static int recoveryWaitDuration = 0;
     private static Hashtable crashList = new Hashtable();
     private static Hashtable waitList = new Hashtable();
     private static Hashtable waitTime = new Hashtable();
-    private static ResourceBundle messages = ResourceBundle.
-        getBundle("com.sun.jts.utils.RecoveryHooks.Messages"/*#Frozen*/);
-    /*
-        Logger to log transaction messages
-    */
-        static Logger _logger = LogDomains.getLogger(FailureInducer.class, LogDomains.TRANSACTION_LOGGER);
-    // static initializer
+    private static ResourceBundle messages = ResourceBundle.getBundle("com.sun.jts.utils.RecoveryHooks.Messages"/* #Frozen */);
 
-    static {
-
-
-    }
 
     // static methods
 
     /**
-     * This activates the FailureInducer. An application needs to activate
-     * the failure inducer first, before setting the fail or wait points.
+     * This activates the FailureInducer. An application needs to activate the failure inducer first, before setting the
+     * fail or wait points.
      */
     public static void activateFailureInducer() {
         failureInducerIsActive = true;
     }
 
     /**
-     * This deactivates the FailureInducer. An application deactivate the
-     * failure inducer, to temporarily stop failure inducement. The fail
-     * or wait points are not forgotten during the dormant state.
+     * This deactivates the FailureInducer. An application deactivate the failure inducer, to temporarily stop failure
+     * inducement. The fail or wait points are not forgotten during the dormant state.
      */
     public static void deactivateFailureInducer() {
         failureInducerIsActive = false;
@@ -125,16 +110,14 @@ public class FailureInducer {
     }
 
     /**
-     * Setting a crash point will cause the TM to wait at the
-     * failure point, until crash() is called.
+     * Setting a crash point will cause the TM to wait at the failure point, until crash() is called.
      *
-     * @param crashPoint pre-defined failure points
-     *  (PREPARING, PREPARED, COMMITTING, COMMITTED).
+     * @param crashPoint pre-defined failure points (PREPARING, PREPARED, COMMITTING, COMMITTED).
      */
     public static void setCrashPoint(Integer crashPoint) {
         // sanity check
         if (crashPoint == null) {
-            _logger.log(Level.SEVERE,"jts.invalid_crash_point");
+            _logger.log(Level.SEVERE, "jts.invalid_crash_point");
             return;
         }
 
@@ -145,17 +128,15 @@ public class FailureInducer {
     }
 
     /**
-     * Setting a wait point will cause the TM to wait at the
-     * failure point, for the stipulated wait duration.
+     * Setting a wait point will cause the TM to wait at the failure point, for the stipulated wait duration.
      *
-     * @param crashPoint pre-defined failure points
-     *  (PREPARING, PREPARED, COMMITTING, COMMITTED).
+     * @param crashPoint pre-defined failure points (PREPARING, PREPARED, COMMITTING, COMMITTED).
      * @param waitDuration time duration (seconds) for RM failure to happen.
      */
     public static void setWaitPoint(Integer waitPoint, int waitDuration) {
         // sanity check
         if (waitPoint == null) {
-            _logger.log(Level.SEVERE,"jts.invalid_wait_point");
+            _logger.log(Level.SEVERE, "jts.invalid_wait_point");
             return;
         }
 
@@ -188,38 +169,36 @@ public class FailureInducer {
     }
 
     /**
-     * This method is called by the coordinator at every valid
-     * failure point. If the crash point or the wait point set for
-     * the current transaction matches the current failure point,
-     * an appropriate action (crash or wait) is taken.
-     * <em>Note:</em> Crash action takes precedence over wait actions for the
-     * same failure point.
+     * This method is called by the coordinator at every valid failure point. If the crash point or the wait point set for
+     * the current transaction matches the current failure point, an appropriate action (crash or wait) is taken.
+     * <em>Note:</em> Crash action takes precedence over wait actions for the same failure point.
      *
      * @param coord the coordinator object (which represents the transaction.
      * @param failPoint indicates the current failure point in coordinator code.
      */
     public static void waitForFailure(GlobalTID gtid, Integer failPoint) {
-
-        // sanity check
-        if (gtid == null)
+        // Sanity check
+        if (gtid == null) {
             return;
+        }
 
         Integer crashPoint = (Integer) crashList.get(gtid);
         Integer waitPoint = (Integer) waitList.get(gtid);
 
-        // no crash point or wait point has been set for the transaction
+        // No crash point or wait point has been set for the transaction
         if (crashPoint == null && waitPoint == null) {
             return;
         }
 
-        _logger.log(Level.WARNING,"jts.failpoint",failPoint);
-        // increment wait count and wait for the crash flag to be set
+        _logger.log(WARNING, "jts.failpoint", failPoint);
+        // Increment wait count and wait for the crash flag to be set
         if (crashPoint != null && crashPoint.equals(failPoint)) {
             incrementWaitCount();
-            while (crash == false) {
+            while (!crash) {
                 try {
                     Thread.sleep(3000);
-                } catch (Exception e) {}
+                } catch (Exception e) {
+                }
             }
             System.exit(0);
         }
@@ -229,19 +208,21 @@ public class FailureInducer {
             Integer waitDuration = (Integer) waitTime.get(gtid);
 
             // wait duration has not be set or is invalid
-            if (waitDuration == null || waitDuration.intValue() < 0)
+            if (waitDuration == null || waitDuration.intValue() < 0) {
                 return;
+            }
 
             // wait for the stipulated duration
             try {
                 Thread.sleep(waitDuration.intValue() * 1000L);
-            } catch (Exception e) {}
+            } catch (Exception e) {
+            }
         }
     }
 
     /**
-     * Enable wait action dyring delegated recovery via "add-wait-point-during-recovery"
-     * property added to the transaction-service config
+     * Enable wait action dyring delegated recovery via "add-wait-point-during-recovery" property added to the
+     * transaction-service config
      */
     public static void setWaitPointRecovery(int waitDuration) {
         recoveryWaitDuration = waitDuration;
@@ -252,11 +233,12 @@ public class FailureInducer {
      */
     public static void waitInRecovery() {
         if (recoveryWaitDuration > 0) {
-            _logger.log(Level.WARNING,"jts.failpoint", "RECOVERY");
+            _logger.log(WARNING, "jts.failpoint", "RECOVERY");
             // wait for the stipulated duration
             try {
                 Thread.sleep(recoveryWaitDuration * 1000L);
-            } catch (Exception e) {}
+            } catch (Exception e) {
+            }
         }
     }
 
@@ -272,6 +254,7 @@ public class FailureInducer {
                 gtid = control.getGlobalTID();
             }
         }
+
         return gtid;
     }
 }

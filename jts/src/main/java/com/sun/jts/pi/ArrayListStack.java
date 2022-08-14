@@ -26,15 +26,14 @@ package com.sun.jts.pi;
 import java.util.ArrayList;
 
 /**
- * The <code>ArrayListStack</code> class represents a last-in-first-out
- * (LIFO) stack of objects. It encapsulates class <tt>ArrayList</tt> with four
- * operations that allow a list to be treated as a stack. The usual
- * <tt>push</tt> and <tt>pop</tt> operations are provided, as well as a
- * method to <tt>peek</tt> at the top item on the stack, and a method to test
- * for whether the stack is <tt>empty</tt>
+ * The <code>ArrayListStack</code> class represents a last-in-first-out (LIFO) stack of objects. It encapsulates class
+ * <tt>ArrayList</tt> with four operations that allow a list to be treated as a stack. The usual <tt>push</tt> and
+ * <tt>pop</tt> operations are provided, as well as a method to <tt>peek</tt> at the top item on the stack, and a method
+ * to test for whether the stack is <tt>empty</tt>
  * <p>
  * When a stack is first created, it contains no items.
- * @author  Darpan Dinker, $Author: tcfujii $
+ *
+ * @author Darpan Dinker, $Author: tcfujii $
  * @version $Revision: 1.3 $ on $Date: 2005/12/25 04:12:09 $
  */
 public class ArrayListStack {
@@ -54,6 +53,7 @@ public class ArrayListStack {
 
     /**
      * Provides the current size of the stack.
+     *
      * @return int return the current size.
      */
     public int size() {
@@ -61,10 +61,11 @@ public class ArrayListStack {
     }
 
     /**
-     * Pushes an item onto the top of this stack. This method will internally
-     * add elements to the <tt>ArrayList</tt> if the stack is full.
-     * @param   obj   the object to be pushed onto this stack.
-     * @see     java.util.ArrayList#add
+     * Pushes an item onto the top of this stack. This method will internally add elements to the <tt>ArrayList</tt> if the
+     * stack is full.
+     *
+     * @param obj the object to be pushed onto this stack.
+     * @see java.util.ArrayList#add
      */
     public void push(Object obj) {
         list.add(curIndex, obj);
@@ -72,10 +73,9 @@ public class ArrayListStack {
     }
 
     /**
-     * Removes the object at the top of this stack and returns that
-     * object as the value of this function.
-     * @return     The object at the top of this stack (the last item
-     *             of the <tt>ArrayList</tt> object). Null if stack is empty.
+     * Removes the object at the top of this stack and returns that object as the value of this function.
+     *
+     * @return The object at the top of this stack (the last item of the <tt>ArrayList</tt> object). Null if stack is empty.
      */
     public Object pop() {
         if (curIndex > 0) {
@@ -87,18 +87,17 @@ public class ArrayListStack {
 
     /**
      * Tests if this stack is empty.
-     * @return  <code>true</code> if and only if this stack contains
-     *          no items; <code>false</code> otherwise.
+     *
+     * @return <code>true</code> if and only if this stack contains no items; <code>false</code> otherwise.
      */
     public boolean empty() {
         return curIndex == 0;
     }
 
     /**
-     * Looks at the object at the top of this stack without removing it
-     * from the stack.
-     * @return     the object at the top of this stack (the last item
-     *             of the <tt>ArrayList</tt> object).  Null if stack is empty.
+     * Looks at the object at the top of this stack without removing it from the stack.
+     *
+     * @return the object at the top of this stack (the last item of the <tt>ArrayList</tt> object). Null if stack is empty.
      */
     public Object peek() {
         Object top = null;

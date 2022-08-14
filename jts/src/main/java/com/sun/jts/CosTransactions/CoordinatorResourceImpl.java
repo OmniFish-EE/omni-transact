@@ -30,33 +30,43 @@
 
 package com.sun.jts.CosTransactions;
 
-// Import required classes.
+import java.util.logging.Level;
+import java.util.logging.Logger;
 
-import org.omg.CORBA.*;
-import org.omg.PortableServer.*;
+// Import required classes.
+import org.omg.CORBA.CompletionStatus;
+import org.omg.CORBA.INTERNAL;
+import org.omg.CORBA.OBJECT_NOT_EXIST;
+import org.omg.CORBA.SystemException;
+import org.omg.CORBA.TRANSACTION_ROLLEDBACK;
+import org.omg.CosTransactions.Coordinator;
+import org.omg.CosTransactions.HeuristicCommit;
+import org.omg.CosTransactions.HeuristicHazard;
+import org.omg.CosTransactions.HeuristicMixed;
+import org.omg.CosTransactions.HeuristicRollback;
+import org.omg.CosTransactions.NotPrepared;
+import org.omg.CosTransactions.Resource;
+import org.omg.CosTransactions.Vote;
+import org.omg.PortableServer.POA;
 import org.omg.PortableServer.POAPackage.ServantAlreadyActive;
 import org.omg.PortableServer.POAPackage.ServantNotActive;
-import org.omg.CosTransactions.*;
 
-import com.sun.jts.codegen.otsidl.*;
-
-import com.sun.jts.trace.*;
-import java.util.logging.Logger;
-import java.util.logging.Level;
-import com.sun.logging.LogDomains;
+import com.sun.jts.codegen.otsidl.CoordinatorResource;
+import com.sun.jts.codegen.otsidl.CoordinatorResourceHelper;
+import com.sun.jts.codegen.otsidl.CoordinatorResourcePOA;
 import com.sun.jts.utils.LogFormatter;
 
-/**The CoordinatorResourceImpl interface provides operations that allow a
- * Coordinator to be represented among the registered Resources of a
- * superior Coordinator, without requiring that the Coordinator support the
- * Resource interface.
+/**
+ * The CoordinatorResourceImpl interface provides operations that allow a Coordinator to be represented among the
+ * registered Resources of a superior Coordinator, without requiring that the Coordinator support the Resource
+ * interface.
  *
  * @version 0.02
  *
  * @author Simon Holdsworth, IBM Corporation
  *
  * @see
-*/
+ */
 //----------------------------------------------------------------------------
 // CHANGE HISTORY
 //
@@ -66,49 +76,46 @@ import com.sun.jts.utils.LogFormatter;
 //                Improved behaviour post recovery occurring
 //-----------------------------------------------------------------------------
 
-class CoordinatorResourceImpl extends CoordinatorResourcePOA
-        implements CompletionHandler {
+class CoordinatorResourceImpl extends CoordinatorResourcePOA implements CompletionHandler {
     private static POA poa = null;
     private static boolean recoverable = false;
     private CoordinatorResource thisRef = null;
 
-    /**This flag may be set to indicate that the transaction is being forced.
+    /**
+     * This flag may be set to indicate that the transaction is being forced.
      */
     boolean beingForced = false;
 
     private GlobalTID globalTID = null;
-    private boolean   subtransaction = false;
-    private boolean   aborted = false;
-    private boolean   heuristicDamage = false;
-    private boolean   completed = false;
-    private boolean   setAsTerminator = false;
+    private boolean subtransaction = false;
+    private boolean aborted = false;
+    private boolean heuristicDamage = false;
+    private boolean completed = false;
+    private boolean setAsTerminator = false;
 
     /*
-        Logger to log transaction messages
-    */
+     * Logger to log transaction messages
+     */
 
-    static Logger _logger = LogDomains.getLogger(CoordinatorResourceImpl.class, LogDomains.TRANSACTION_LOGGER);
-    /**Normal constructor.
+    static Logger _logger = Logger.getLogger(CoordinatorResourceImpl.class.getName());
+
+    /**
+     * Normal constructor.
      * <p>
-     * Sets up the CoordinatorResourceImpl with the Coordinator reference and the
-     * local transaction identifier so that the Resource can always find the
-     * Coordinator to pass on the two-phase commit messages.
+     * Sets up the CoordinatorResourceImpl with the Coordinator reference and the local transaction identifier so that the
+     * Resource can always find the Coordinator to pass on the two-phase commit messages.
      * <p>
-     * A flag is passed to indicate whether the CoordinatorResourceImpl represents
-     * a subtransaction.
+     * A flag is passed to indicate whether the CoordinatorResourceImpl represents a subtransaction.
      *
-     * @param globalTID  The global transaction identifier.
-     * @param coord      The Coordinator for the transaction.
-     * @param subtran    Subtransaction indicator.
+     * @param globalTID The global transaction identifier.
+     * @param coord The Coordinator for the transaction.
+     * @param subtran Subtransaction indicator.
      *
      * @return
      *
      * @see
      */
-    CoordinatorResourceImpl( GlobalTID       globalTID,
-                             CoordinatorImpl coord,
-                             boolean         subtran ) {
-
+    CoordinatorResourceImpl(GlobalTID globalTID, CoordinatorImpl coord, boolean subtran) {
 
         // Set up the instance variables to those values passed in.
 
@@ -118,26 +125,25 @@ class CoordinatorResourceImpl extends CoordinatorResourcePOA
         // Inform the Coordinator that this is the object that normally terminates
         // the transaction.
 
-        if( coord != null )
+        if (coord != null)
             coord.setTerminator(this);
 
     }
 
-    /**Informs the CoordinatorResourceImpl object that the transaction it
-     * represents has completed.
+    /**
+     * Informs the CoordinatorResourceImpl object that the transaction it represents has completed.
      * <p>
-     * Flags indicate whether the transaction aborted, and whether there was
-     * heuristic damage.
+     * Flags indicate whether the transaction aborted, and whether there was heuristic damage.
      *
-     * @param aborted          Indicates the transaction aborted.
-     * @param heuristicDamage  Indicates heuristic damage occurred.
+     * @param aborted Indicates the transaction aborted.
+     * @param heuristicDamage Indicates heuristic damage occurred.
      *
      * @return
      *
      * @see CompletionHandler
      */
-    public void setCompleted( boolean aborted,
-                              boolean heuristicDamage ) {
+    @Override
+    public void setCompleted(boolean aborted, boolean heuristicDamage) {
 
         // Record the information.
 
@@ -147,47 +153,44 @@ class CoordinatorResourceImpl extends CoordinatorResourcePOA
 
     }
 
-    /**Requests the prepare phase vote from the object.
+    /**
+     * Requests the prepare phase vote from the object.
      * <p>
-     * This uses a private interface to pass the superior Coordinator's prepare request.
-     * on to the Coordinator that registered the CoordinatorResourceImpl.
+     * This uses a private interface to pass the superior Coordinator's prepare request. on to the Coordinator that
+     * registered the CoordinatorResourceImpl.
      * <p>
      * The result from the Coordinator is returned to the caller.
      *
      * @param
      *
-     * @return  The Coordinators vote.
+     * @return The Coordinators vote.
      *
-     * @exception SystemException  The operation failed.
-     * @exception HeuristicMixed  Indicates that a participant voted to roll the
-     *   transaction back, but one or more others have already heuristically committed.
-     * @exception HeuristicHazard  Indicates that a participant voted to roll the
-     *   transaction back, but one or more others may have already heuristically
-     *   committed.
+     * @exception SystemException The operation failed.
+     * @exception HeuristicMixed Indicates that a participant voted to roll the transaction back, but one or more others
+     * have already heuristically committed.
+     * @exception HeuristicHazard Indicates that a participant voted to roll the transaction back, but one or more others
+     * may have already heuristically committed.
      *
      * @see Resource
      */
-    public Vote prepare()
-        throws SystemException, HeuristicMixed, HeuristicHazard {
-
+    @Override
+    public Vote prepare() throws SystemException, HeuristicMixed, HeuristicHazard {
 
         Vote result = Vote.VoteRollback;
 
         // If no global identifier has been set up, we can do nothing but vote for
         // the transaction to be rolled back.
 
-        if( globalTID == null ) {
-            INTERNAL exc = new INTERNAL(MinorCode.NoGlobalTID,
-                                        CompletionStatus.COMPLETED_NO);
+        if (globalTID == null) {
+            INTERNAL exc = new INTERNAL(MinorCode.NoGlobalTID, CompletionStatus.COMPLETED_NO);
             throw exc;
         }
 
         // Prepare operations should only come in for top-level transactions.
 
-        if( subtransaction ) {
+        if (subtransaction) {
 
-            INTERNAL exc = new INTERNAL(MinorCode.TopForSub,
-                                        CompletionStatus.COMPLETED_NO);
+            INTERNAL exc = new INTERNAL(MinorCode.TopForSub, CompletionStatus.COMPLETED_NO);
             throw exc;
         }
 
@@ -204,13 +207,13 @@ class CoordinatorResourceImpl extends CoordinatorResourcePOA
 
             // Look up the Coordinator for the transaction.
 
-            TopCoordinator coord = (TopCoordinator)RecoveryManager.getCoordinator(globalTID);
+            TopCoordinator coord = (TopCoordinator) RecoveryManager.getCoordinator(globalTID);
 
             // If there is a Coordinator, lock it for the duration of this operation.
             // If there is no Coordinator, return a rollback vote.
 
-            if( coord != null )
-                synchronized( coord ) {
+            if (coord != null)
+                synchronized (coord) {
 
                     // Get the Coordinator's vote.
                     // If the Coordinator throws HeuristicMixed or HeuristicHazard,
@@ -219,12 +222,12 @@ class CoordinatorResourceImpl extends CoordinatorResourcePOA
                     result = coord.prepare();
 
                     // If the Coordinator has voted to roll the transaction back, then this
-                    // CoordinatorResourceImpl will not be called again.  Ensure that the
+                    // CoordinatorResourceImpl will not be called again. Ensure that the
                     // Coordinator has rolled back.
                     // If the Coordinator throws HeuristicMixed or HeuristicHazard,
                     // allow them to percolate to the caller.
 
-                    if( result == Vote.VoteRollback )
+                    if (result == Vote.VoteRollback)
                         coord.rollback(false);
                 }
         }
@@ -240,59 +243,53 @@ class CoordinatorResourceImpl extends CoordinatorResourcePOA
         return result;
     }
 
-    /**Informs the object that the transaction is to be committed.
+    /**
+     * Informs the object that the transaction is to be committed.
      * <p>
-     * Passes the superior Coordinator's commit request on to the Coordinator that
-     * registered the CoordinatorResourceImpl, using a private interface.
+     * Passes the superior Coordinator's commit request on to the Coordinator that registered the CoordinatorResourceImpl,
+     * using a private interface.
      * <p>
-     * If the Coordinator does not raise any heuristic exception, the
-     * CoordinatorResourceImpl destroys itself.
+     * If the Coordinator does not raise any heuristic exception, the CoordinatorResourceImpl destroys itself.
      *
      * @param
      *
      * @return
      *
-     * @exception HeuristicRollback  The transaction has already been rolled back.
-     * @exception HeuristicMixed  At least one participant in the transaction has
-     *                            rolled back its changes.
-     * @exception HeuristicHazard  At least one participant in the transaction may
-     *                             have rolled back its changes.
-     * @exception NotPrepared  The transaction has not yet been prepared.
-     * @exception SystemException  An error occurred.  The minor code indicates
-     *                             the reason for the exception.
+     * @exception HeuristicRollback The transaction has already been rolled back.
+     * @exception HeuristicMixed At least one participant in the transaction has rolled back its changes.
+     * @exception HeuristicHazard At least one participant in the transaction may have rolled back its changes.
+     * @exception NotPrepared The transaction has not yet been prepared.
+     * @exception SystemException An error occurred. The minor code indicates the reason for the exception.
      *
      * @see Resource
      */
-    public void commit()
-        throws HeuristicRollback, HeuristicMixed, HeuristicHazard, NotPrepared,
-        SystemException {
+    @Override
+    public void commit() throws HeuristicRollback, HeuristicMixed, HeuristicHazard, NotPrepared, SystemException {
 
         // If no global identifier has been set up, we can do nothing.
 
-        if( globalTID == null ) {
-            INTERNAL exc = new INTERNAL(MinorCode.NoGlobalTID,
-                                        CompletionStatus.COMPLETED_NO);
+        if (globalTID == null) {
+            INTERNAL exc = new INTERNAL(MinorCode.NoGlobalTID, CompletionStatus.COMPLETED_NO);
             throw exc;
         }
 
         // Commit operations should only come in for top-level transactions.
 
-        if( subtransaction ) {
-            INTERNAL exc = new INTERNAL(MinorCode.TopForSub,
-                                        CompletionStatus.COMPLETED_NO);
+        if (subtransaction) {
+            INTERNAL exc = new INTERNAL(MinorCode.TopForSub, CompletionStatus.COMPLETED_NO);
             throw exc;
         }
 
         // If the transaction that this object represents has already been completed,
-        // raise a heuristic exception if necessary.  This object must wait for a
+        // raise a heuristic exception if necessary. This object must wait for a
         // forget before destroying itself if it returns a heuristic exception.
 
-        if( completed ) {
-            if( aborted ) {
+        if (completed) {
+            if (aborted) {
                 heuristicDamage = true;
                 HeuristicRollback exc = new HeuristicRollback();
                 throw exc;
-            } else if( heuristicDamage ) {
+            } else if (heuristicDamage) {
                 HeuristicMixed exc = new HeuristicMixed();
                 throw exc;
             }
@@ -301,24 +298,22 @@ class CoordinatorResourceImpl extends CoordinatorResourcePOA
             // Look up the Coordinator for the transaction.
 
             // GDH: First of all make sure it has been recovered if necessary
-        if(_logger.isLoggable(Level.FINE))
-        {
-            _logger.logp(Level.FINE,"CoordinatorResourceImpl","commit()",
-                    "Before invoking RecoveryManager.waitForRecovery():"+
-                    "GTID is: "+ globalTID.toString());
+            if (_logger.isLoggable(Level.FINE)) {
+                _logger.logp(Level.FINE, "CoordinatorResourceImpl", "commit()",
+                        "Before invoking RecoveryManager.waitForRecovery():" + "GTID is: " + globalTID.toString());
 
-        }
+            }
             RecoveryManager.waitForRecovery();
 
-            TopCoordinator coord = (TopCoordinator)RecoveryManager.getCoordinator(globalTID);
+            TopCoordinator coord = (TopCoordinator) RecoveryManager.getCoordinator(globalTID);
 
             // If there is a Coordinator, lock it for the duration of this operation.
             // Tell the Coordinator to commit.
             // If the Coordinator throws HeuristicMixed or HeuristicHazard,
             // allow them to percolate to the caller.
 
-            if( coord != null )
-                synchronized( coord ) {
+            if (coord != null)
+                synchronized (coord) {
                     // GDH:
                     // Make sure the coordinator knows we are it's terminator
                     // (this is done here in case we are in a recovery situation)
@@ -343,62 +338,55 @@ class CoordinatorResourceImpl extends CoordinatorResourcePOA
         // the information we need should a subsequent commit or rollback request
         // arrive.
 
-        if( !beingForced )
+        if (!beingForced)
             destroy();
 
     }
 
-    /**Informs the object that the transaction is to be committed in one phase.
+    /**
+     * Informs the object that the transaction is to be committed in one phase.
      * <p>
-     * Passes the superior Coordinator's single-phase commit request on to the
-     * Coordinator that registered the CoordinatorResourceImpl, using a private
-     * interface.
+     * Passes the superior Coordinator's single-phase commit request on to the Coordinator that registered the
+     * CoordinatorResourceImpl, using a private interface.
      * <p>
-     * The result from the Coordinator is returned to the caller. If the
-     * Coordinator did not raise any heuristic exception, the CoordinatorResourceImpl
-     * destroys itself.
+     * The result from the Coordinator is returned to the caller. If the Coordinator did not raise any heuristic exception,
+     * the CoordinatorResourceImpl destroys itself.
      *
      * @param
      *
      * @return
      *
-     * @exception TRANSACTION_ROLLEDBACK  The transaction could not be committed and
-     *                                   has been rolled back.
-     * @exception HeuristicHazard  One or more resources in the transaction may have
-     *                             rolled back.
-     * @exception SystemException  An error occurred.  The minor code indicates
-     *                             the reason for the exception.
+     * @exception TRANSACTION_ROLLEDBACK The transaction could not be committed and has been rolled back.
+     * @exception HeuristicHazard One or more resources in the transaction may have rolled back.
+     * @exception SystemException An error occurred. The minor code indicates the reason for the exception.
      *
      * @see Resource
      */
-    public void commit_one_phase()
-        throws TRANSACTION_ROLLEDBACK, HeuristicHazard, SystemException {
+    @Override
+    public void commit_one_phase() throws TRANSACTION_ROLLEDBACK, HeuristicHazard, SystemException {
 
         boolean rolledBack;
 
-
         // If no global_identifier has been set up, we can do nothing.
 
-        if( globalTID == null ) {
-            INTERNAL exc = new INTERNAL(MinorCode.NoGlobalTID,
-                                        CompletionStatus.COMPLETED_NO);
+        if (globalTID == null) {
+            INTERNAL exc = new INTERNAL(MinorCode.NoGlobalTID, CompletionStatus.COMPLETED_NO);
             throw exc;
         }
 
         // Commit operations should only come in for top-level transactions.
 
-        if( subtransaction ) {
-            INTERNAL exc = new INTERNAL(MinorCode.TopForSub,
-                                        CompletionStatus.COMPLETED_NO);
+        if (subtransaction) {
+            INTERNAL exc = new INTERNAL(MinorCode.TopForSub, CompletionStatus.COMPLETED_NO);
             throw exc;
         }
 
         // If the transaction that this object represents has already been completed,
         // raise an exception if necessary.
 
-        if( completed ) {
-            if( aborted ) {
-                TRANSACTION_ROLLEDBACK exc = new TRANSACTION_ROLLEDBACK(0,CompletionStatus.COMPLETED_NO);
+        if (completed) {
+            if (aborted) {
+                TRANSACTION_ROLLEDBACK exc = new TRANSACTION_ROLLEDBACK(0, CompletionStatus.COMPLETED_NO);
                 throw exc;
             }
         } else {
@@ -406,25 +394,23 @@ class CoordinatorResourceImpl extends CoordinatorResourcePOA
             // Look up the Coordinator for the transaction.
 
             // GDH: First of all make sure it has been recovered if necessary
-        if(_logger.isLoggable(Level.FINE))
-        {
-            _logger.logp(Level.FINE,"CoordinatorResourceImpl","commit_one_phase()",
-                    "Before invoking RecoveryManager.waitForRecovery(): "+
-                    "GTID is: " + globalTID.toString());
-        }
+            if (_logger.isLoggable(Level.FINE)) {
+                _logger.logp(Level.FINE, "CoordinatorResourceImpl", "commit_one_phase()",
+                        "Before invoking RecoveryManager.waitForRecovery(): " + "GTID is: " + globalTID.toString());
+            }
             RecoveryManager.waitForRecovery();
 
-            TopCoordinator coord = (TopCoordinator)RecoveryManager.getCoordinator(globalTID);
+            TopCoordinator coord = (TopCoordinator) RecoveryManager.getCoordinator(globalTID);
 
             // If there is a Coordinator, lock it for the duration of this operation.
             // Tell the Coordinator to commit, by first doing a prepare.
             // If the Coordinator throws HeuristicMixed or HeuristicHazard,
             // allow them to percolate to the caller.
 
-            if( coord != null ) {
+            if (coord != null) {
                 rolledBack = false;
 
-                synchronized( coord ) {
+                synchronized (coord) {
 
                     // GDH:
                     // Make sure the coordinator knows we are it's terminator
@@ -435,17 +421,17 @@ class CoordinatorResourceImpl extends CoordinatorResourcePOA
                     // cases
                     makeSureSetAsTerminator();
 
-                    // The prepare operation may throw the HeuristicHazard exception.  In this case
+                    // The prepare operation may throw the HeuristicHazard exception. In this case
                     // allow it to go back to the caller.
 
                     Vote vote;
                     try {
                         vote = coord.prepare();
-                    } catch( HeuristicMixed exc ) {
+                    } catch (HeuristicMixed exc) {
                         throw new HeuristicHazard();
                     }
                     try {
-                        if( vote == Vote.VoteCommit )
+                        if (vote == Vote.VoteCommit)
                             coord.commit();
                         else if (vote == Vote.VoteRollback) {
                             // COMMENT (Ram J) 12/11/2000 The above if check
@@ -469,10 +455,10 @@ class CoordinatorResourceImpl extends CoordinatorResourcePOA
                 // We could still find no coord that matched even after recovery
                 // If there is still no coord then the process failed between
                 // deleting the subordinate coordinator and the result being received
-                // in the superior.   As all of the recoverable work occurred in this
+                // in the superior. As all of the recoverable work occurred in this
                 // server or in its subordinate servers (we are in cop), from a data integrity point of
                 // view, it does not matter what result the CoordinatorResource returns
-                // to the superior.  However, the superior may still have a client attached
+                // to the superior. However, the superior may still have a client attached
                 // and it would look strange if the transaction actually rolled back and
                 // the TRANSACTION_ROLLEDBACK exception was not reported to the client.
                 // Therefore we jump through hoops to give the best answer as possible.
@@ -483,16 +469,16 @@ class CoordinatorResourceImpl extends CoordinatorResourcePOA
                 // the ORB is holding a reference count to the CoordinatorResource).
                 // Therefore, the most likely reason for this to occur is that the
                 // Coordinator was timed out (and removed) just before the server
-                // terminated.  In this case, the transaction rolled back, which is the
+                // terminated. In this case, the transaction rolled back, which is the
                 // response that will be returned.
 
                 rolledBack = true;
 
             }
 
-            if( rolledBack ) {
+            if (rolledBack) {
                 destroy();
-                TRANSACTION_ROLLEDBACK exc = new TRANSACTION_ROLLEDBACK(0,CompletionStatus.COMPLETED_YES);
+                TRANSACTION_ROLLEDBACK exc = new TRANSACTION_ROLLEDBACK(0, CompletionStatus.COMPLETED_YES);
                 throw exc;
             }
         }
@@ -503,59 +489,52 @@ class CoordinatorResourceImpl extends CoordinatorResourcePOA
 
     }
 
-    /**Informs the object that the transaction is to be rolled back.
+    /**
+     * Informs the object that the transaction is to be rolled back.
      * <p>
-     * Passes the superior Coordinator's rollback request on to the Coordinator
-     * that registered the CoordinatorResourceImpl, using a private interface.
+     * Passes the superior Coordinator's rollback request on to the Coordinator that registered the CoordinatorResourceImpl,
+     * using a private interface.
      * <p>
-     * If the Coordinator does not raise any heuristic exception, the
-     * CoordinatorResourceImpl destroys itself.
+     * If the Coordinator does not raise any heuristic exception, the CoordinatorResourceImpl destroys itself.
      *
      * @param
      *
      * @return
      *
-     * @exception HeuristicCommit  The transaction has already been committed.
-     * @exception HeuristicMixed  At least one participant in the transaction has
-     *                            committed its changes.
-     * @exception HeuristicHazard  At least one participant in the transaction may
-     *                             have rolled back its changes.
-     * @exception SystemException  An error occurred.  The minor code indicates
-     *                             the reason for the exception.
+     * @exception HeuristicCommit The transaction has already been committed.
+     * @exception HeuristicMixed At least one participant in the transaction has committed its changes.
+     * @exception HeuristicHazard At least one participant in the transaction may have rolled back its changes.
+     * @exception SystemException An error occurred. The minor code indicates the reason for the exception.
      *
      * @see Resource
-     *///----------------------------------------------------------------------------
-    public void rollback()
-        throws HeuristicCommit, HeuristicMixed,
-        HeuristicHazard, SystemException {
+     */// ----------------------------------------------------------------------------
+    @Override
+    public void rollback() throws HeuristicCommit, HeuristicMixed, HeuristicHazard, SystemException {
 
         // If no global identifier has been set up, we can do nothing.
 
-        if( globalTID == null ) {
-            INTERNAL exc = new INTERNAL(MinorCode.NoGlobalTID,
-                CompletionStatus.COMPLETED_NO);
+        if (globalTID == null) {
+            INTERNAL exc = new INTERNAL(MinorCode.NoGlobalTID, CompletionStatus.COMPLETED_NO);
             throw exc;
         }
 
         // Rollback operations should only come in for top-level transactions.
 
-        if( subtransaction ) {
-            INTERNAL exc = new INTERNAL(MinorCode.TopForSub,
-                CompletionStatus.COMPLETED_NO);
+        if (subtransaction) {
+            INTERNAL exc = new INTERNAL(MinorCode.TopForSub, CompletionStatus.COMPLETED_NO);
             throw exc;
         }
 
         // If the transaction that this object represents has already been completed,
-        // raise a heuristic exception if necessary.  This object must wait for a
+        // raise a heuristic exception if necessary. This object must wait for a
         // forget before destroying itself if it returns a heuristic exception.
 
-        if( completed ) {
-            if( !aborted ) {
+        if (completed) {
+            if (!aborted) {
                 heuristicDamage = true;
                 HeuristicCommit exc = new HeuristicCommit();
                 throw exc;
-            }
-            else if( heuristicDamage ) {
+            } else if (heuristicDamage) {
                 HeuristicMixed exc = new HeuristicMixed();
                 throw exc;
             }
@@ -564,24 +543,22 @@ class CoordinatorResourceImpl extends CoordinatorResourcePOA
             // Look up the Coordinator for the transaction.
 
             // GDH: First of all make sure it has been recovered if necessary
-            if(_logger.isLoggable(Level.FINE))
-            {
-                _logger.logp(Level.FINE,"CoordinatorResourceImpl","rollback()",
-                    "Before invoking RecoveryManager.waitForRecovery(): "+
-                        "GTID is : "+ globalTID.toString());
+            if (_logger.isLoggable(Level.FINE)) {
+                _logger.logp(Level.FINE, "CoordinatorResourceImpl", "rollback()",
+                        "Before invoking RecoveryManager.waitForRecovery(): " + "GTID is : " + globalTID.toString());
 
             }
             RecoveryManager.waitForRecovery();
 
-            TopCoordinator coord = (TopCoordinator)RecoveryManager.getCoordinator(globalTID);
+            TopCoordinator coord = (TopCoordinator) RecoveryManager.getCoordinator(globalTID);
 
             // If there is a Coordinator, lock it for the duration of this operation.
             // Tell the Coordinator to rollback.
             // If the Coordinator throws HeuristicMixed or HeuristicHazard,
             // allow them to percolate to the caller.
 
-            if( coord != null )
-                synchronized( coord ) {
+            if (coord != null)
+                synchronized (coord) {
 
                     // GDH:
                     // Make sure the coordinator knows we are it's terminator
@@ -600,32 +577,31 @@ class CoordinatorResourceImpl extends CoordinatorResourcePOA
         // the information we need should a subsequent commit or rollback request
         // arrive.
 
-        if( !beingForced )
+        if (!beingForced)
             destroy();
 
     }
 
-    /**Informs the object that the transaction is to be forgotten.
+    /**
+     * Informs the object that the transaction is to be forgotten.
      * <p>
-     * Informs the CoordinatorResourceImpl that it does not need to retain heuristic
-     * information any longer.
+     * Informs the CoordinatorResourceImpl that it does not need to retain heuristic information any longer.
      *
      * @param
      *
      * @return
      *
-     * @exception  SystemException  An error occurred.  The minor code indicates
-     *                              the reason for the exception.
+     * @exception SystemException An error occurred. The minor code indicates the reason for the exception.
      *
      * @see
      */
+    @Override
     public void forget() throws SystemException {
 
         // Forget operations should only come in for top-level transactions.
 
-        if( subtransaction ) {
-            INTERNAL exc = new INTERNAL(MinorCode.TopForSub,
-                                        CompletionStatus.COMPLETED_NO);
+        if (subtransaction) {
+            INTERNAL exc = new INTERNAL(MinorCode.TopForSub, CompletionStatus.COMPLETED_NO);
             throw exc;
         }
 
@@ -634,83 +610,78 @@ class CoordinatorResourceImpl extends CoordinatorResourcePOA
         destroy();
     }
 
-    /**Informs the object that the subtransaction is to be committed.
+    /**
+     * Informs the object that the subtransaction is to be committed.
      * <p>
-     * Passes the superior Coordinator's commit request on to the SubCoordinator
-     * that registered the CoordinatorResourceImpl, using a private interface.
+     * Passes the superior Coordinator's commit request on to the SubCoordinator that registered the
+     * CoordinatorResourceImpl, using a private interface.
      * <p>
-     * The result from the SubCoordinator is returned to the caller. The
-     * CoordinatorResourceImpl destroys itself.
+     * The result from the SubCoordinator is returned to the caller. The CoordinatorResourceImpl destroys itself.
      *
-     * @param parent  The parent Coordinator reference.
+     * @param parent The parent Coordinator reference.
      *
      * @return
      *
-     * @exception TRANSACTION_ROLLEDBACK  The transaction could not be committed
-     *                                   and some parts may have rolled back.
-     * @exception SystemException  An error occurred.  The minor code indicates
-     *                             the reason for the exception.
+     * @exception TRANSACTION_ROLLEDBACK The transaction could not be committed and some parts may have rolled back.
+     * @exception SystemException An error occurred. The minor code indicates the reason for the exception.
      *
      * @see
      */
-    public void commit_subtransaction( Coordinator parent )
-        throws TRANSACTION_ROLLEDBACK, SystemException {
+    @Override
+    public void commit_subtransaction(Coordinator parent) throws TRANSACTION_ROLLEDBACK, SystemException {
 
         // If no global identifier has been set up, we can do nothing.
 
-        if( globalTID == null ) {
-            INTERNAL exc = new INTERNAL(MinorCode.NoGlobalTID,
-                                        CompletionStatus.COMPLETED_NO);
+        if (globalTID == null) {
+            INTERNAL exc = new INTERNAL(MinorCode.NoGlobalTID, CompletionStatus.COMPLETED_NO);
             throw exc;
         }
 
         // Commit_subtransaction operations should only come in for subtransactions.
 
-        if( !subtransaction ) {
-            INTERNAL exc = new INTERNAL(MinorCode.SubForTop,
-                                        CompletionStatus.COMPLETED_NO);
+        if (!subtransaction) {
+            INTERNAL exc = new INTERNAL(MinorCode.SubForTop, CompletionStatus.COMPLETED_NO);
             throw exc;
         }
 
         // If the transaction that this object represents has already been rolled
         // back, raise the TRANSACTION_ROLLEDBACK exception.
 
-        if( completed ) {
-            if( aborted ) {
+        if (completed) {
+            if (aborted) {
                 destroy();
-                TRANSACTION_ROLLEDBACK exc = new TRANSACTION_ROLLEDBACK(0,CompletionStatus.COMPLETED_YES);
+                TRANSACTION_ROLLEDBACK exc = new TRANSACTION_ROLLEDBACK(0, CompletionStatus.COMPLETED_YES);
                 throw exc;
             }
         } else {
 
             // Look up the Coordinator for the subtransaction.
 
-            SubCoordinator coord = (SubCoordinator)RecoveryManager.getCoordinator(globalTID);
+            SubCoordinator coord = (SubCoordinator) RecoveryManager.getCoordinator(globalTID);
 
             // If there is a Coordinator, lock it for the duration of this operation.
             // Tell the Coordinator to prepare then commit.
             // Record then ignore any exceptions - we do not expect heuristics during
             // subtransaction completion.
 
-            if( coord != null ) {
+            if (coord != null) {
                 boolean rolledBack = false;
 
-                synchronized( coord ) {
+                synchronized (coord) {
                     try {
-                        if( coord.prepare() == Vote.VoteCommit )
+                        if (coord.prepare() == Vote.VoteCommit)
                             coord.commit();
                         else {
                             coord.rollback(true);
                             rolledBack = true;
                         }
-                    }
-                    catch( Throwable ex ) {
+                    } catch (Throwable ex) {
                     }
                 }
 
-                if( rolledBack ) {
+                if (rolledBack) {
                     destroy();
-                    TRANSACTION_ROLLEDBACK exc = new TRANSACTION_ROLLEDBACK(0,CompletionStatus.COMPLETED_YES);
+                    TRANSACTION_ROLLEDBACK exc = new TRANSACTION_ROLLEDBACK(0, CompletionStatus.COMPLETED_YES);
                     throw exc;
                 }
             }
@@ -723,56 +694,54 @@ class CoordinatorResourceImpl extends CoordinatorResourcePOA
 
     }
 
-    /**Informs the object that the subtransaction is to be rolled back.
+    /**
+     * Informs the object that the subtransaction is to be rolled back.
      * <p>
-     * Passes the superior Coordinator's rollback request on to the SubCoordinator
-     * that registered the CoordinatorResourceImpl, using a private interface.
+     * Passes the superior Coordinator's rollback request on to the SubCoordinator that registered the
+     * CoordinatorResourceImpl, using a private interface.
      * <p>
-     * The result from the SubCoordinator is returned to the caller. The
-     * CoordinatorResourceImpl destroys itself.
+     * The result from the SubCoordinator is returned to the caller. The CoordinatorResourceImpl destroys itself.
      *
      * @param
      *
      * @return
      *
-     * @exception SystemException  An error occurred.  The minor code indicates
-     *                             the reason for the exception.
+     * @exception SystemException An error occurred. The minor code indicates the reason for the exception.
      *
      * @see
      */
 
+    @Override
     public void rollback_subtransaction() throws SystemException {
 
         // If no global identifier has been set up, we can do nothing.
 
-        if( globalTID == null ) {
-            INTERNAL exc = new INTERNAL(MinorCode.NoGlobalTID,
-                                        CompletionStatus.COMPLETED_NO);
+        if (globalTID == null) {
+            INTERNAL exc = new INTERNAL(MinorCode.NoGlobalTID, CompletionStatus.COMPLETED_NO);
             throw exc;
         }
 
         // Commit_subtransaction operations should only come in for subtransactions.
 
-        if( !subtransaction ) {
-            INTERNAL exc = new INTERNAL(MinorCode.SubForTop,
-                                        CompletionStatus.COMPLETED_NO);
+        if (!subtransaction) {
+            INTERNAL exc = new INTERNAL(MinorCode.SubForTop, CompletionStatus.COMPLETED_NO);
             throw exc;
         }
 
         // If the transaction that this object represents has already been completed,
         // do nothing.
 
-        if( !completed ) {
+        if (!completed) {
 
             // Look up the Coordinator for the transaction.
 
-            SubCoordinator coord = (SubCoordinator)RecoveryManager.getCoordinator(globalTID);
+            SubCoordinator coord = (SubCoordinator) RecoveryManager.getCoordinator(globalTID);
 
             // If there is a Coordinator, lock it for the duration of this operation.
             // Tell the Coordinator to rollback.
 
-            if( coord != null )
-                synchronized( coord ) {
+            if (coord != null)
+                synchronized (coord) {
                     coord.rollback(true);
                 }
         }
@@ -784,17 +753,17 @@ class CoordinatorResourceImpl extends CoordinatorResourcePOA
 
     }
 
-    /**Creates the CoordinatorResourceImpl with the given key.  This is done when
-     * the CoordinatorResource object is recreated after the server has been
-     * restarted.
+    /**
+     * Creates the CoordinatorResourceImpl with the given key. This is done when the CoordinatorResource object is recreated
+     * after the server has been restarted.
      *
-     * @param key  The key for the object.
+     * @param key The key for the object.
      *
      * @return
      *
      * @see
      */
-    CoordinatorResourceImpl( byte[] key ) {
+    CoordinatorResourceImpl(byte[] key) {
 
         // Get the global transaction identifier from the key.
 
@@ -805,41 +774,42 @@ class CoordinatorResourceImpl extends CoordinatorResourcePOA
         // This is now delayed until the 2PC methods for normal resync and is
         // done as part of the superinfo.reconst
 
-        //    RecoveryManager.waitForRecovery();
+        // RecoveryManager.waitForRecovery();
 
         // Check that the global transaction identifier represents a known transaction.
         // If it does not, then throw the OBJECT_NOT_EXIST exception.
 
-        //    CoordinatorImpl coord = RecoveryManager.getCoordinator(globalTID);
-        //    if( coord == null )
-        //      {
-        //      OBJECT_NOT_EXIST exc = new OBJECT_NOT_EXIST();
-        //      if( trc != null ) trc.event(EVT_THROW).data(exc).write();
-        //      throw exc;
-        //      }
+        // CoordinatorImpl coord = RecoveryManager.getCoordinator(globalTID);
+        // if( coord == null )
+        // {
+        // OBJECT_NOT_EXIST exc = new OBJECT_NOT_EXIST();
+        // if( trc != null ) trc.event(EVT_THROW).data(exc).write();
+        // throw exc;
+        // }
 
         // If the transaction is known, then inform the Coordinator that this is the
         // terminator for it.
 
-        //    else
-        //      coord.setTerminator(this);
+        // else
+        // coord.setTerminator(this);
 
         // Leave other members at the default values.
 
     }
 
-    /**Returns the CORBA Object which represents this object.
+    /**
+     * Returns the CORBA Object which represents this object.
      *
      * @param
      *
-     * @return  The CORBA object.
+     * @return The CORBA object.
      *
      * @see
      */
     CoordinatorResource object() {
-        if( thisRef == null ) {
-            if( poa == null ) {
-                poa = Configuration.getPOA("CoordinatorResource"/*#Frozen*/);
+        if (thisRef == null) {
+            if (poa == null) {
+                poa = Configuration.getPOA("CoordinatorResource"/* #Frozen */);
                 recoverable = Configuration.isRecoverable();
             }
 
@@ -850,33 +820,27 @@ class CoordinatorResourceImpl extends CoordinatorResourcePOA
                     poa.activate_object_with_id(id, this);
                     org.omg.CORBA.Object obj = poa.create_reference_with_id(id, CoordinatorResourceHelper.id());
                     thisRef = CoordinatorResourceHelper.narrow(obj);
-                    //thisRef = (CoordinatorResource) this;
+                    // thisRef = (CoordinatorResource) this;
                 } else {
                     poa.activate_object(this);
                     org.omg.CORBA.Object obj = poa.servant_to_reference(this);
                     thisRef = CoordinatorResourceHelper.narrow(obj);
-                    //thisRef = (CoordinatorResource) this;
+                    // thisRef = (CoordinatorResource) this;
                 }
-            } catch( ServantAlreadyActive saexc ) {
-                _logger.log(Level.SEVERE,
-                    "jts.create_CoordinatorResource_object_error",saexc);
-                String msg = LogFormatter.getLocalizedMessage(_logger,
-                    "jts.create_CoordinatorResource_object_error");
-                throw  new org.omg.CORBA.INTERNAL(msg);
+            } catch (ServantAlreadyActive saexc) {
+                _logger.log(Level.SEVERE, "jts.create_CoordinatorResource_object_error", saexc);
+                String msg = LogFormatter.getLocalizedMessage(_logger, "jts.create_CoordinatorResource_object_error");
+                throw new org.omg.CORBA.INTERNAL(msg);
 
-            } catch( ServantNotActive snexc ) {
-                _logger.log(Level.SEVERE,
-                    "jts.create_CoordinatorResource_object_error",snexc);
-                String msg = LogFormatter.getLocalizedMessage(_logger,
-                    "jts.create_CoordinatorResource_object_error");
-                throw  new org.omg.CORBA.INTERNAL(msg);
+            } catch (ServantNotActive snexc) {
+                _logger.log(Level.SEVERE, "jts.create_CoordinatorResource_object_error", snexc);
+                String msg = LogFormatter.getLocalizedMessage(_logger, "jts.create_CoordinatorResource_object_error");
+                throw new org.omg.CORBA.INTERNAL(msg);
 
-            } catch( Exception exc ) {
-                _logger.log(Level.SEVERE,
-                    "jts.create_CoordinatorResource_object_error",exc);
-                String msg = LogFormatter.getLocalizedMessage(_logger,
-                    "jts.create_CoordinatorResource_object_error");
-                throw  new org.omg.CORBA.INTERNAL(msg);
+            } catch (Exception exc) {
+                _logger.log(Level.SEVERE, "jts.create_CoordinatorResource_object_error", exc);
+                String msg = LogFormatter.getLocalizedMessage(_logger, "jts.create_CoordinatorResource_object_error");
+                throw new org.omg.CORBA.INTERNAL(msg);
 
             }
         }
@@ -884,7 +848,8 @@ class CoordinatorResourceImpl extends CoordinatorResourcePOA
         return thisRef;
     }
 
-    /**Destroys the CoordinatorResourceImpl object.
+    /**
+     * Destroys the CoordinatorResourceImpl object.
      *
      * @param
      *
@@ -907,7 +872,7 @@ class CoordinatorResourceImpl extends CoordinatorResourcePOA
 
                 POA crPoa = null;
                 if (poa == null) {
-                    crPoa = Configuration.getPOA("CoordinatorResource"/*#Frozen*/);
+                    crPoa = Configuration.getPOA("CoordinatorResource"/* #Frozen */);
                 } else {
                     crPoa = poa;
                 }
@@ -918,15 +883,16 @@ class CoordinatorResourceImpl extends CoordinatorResourcePOA
                     thisRef = null;
                 }
             }
-        } catch( Exception exc ) {
-             _logger.log(Level.WARNING,"jts.object_destroy_error","CoordinatorResource");
+        } catch (Exception exc) {
+            _logger.log(Level.WARNING, "jts.object_destroy_error", "CoordinatorResource");
 
         }
 
         globalTID = null;
     }
 
-    /**Dumps the state of the object.
+    /**
+     * Dumps the state of the object.
      *
      * @param
      *
@@ -937,7 +903,8 @@ class CoordinatorResourceImpl extends CoordinatorResourcePOA
     void dump() {
     }
 
-    /**Makes sure this object is set as the Coordinator Terminator
+    /**
+     * Makes sure this object is set as the Coordinator Terminator
      *
      * @param
      *
@@ -947,7 +914,7 @@ class CoordinatorResourceImpl extends CoordinatorResourcePOA
      */
     void makeSureSetAsTerminator() {
 
-        if( !setAsTerminator ) {
+        if (!setAsTerminator) {
 
             CoordinatorImpl coord = RecoveryManager.getCoordinator(globalTID);
 
@@ -955,7 +922,7 @@ class CoordinatorResourceImpl extends CoordinatorResourcePOA
             // otherwise inform the Coordinator that this is the
             // terminator for it.
 
-            if( coord == null ) {
+            if (coord == null) {
                 OBJECT_NOT_EXIST exc = new OBJECT_NOT_EXIST();
                 throw exc;
             } else {
@@ -964,7 +931,6 @@ class CoordinatorResourceImpl extends CoordinatorResourcePOA
             }
         }
 
-    }  // MakeSureSetAsTerminator method
+    } // MakeSureSetAsTerminator method
 
-    } // class
-
+} // class

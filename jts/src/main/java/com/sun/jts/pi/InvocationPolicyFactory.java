@@ -17,16 +17,14 @@
 package com.sun.jts.pi;
 
 import org.omg.CORBA.Any;
+import org.omg.CORBA.LocalObject;
 import org.omg.CORBA.Policy;
 import org.omg.CORBA.PolicyError;
-import org.omg.CORBA.LocalObject;
-
-import org.omg.CosTransactions.SHARED;
-import org.omg.CosTransactions.UNSHARED;
 import org.omg.CosTransactions.EITHER;
 import org.omg.CosTransactions.INVOCATION_POLICY_TYPE;
 import org.omg.CosTransactions.InvocationPolicyValueHelper;
-
+import org.omg.CosTransactions.SHARED;
+import org.omg.CosTransactions.UNSHARED;
 import org.omg.PortableInterceptor.PolicyFactory;
 
 /**
@@ -35,11 +33,12 @@ import org.omg.PortableInterceptor.PolicyFactory;
  * @author Ram Jeyaraman 11/11/2000
  * @version 1.0
  */
-public class InvocationPolicyFactory
-        extends LocalObject implements PolicyFactory {
+public class InvocationPolicyFactory extends LocalObject implements PolicyFactory {
 
-    public InvocationPolicyFactory() {}
+    public InvocationPolicyFactory() {
+    }
 
+    @Override
     public Policy create_policy(int type, Any value) throws PolicyError {
 
         if (type != INVOCATION_POLICY_TYPE.value) {
@@ -49,15 +48,14 @@ public class InvocationPolicyFactory
         short policyValue = InvocationPolicyValueHelper.extract(value);
 
         switch (policyValue) {
-        case SHARED.value :
-        case UNSHARED.value :
-        case EITHER.value :
+        case SHARED.value:
+        case UNSHARED.value:
+        case EITHER.value:
             break;
-        default :
+        default:
             throw new PolicyError("Invalid InvocationPolicyValue", (short) 1);
         }
 
         return new InvocationPolicyImpl(policyValue);
     }
 }
-
