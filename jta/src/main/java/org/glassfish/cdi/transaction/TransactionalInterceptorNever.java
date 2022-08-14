@@ -32,7 +32,10 @@ import jakarta.transaction.TransactionalException;
 
 /**
  * Transactional annotation Interceptor class for Never transaction type, ie
- * jakarta.transaction.Transactional.TxType.NEVER If called outside a transaction context, managed bean method execution
+ * jakarta.transaction.Transactional.TxType.NEVER
+ *
+ * <p>
+ * If called outside a transaction context, managed bean method execution
  * will then continue outside a transaction context. If called inside a transaction context, InvalidTransactionException
  * will be thrown
  *
@@ -44,7 +47,7 @@ import jakarta.transaction.TransactionalException;
 public class TransactionalInterceptorNever extends TransactionalInterceptorBase {
 
     private static final long serialVersionUID = -7206478787594554608L;
-    private static final Logger _logger = Logger.getLogger(CDI_JTA_LOGGER_SUBSYSTEM_NAME, SHARED_LOGMESSAGE_RESOURCE);
+    private static final Logger _logger = Logger.getLogger(CDI_JTA_LOGGER_SUBSYSTEM_NAME);
 
     @AroundInvoke
     public Object transactional(InvocationContext ctx) throws Exception {

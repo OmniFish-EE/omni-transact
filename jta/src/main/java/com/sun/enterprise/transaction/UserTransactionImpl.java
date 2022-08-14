@@ -24,20 +24,16 @@ import java.io.Serializable;
 import java.rmi.RemoteException;
 import java.util.logging.Logger;
 
-import org.glassfish.api.invocation.ComponentInvocation;
-import org.glassfish.api.invocation.InvocationManager;
-import org.glassfish.hk2.api.PerLookup;
-import org.glassfish.hk2.api.ServiceLocator;
-import org.glassfish.internal.api.Globals;
-import org.jvnet.hk2.annotations.ContractsProvided;
-import org.jvnet.hk2.annotations.Service;
-
+import com.sun.enterprise.transaction.api.ComponentInvocation;
+import com.sun.enterprise.transaction.api.Globals;
+import com.sun.enterprise.transaction.api.InvocationManager;
 import com.sun.enterprise.transaction.api.JavaEETransactionManager;
+import com.sun.enterprise.transaction.spi.ServiceLocator;
 import com.sun.enterprise.transaction.spi.TransactionOperationsManager;
-import com.sun.enterprise.util.i18n.StringManager;
-import com.sun.logging.LogDomains;
 
+import jakarta.enterprise.context.ApplicationScoped;
 import jakarta.inject.Inject;
+import jakarta.inject.Named;
 import jakarta.transaction.HeuristicMixedException;
 import jakarta.transaction.HeuristicRollbackException;
 import jakarta.transaction.NotSupportedException;
@@ -55,17 +51,13 @@ import jakarta.transaction.UserTransaction;
  * @author Tony Ng
  * @author Marina Vatkina
  */
-@Service
-@ContractsProvided({ UserTransactionImpl.class, UserTransaction.class }) // Needed because we can't change spec provided class
-@PerLookup
+@ApplicationScoped
+@Named("java:comp/UserTransaction")
 public class UserTransactionImpl implements UserTransaction, Serializable {
 
     private static final long serialVersionUID = -9058595590726479777L;
 
-    static Logger _logger = LogDomains.getLogger(UserTransactionImpl.class, LogDomains.JTA_LOGGER);
-
-    // Sting Manager for Localization
-    private static StringManager sm = StringManager.getManager(UserTransactionImpl.class);
+    Logger _logger = Logger.getLogger(UserTransactionImpl.class.getName());
 
     @Inject
     private transient JavaEETransactionManager transactionManager;
@@ -75,13 +67,11 @@ public class UserTransactionImpl implements UserTransaction, Serializable {
 
     private transient boolean initialized;
 
-    // for non-J2EE clients usage
+    // for non-EE clients usage
     // currently is never set
     private transient UserTransaction userTransaction;
 
-    // private int transactionTimeout;
-
-    // true if ejb access checks should be performed. Default is
+    // True if EJB access checks should be performed. Default is
     // true. All instances of UserTransaction exposed to applications
     // will have checking turned on.
     private boolean checkEjbAccess;
@@ -113,7 +103,7 @@ public class UserTransactionImpl implements UserTransaction, Serializable {
 
         if (transactionOperationsManager != null && checkEjbAccess) {
             if (!transactionOperationsManager.userTransactionMethodsAllowed()) {
-                throw new IllegalStateException(sm.getString("enterprise_distributedtx.operation_not_allowed"));
+                throw new IllegalStateException("enterprise_distributedtx.operation_not_allowed");
             }
         }
     }
@@ -270,14 +260,14 @@ public class UserTransactionImpl implements UserTransaction, Serializable {
     public void setForTesting(JavaEETransactionManager tm, InvocationManager im) {
         transactionManager = tm;
         invocationManager = im;
-        ((JavaEETransactionManagerSimplified) transactionManager).invMgr = im;
+        ((JavaEETransactionManagerImpl) transactionManager).invocationManager = im;
     }
 
     /**
      * Return instance with all injected values from deserialization if possible
      */
     Object readResolve() throws ObjectStreamException {
-        ServiceLocator serviceLocator = Globals.getDefaultHabitat();
+        ServiceLocator serviceLocator = Globals.getDefaultServiceLocator();
         if (serviceLocator != null) {
             return serviceLocator.getService(UserTransactionImpl.class);
         }

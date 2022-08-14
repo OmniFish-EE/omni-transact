@@ -23,7 +23,7 @@ import static java.util.logging.Level.INFO;
 
 import java.util.logging.Logger;
 
-import com.sun.enterprise.transaction.TransactionManagerHelper;
+import com.sun.enterprise.transaction.TransactionManagerImpl;
 
 import jakarta.annotation.Priority;
 import jakarta.interceptor.AroundInvoke;
@@ -35,7 +35,10 @@ import jakarta.transaction.TransactionalException;
 
 /**
  * Transactional annotation Interceptor class for Required transaction type, ie
- * jakarta.transaction.Transactional.TxType.REQUIRED If called outside a transaction context, a new JTA transaction will
+ * jakarta.transaction.Transactional.TxType.REQUIRED
+ *
+ * <p>
+ * If called outside a transaction context, a new JTA transaction will
  * begin, the managed bean method execution will then continue inside this transaction context, and the transaction will
  * be committed. If called inside a transaction context, the managed bean method execution will then continue inside
  * this transaction context.
@@ -48,7 +51,7 @@ import jakarta.transaction.TransactionalException;
 public class TransactionalInterceptorRequired extends TransactionalInterceptorBase {
 
     private static final long serialVersionUID = 7783065031210674657L;
-    private static final Logger _logger = Logger.getLogger(CDI_JTA_LOGGER_SUBSYSTEM_NAME, SHARED_LOGMESSAGE_RESOURCE);
+    private static final Logger _logger = Logger.getLogger(CDI_JTA_LOGGER_SUBSYSTEM_NAME);
 
     @AroundInvoke
     public Object transactional(InvocationContext ctx) throws Exception {
@@ -64,9 +67,9 @@ public class TransactionalInterceptorRequired extends TransactionalInterceptorBa
                 _logger.log(INFO, CDI_JTA_MBREQUIRED);
                 try {
                     getTransactionManager().begin();
-                    TransactionManager tm = getTransactionManager();
-                    if(tm instanceof TransactionManagerHelper){
-                        ((TransactionManagerHelper)tm).preInvokeTx(true);
+                    TransactionManager transactionManager = getTransactionManager();
+                    if(transactionManager instanceof TransactionManagerImpl){
+                        ((TransactionManagerImpl)transactionManager).preInvokeTx(true);
                     }
                 } catch (Exception exception) {
                     _logger.log(INFO, CDI_JTA_MBREQUIREDBT, exception);
@@ -84,10 +87,11 @@ public class TransactionalInterceptorRequired extends TransactionalInterceptorBa
             } finally {
                 if (isTransactionStarted) {
                     try {
-                        TransactionManager tm = getTransactionManager();
-                        if(tm instanceof TransactionManagerHelper){
-                            ((TransactionManagerHelper)tm).postInvokeTx(false, true);
+                        TransactionManager transactionManager = getTransactionManager();
+                        if(transactionManager instanceof TransactionManagerImpl){
+                            ((TransactionManagerImpl)transactionManager).postInvokeTx(false, true);
                         }
+
                         // Exception handling for proceed method call above can set TM/TRX as setRollbackOnly
                         if (getTransactionManager().getTransaction().getStatus() == STATUS_MARKED_ROLLBACK) {
                             getTransactionManager().rollback();

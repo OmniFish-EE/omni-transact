@@ -16,13 +16,13 @@
 
 package org.glassfish.cdi.transaction;
 
+import static javax.naming.InitialContext.doLookup;
 import static org.glassfish.cdi.transaction.TransactionScopedCDIUtil.DESTORYED_EVENT;
 import static org.glassfish.cdi.transaction.TransactionScopedCDIUtil.log;
 import static org.glassfish.cdi.transaction.TransactionScopedContextImpl.TRANSACTION_SYNCHRONIZATION_REGISTRY_JNDI_NAME;
 
 import java.util.Set;
 
-import javax.naming.InitialContext;
 import javax.naming.NamingException;
 
 import jakarta.enterprise.context.spi.Contextual;
@@ -31,12 +31,15 @@ import jakarta.transaction.Synchronization;
 import jakarta.transaction.TransactionSynchronizationRegistry;
 
 /**
- * A wrapper for contextual instances of {@link jakarta.transaction.TransactionScoped} beans. We need this wrapper so
- * that the contextual instance can be destroyed when the transaction completes.
+ * A wrapper for contextual instances of {@link jakarta.transaction.TransactionScoped} beans.
+ *
+ * <p>
+ * We need this wrapper so that the contextual instance can be destroyed when the transaction completes.
  *
  * @author <a href="mailto:j.j.snyder@oracle.com">JJ Snyder</a>
  */
 public class TransactionScopedBean<T> implements Synchronization {
+
     private T contextualInstance;
     private Contextual<T> contextual;
     private CreationalContext<T> creationalContext;
@@ -98,8 +101,7 @@ public class TransactionScopedBean<T> implements Synchronization {
     private TransactionSynchronizationRegistry getTransactionSynchronizationRegistry() throws NamingException {
         TransactionSynchronizationRegistry transactionSynchronizationRegistry;
         try {
-            transactionSynchronizationRegistry = (TransactionSynchronizationRegistry)
-                new InitialContext().lookup(TRANSACTION_SYNCHRONIZATION_REGISTRY_JNDI_NAME);
+            transactionSynchronizationRegistry = doLookup(TRANSACTION_SYNCHRONIZATION_REGISTRY_JNDI_NAME);
         } catch (NamingException ne) {
             throw ne;
         }

@@ -21,26 +21,21 @@ import static jakarta.transaction.Status.STATUS_MARKED_ROLLBACK;
 import static jakarta.transaction.Status.STATUS_NO_TRANSACTION;
 import static jakarta.transaction.Status.STATUS_ROLLING_BACK;
 
-import org.jvnet.hk2.annotations.ContractsProvided;
-import org.jvnet.hk2.annotations.Service;
-
-import com.sun.enterprise.util.i18n.StringManager;
-
+import jakarta.enterprise.context.ApplicationScoped;
 import jakarta.inject.Inject;
+import jakarta.inject.Named;
 import jakarta.transaction.RollbackException;
 import jakarta.transaction.Synchronization;
 import jakarta.transaction.SystemException;
 import jakarta.transaction.TransactionManager;
 import jakarta.transaction.TransactionSynchronizationRegistry;
 
-@Service
-@ContractsProvided({ TransactionSynchronizationRegistryImpl.class, TransactionSynchronizationRegistry.class }) // Needed because we can't change spec provided class
+@ApplicationScoped
+@Named("java:comp/TransactionSynchronizationRegistry")
 public class TransactionSynchronizationRegistryImpl implements TransactionSynchronizationRegistry {
 
     @Inject
     private transient TransactionManager transactionManager;
-
-    private static StringManager sm = StringManager.getManager(TransactionSynchronizationRegistryImpl.class);
 
     public TransactionSynchronizationRegistryImpl() {
     }
@@ -95,7 +90,7 @@ public class TransactionSynchronizationRegistryImpl implements TransactionSynchr
         try {
             getTransaction().putUserResource(key, value);
         } catch (SystemException ex) {
-            throw new IllegalStateException(sm.getString("enterprise_distributedtx.no_transaction"));
+            throw new IllegalStateException("enterprise_distributedtx.no_transaction");
         }
     }
 
@@ -115,18 +110,20 @@ public class TransactionSynchronizationRegistryImpl implements TransactionSynchr
         try {
             return getTransaction().getUserResource(key);
         } catch (SystemException ex) {
-            throw new IllegalStateException(sm.getString("enterprise_distributedtx.no_transaction"));
+            throw new IllegalStateException("enterprise_distributedtx.no_transaction");
         }
     }
 
     /**
-     * Register a <code>Synchronization</code> instance with special ordering semantics. The <code>beforeCompletion</code>
-     * method on the registered <code>Synchronization</code> will be called after all user and system component
-     * <code>beforeCompletion</code> callbacks, but before the 2-phase commit process starts. This allows user and system
-     * components to flush state changes to the caching manager, during their <code>SessionSynchronization</code> callbacks,
-     * and allows managers to flush state changes to Connectors, during the callbacks registered with this method.
-     * Similarly, the <code>afterCompletion</code> callback will be called after 2-phase commit completes but before any
-     * user and system <code>afterCompletion</code> callbacks.
+     * Register a <code>Synchronization</code> instance with special ordering semantics.
+     *
+     * <p>
+     * The <code>beforeCompletion</code> method on the registered <code>Synchronization</code> will be called after all user
+     * and system component* <code>beforeCompletion</code> callbacks, but before the 2-phase commit process starts. This
+     * allows user and system components to flush state changes to the caching manager, during their
+     * <code>SessionSynchronization</code> callbacks, and allows managers to flush state changes to Connectors, during the
+     * callbacks registered with this method. Similarly, the <code>afterCompletion</code> callback will be called after
+     * 2-phase commit completes but before any user and system <code>afterCompletion</code> callbacks.
      *
      * <P>
      * The <code>beforeCompletion</code> callback will be invoked in the transaction context of the current transaction
@@ -141,7 +138,7 @@ public class TransactionSynchronizationRegistryImpl implements TransactionSynchr
      * with them.
      *
      * <P>
-     * Other than the transaction context, no component J2EE context is active during either of the callbacks.
+     * Other than the transaction context, no component EE context is active during either of the callbacks.
      *
      * @param sync The synchronization callback object.
      *
@@ -152,9 +149,9 @@ public class TransactionSynchronizationRegistryImpl implements TransactionSynchr
         try {
             getTransaction().registerInterposedSynchronization(sync);
         } catch (SystemException ex) {
-            throw new IllegalStateException(sm.getString("enterprise_distributedtx.no_transaction"));
+            throw new IllegalStateException("enterprise_distributedtx.no_transaction");
         } catch (RollbackException ex) {
-            throw new IllegalStateException(sm.getString("enterprise_distributedtx.mark_rollback"));
+            throw new IllegalStateException("enterprise_distributedtx.mark_rollback");
         }
     }
 
@@ -183,7 +180,7 @@ public class TransactionSynchronizationRegistryImpl implements TransactionSynchr
         try {
             transactionManager.setRollbackOnly();
         } catch (SystemException ex) {
-            throw new IllegalStateException(sm.getString("enterprise_distributedtx.no_transaction"));
+            throw new IllegalStateException("enterprise_distributedtx.no_transaction");
         }
     }
 
@@ -198,20 +195,16 @@ public class TransactionSynchronizationRegistryImpl implements TransactionSynchr
     public boolean getRollbackOnly() {
         int status = getTransactionStatus();
         if (status == STATUS_NO_TRANSACTION) {
-            throw new IllegalStateException(sm.getString("enterprise_distributedtx.no_transaction"));
+            throw new IllegalStateException("enterprise_distributedtx.no_transaction");
         }
 
-        if (status == STATUS_MARKED_ROLLBACK || status == STATUS_ROLLING_BACK) {
-            return true;
-        }
-
-        return false;
+        return status == STATUS_MARKED_ROLLBACK || status == STATUS_ROLLING_BACK;
     }
 
     private JavaEETransactionImpl getTransaction() throws SystemException {
         JavaEETransactionImpl transaction = (JavaEETransactionImpl) transactionManager.getTransaction();
         if (transaction == null) {
-            throw new IllegalStateException(sm.getString("enterprise_distributedtx.no_transaction"));
+            throw new IllegalStateException("enterprise_distributedtx.no_transaction");
         }
 
         return transaction;

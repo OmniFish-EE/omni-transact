@@ -24,13 +24,15 @@ import static jakarta.transaction.Status.STATUS_PREPARING;
 import static jakarta.transaction.Status.STATUS_ROLLING_BACK;
 import static jakarta.transaction.Status.STATUS_UNKNOWN;
 import static java.util.Collections.synchronizedSet;
+import static javax.naming.InitialContext.doLookup;
+import static org.glassfish.cdi.transaction.TransactionScopedCDIUtil.INITIALIZED_EVENT;
 
 import java.lang.annotation.Annotation;
 import java.util.HashSet;
+import java.util.Map;
 import java.util.Set;
 import java.util.concurrent.ConcurrentHashMap;
 
-import javax.naming.InitialContext;
 import javax.naming.NamingException;
 
 import jakarta.enterprise.context.ContextNotActiveException;
@@ -61,15 +63,16 @@ import jakarta.transaction.TransactionSynchronizationRegistry;
  * @author <a href="mailto:arjav.desai@oracle.com">Arjav Desai</a>
  */
 public class TransactionScopedContextImpl implements Context {
+
     public static final String TRANSACTION_SYNCHRONIZATION_REGISTRY_JNDI_NAME = "java:comp/TransactionSynchronizationRegistry";
 
-    ConcurrentHashMap<TransactionSynchronizationRegistry, Set<TransactionScopedBean<?>>> beansPerTransaction;
+    Map<TransactionSynchronizationRegistry, Set<TransactionScopedBean<?>>> beansPerTransaction;
 
     public TransactionScopedContextImpl() {
         beansPerTransaction = new ConcurrentHashMap<>();
     }
 
-    public ConcurrentHashMap<TransactionSynchronizationRegistry, Set<TransactionScopedBean<?>>> getBeansPerTransaction() {
+    public Map<TransactionSynchronizationRegistry, Set<TransactionScopedBean<?>>> getBeansPerTransaction() {
         return beansPerTransaction;
     }
 
@@ -82,6 +85,7 @@ public class TransactionScopedContextImpl implements Context {
     public <T> T get(Contextual<T> contextual, CreationalContext<T> creationalContext) {
         TransactionSynchronizationRegistry transactionSynchronizationRegistry = getTransactionSynchronizationRegistry();
         Object beanId = getContextualId(contextual);
+
         T contextualInstance = getContextualInstance(beanId, transactionSynchronizationRegistry);
         if (contextualInstance == null) {
             contextualInstance = createContextualInstance(contextual, beanId, creationalContext, transactionSynchronizationRegistry);
@@ -95,7 +99,6 @@ public class TransactionScopedContextImpl implements Context {
         return getContextualInstance(getContextualId(contextual), getTransactionSynchronizationRegistry());
     }
 
-
     /**
      * Determines if this context object is active.
      *
@@ -105,7 +108,7 @@ public class TransactionScopedContextImpl implements Context {
     @Override
     public boolean isActive() {
         try {
-            //Just calling it but not checking for != null on return value as its already done inside method
+            // Just calling it but not checking for != null on return value as its already done inside method
             getTransactionSynchronizationRegistry();
             return true;
         } catch (ContextNotActiveException ignore) {
@@ -137,11 +140,12 @@ public class TransactionScopedContextImpl implements Context {
             transactionScopedBeanSet = synchronizedSet(new HashSet<>());
 
             // Fire this event only for the first initialization of context and not for every TransactionScopedBean in a Transaction
-            TransactionScopedCDIUtil.fireEvent(TransactionScopedCDIUtil.INITIALIZED_EVENT);
+            TransactionScopedCDIUtil.fireEvent(INITIALIZED_EVENT);
 
             // Adding transactionScopedBeanSet in Map for the first time for this transactionSynchronizationRegistry key
             beansPerTransaction.put(transactionSynchronizationRegistry, transactionScopedBeanSet);
         }
+
         transactionScopedBeanSet.add(transactionScopedBean);
 
         // Not updating entry in main Map with new TransactionScopedBeans as it should happen by reference
@@ -161,8 +165,7 @@ public class TransactionScopedContextImpl implements Context {
     private TransactionSynchronizationRegistry getTransactionSynchronizationRegistry() {
         TransactionSynchronizationRegistry transactionSynchronizationRegistry;
         try {
-            transactionSynchronizationRegistry = (TransactionSynchronizationRegistry)
-                    new InitialContext().lookup(TRANSACTION_SYNCHRONIZATION_REGISTRY_JNDI_NAME);
+            transactionSynchronizationRegistry = doLookup(TRANSACTION_SYNCHRONIZATION_REGISTRY_JNDI_NAME);
         } catch (NamingException ne) {
             throw new ContextNotActiveException("Could not get TransactionSynchronizationRegistry", ne);
         }

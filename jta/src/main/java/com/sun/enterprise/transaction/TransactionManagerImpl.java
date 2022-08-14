@@ -17,23 +17,23 @@
 
 package com.sun.enterprise.transaction;
 
-import static org.glassfish.api.invocation.ComponentInvocation.ComponentInvocationType.SERVLET_INVOCATION;
+import static com.sun.enterprise.transaction.api.ComponentInvocation.ComponentInvocationType.SERVLET_INVOCATION;
 
 import java.rmi.RemoteException;
 
 import javax.transaction.xa.XAResource;
 import javax.transaction.xa.Xid;
 
-import org.glassfish.api.invocation.ComponentInvocation;
-import org.glassfish.api.invocation.InvocationManager;
-import org.jvnet.hk2.annotations.ContractsProvided;
-import org.jvnet.hk2.annotations.Service;
-
+import com.sun.enterprise.transaction.api.ComponentInvocation;
+import com.sun.enterprise.transaction.api.InvocationManager;
 import com.sun.enterprise.transaction.api.JavaEETransactionManager;
 import com.sun.enterprise.transaction.api.TransactionImport;
 
+import jakarta.enterprise.context.ApplicationScoped;
 import jakarta.inject.Inject;
+import jakarta.inject.Named;
 import jakarta.resource.spi.XATerminator;
+import jakarta.resource.spi.work.WorkException;
 import jakarta.transaction.HeuristicMixedException;
 import jakarta.transaction.HeuristicRollbackException;
 import jakarta.transaction.InvalidTransactionException;
@@ -47,15 +47,15 @@ import jakarta.transaction.TransactionManager;
  * This class is wrapper for the actual transaction manager implementation. JNDI lookup name
  * "java:appserver/TransactionManager" see the com/sun/enterprise/naming/java/javaURLContext.java
  **/
-@Service
-@ContractsProvided({ TransactionManagerHelper.class, TransactionManager.class }) // Needed because we can't change spec provided class
-public class TransactionManagerHelper implements TransactionManager, TransactionImport {
+@ApplicationScoped
+@Named("java:appserver/TransactionManager")
+public class TransactionManagerImpl implements TransactionManager, TransactionImport {
 
     @Inject
-    private transient JavaEETransactionManager transactionManager;
+    private JavaEETransactionManager transactionManager;
 
     @Inject
-    private transient InvocationManager invocationManager;
+    private InvocationManager invocationManager;
 
     @Override
     public void begin() throws NotSupportedException, SystemException {
@@ -78,8 +78,8 @@ public class TransactionManagerHelper implements TransactionManager, Transaction
     }
 
     @Override
-    public void resume(Transaction tobj) throws InvalidTransactionException, IllegalStateException, SystemException {
-        transactionManager.resume(tobj);
+    public void resume(Transaction transaction) throws InvalidTransactionException, IllegalStateException, SystemException {
+        transactionManager.resume(transaction);
         preInvokeTx(false);
     }
 
@@ -106,28 +106,26 @@ public class TransactionManagerHelper implements TransactionManager, Transaction
 
     @Override
     public void recreate(Xid xid, long timeout) {
-        final JavaEETransactionManager tm = transactionManager;
-
         try {
-            tm.recreate(xid, timeout);
-        } catch (jakarta.resource.spi.work.WorkException ex) {
+            transactionManager.recreate(xid, timeout);
+        } catch (WorkException ex) {
             throw new IllegalStateException(ex);
         }
+
         preInvokeTx(true);
     }
 
     @Override
     public void release(Xid xid) {
-        final JavaEETransactionManager tm = transactionManager;
-
         postInvokeTx(false, true);
+
         try {
-            tm.release(xid);
-        } catch (jakarta.resource.spi.work.WorkException ex) {
+            transactionManager.release(xid);
+        } catch (WorkException ex) {
             throw new IllegalStateException(ex);
         } finally {
-            if (tm instanceof JavaEETransactionManagerSimplified) {
-                ((JavaEETransactionManagerSimplified) tm).clearThreadTx();
+            if (transactionManager instanceof JavaEETransactionManagerImpl) {
+                ((JavaEETransactionManagerImpl) transactionManager).clearThreadTx();
             }
         }
     }
@@ -135,6 +133,26 @@ public class TransactionManagerHelper implements TransactionManager, Transaction
     @Override
     public XATerminator getXATerminator() {
         return transactionManager.getXATerminator();
+    }
+
+    @Override
+    public int getTransactionRemainingTimeout() throws SystemException {
+        int timeout = 0;
+        Transaction transaction = getTransaction();
+        if (transaction == null) {
+            throw new IllegalStateException("no current transaction");
+        }
+
+        if (transaction instanceof JavaEETransactionImpl) {
+            timeout = ((JavaEETransactionImpl) transaction).getRemainingTimeout();
+        }
+
+        return timeout;
+    }
+
+    @Override
+    public void registerRecoveryResourceHandler(XAResource xaResource) {
+        transactionManager.registerRecoveryResourceHandler(xaResource);
     }
 
     /**
@@ -146,11 +164,11 @@ public class TransactionManagerHelper implements TransactionManager, Transaction
      * Precondition: assumes JTA transaction already associated with current thread.
      */
     public void preInvokeTx(boolean checkServletInvocation) {
-        final ComponentInvocation inv = invocationManager.getCurrentInvocation();
-        if (inv != null && (!checkServletInvocation || inv.getInvocationType() == SERVLET_INVOCATION)) {
+        final ComponentInvocation componentInvocation = invocationManager.getCurrentInvocation();
+
+        if (componentInvocation != null && (!checkServletInvocation || componentInvocation.getInvocationType() == SERVLET_INVOCATION)) {
             try {
-                // Required side effect: note that
-                // enlistComponentResources calls
+                // Required side effect: note that enlistComponentResources calls
                 // ComponentInvocation.setTransaction(currentJTATxn).
                 // If this is not correctly set, managed XAResource connections
                 // are not auto enlisted when they are created.
@@ -169,32 +187,15 @@ public class TransactionManagerHelper implements TransactionManager, Transaction
      * @param suspend indicate whether the delisting is due to suspension or transaction completion(commmit/rollback)
      */
     public void postInvokeTx(boolean suspend, boolean checkServletInvocation) {
-        final ComponentInvocation inv = invocationManager.getCurrentInvocation();
-        if (inv != null && (!checkServletInvocation || inv.getInvocationType() == SERVLET_INVOCATION)) {
+        final ComponentInvocation componentInvocation = invocationManager.getCurrentInvocation();
+        if (componentInvocation != null && (!checkServletInvocation || componentInvocation.getInvocationType() == SERVLET_INVOCATION)) {
             try {
                 transactionManager.delistComponentResources(suspend);
             } catch (RemoteException re) {
                 throw new IllegalStateException(re);
             } finally {
-                inv.setTransaction(null);
+                componentInvocation.setTransaction(null);
             }
         }
-    }
-
-    @Override
-    public int getTransactionRemainingTimeout() throws SystemException {
-        int timeout = 0;
-        Transaction txn = getTransaction();
-        if (txn == null) {
-            throw new IllegalStateException("no current transaction");
-        } else if (txn instanceof JavaEETransactionImpl) {
-            timeout = ((JavaEETransactionImpl) txn).getRemainingTimeout();
-        }
-        return timeout;
-    }
-
-    @Override
-    public void registerRecoveryResourceHandler(XAResource xaResource) {
-        transactionManager.registerRecoveryResourceHandler(xaResource);
     }
 }

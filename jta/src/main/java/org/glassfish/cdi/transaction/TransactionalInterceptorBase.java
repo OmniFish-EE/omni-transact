@@ -27,14 +27,10 @@ import javax.naming.InitialContext;
 import javax.naming.NameNotFoundException;
 import javax.naming.NamingException;
 
-import org.glassfish.api.invocation.ComponentInvocation;
-import org.glassfish.api.invocation.InvocationManager;
-import org.glassfish.hk2.api.ServiceLocator;
-import org.glassfish.internal.api.Globals;
-import org.glassfish.logging.annotation.LogMessageInfo;
-import org.glassfish.logging.annotation.LogMessagesResourceBundle;
-import org.glassfish.logging.annotation.LoggerInfo;
-
+import com.sun.enterprise.transaction.api.ComponentInvocation;
+import com.sun.enterprise.transaction.api.Globals;
+import com.sun.enterprise.transaction.api.InvocationManager;
+import com.sun.enterprise.transaction.spi.ServiceLocator;
 import com.sun.enterprise.transaction.spi.TransactionOperationsManager;
 
 import jakarta.annotation.PostConstruct;
@@ -54,76 +50,77 @@ public class TransactionalInterceptorBase implements Serializable {
 
     private static final long serialVersionUID = 706603825748958619L;
 
-    @LogMessagesResourceBundle
-    public static final String SHARED_LOGMESSAGE_RESOURCE = "org.glassfish.cdi.LogMessages";
+    //@LogMessagesResourceBundle
 
-    @LoggerInfo(subsystem = "AS-CDI-JTA", description = "CDI-JTA", publish = true)
+    //@LoggerInfo(subsystem = "AS-CDI-JTA", description = "CDI-JTA", publish = true)
     public static final String CDI_JTA_LOGGER_SUBSYSTEM_NAME = "jakarta.enterprise.resource.jta";
-    private static final Logger _logger = Logger.getLogger(CDI_JTA_LOGGER_SUBSYSTEM_NAME, SHARED_LOGMESSAGE_RESOURCE);
+    private static final Logger _logger = Logger.getLogger(CDI_JTA_LOGGER_SUBSYSTEM_NAME);
 
-    @LogMessageInfo(message = "Encountered NamingException while attempting to acquire "
-            + "transaction manager for Transactional annotation interceptors {0}", action = "Fix the issue for the Naming exception", cause = "Transaction annotation processing for the Naming", level = "SEVERE")
+//    @LogMessageInfo(message = "Encountered NamingException while attempting to acquire "
+//            + "transaction manager for Transactional annotation interceptors {0}", action = "Fix the issue for the Naming exception", cause = "Transaction annotation processing for the Naming", level = "SEVERE")
     public static final String CDI_JTA_NAME_EXCEPTION = "AS-JTA-00001";
 
-    @LogMessageInfo(message = "About to setRollbackOnly from @Transactional interceptor on " + "transaction: {0}", level = "INFO")
-    public static final String CDI_JTA_SETROLLBACK = "AS-JTA-00002";
+//    @LogMessageInfo(message = "About to setRollbackOnly from @Transactional interceptor on " + "transaction: {0}", level = "INFO")
+    public static final String CDI_JTA_SETROLLBACK = "AS-JTA-00002 - " + "About to setRollbackOnly from @Transactional interceptor on " + "transaction: {0}";
 
-    @LogMessageInfo(message = "No ComponentInvocation present for @Transactional annotation "
-            + "processing. Restriction on use of UserTransaction will not be enforced.", level = "WARNING")
-    public static final String CDI_JTA_NOCOMPONENT = "AS-JTA-00003";
+//    @LogMessageInfo(message = "No ComponentInvocation present for @Transactional annotation "
+  //          + "processing. Restriction on use of UserTransaction will not be enforced.", level = "WARNING")
+    public static final String CDI_JTA_NOCOMPONENT = "AS-JTA-00003 - " +  "No ComponentInvocation present for @Transactional annotation "
+                     + "processing. Restriction on use of UserTransaction will not be enforced.";
 
-    @LogMessageInfo(message = "In MANDATORY TransactionalInterceptor", level = "INFO")
+//    @LogMessageInfo(message = "In MANDATORY TransactionalInterceptor", level = "INFO")
     public static final String CDI_JTA_MANDATORY = "AS-JTA-00004";
 
-    @LogMessageInfo(message = "In NEVER TransactionalInterceptor", level = "INFO")
+//    @LogMessageInfo(message = "In NEVER TransactionalInterceptor", level = "INFO")
     public static final String CDI_JTA_NEVER = "AS-JTA-00005";
 
-    @LogMessageInfo(message = "In NOT_SUPPORTED TransactionalInterceptor", level = "INFO")
+//    @LogMessageInfo(message = "In NOT_SUPPORTED TransactionalInterceptor", level = "INFO")
     public static final String CDI_JTA_NOTSUPPORTED = "AS-JTA-00006";
 
-    @LogMessageInfo(message = "Managed bean with Transactional annotation and TxType of NOT_SUPPORTED "
-            + "called inside a transaction context. Suspending transaction...", level = "INFO")
+//    @LogMessageInfo(message = "Managed bean with Transactional annotation and TxType of NOT_SUPPORTED "
+ //           + "called inside a transaction context. Suspending transaction...", level = "INFO")
     public static final String CDI_JTA_MBNOTSUPPORTED = "AS-JTA-00007";
 
-    @LogMessageInfo(message = "Managed bean with Transactional annotation and TxType of NOT_SUPPORTED "
-            + "called inside a transaction context.  Suspending transaction failed due to {0}", level = "INFO")
+//    @LogMessageInfo(message = "Managed bean with Transactional annotation and TxType of NOT_SUPPORTED "
+  //          + "called inside a transaction context.  Suspending transaction failed due to {0}", level = "INFO")
     public static final String CDI_JTA_MBNOTSUPPORTEDTX = "AS-JTA-00008";
 
-    @LogMessageInfo(message = "In REQUIRED TransactionalInterceptor", level = "INFO")
-    public static final String CDI_JTA_REQUIRED = "AS-JTA-00009";
+//    @LogMessageInfo(message = "In REQUIRED TransactionalInterceptor", level = "INFO")
+    public static final String CDI_JTA_REQUIRED = "AS-JTA-00009 - In REQUIRED TransactionalInterceptor";
 
-    @LogMessageInfo(message = "Managed bean with Transactional annotation and TxType of REQUIRED "
-            + "called outside a transaction context.  Beginning a transaction...", level = "INFO")
-    public static final String CDI_JTA_MBREQUIRED = "AS-JTA-00010";
+//    @LogMessageInfo(message = "Managed bean with Transactional annotation and TxType of REQUIRED "
+ //           + "called outside a transaction context.  Beginning a transaction...", level = "INFO")
+    public static final String CDI_JTA_MBREQUIRED = "AS-JTA-00010 - " + "Managed bean with Transactional annotation and TxType of REQUIRED "
+                       + "called outside a transaction context.  Beginning a transaction...";
 
-    @LogMessageInfo(message = "Managed bean with Transactional annotation and TxType of REQUIRED "
-            + "encountered exception during begin {0}", level = "INFO")
+//    @LogMessageInfo(message = "Managed bean with Transactional annotation and TxType of REQUIRED "
+ //           + "encountered exception during begin {0}", level = "INFO")
     public static final String CDI_JTA_MBREQUIREDBT = "AS-JTA-00011";
 
-    @LogMessageInfo(message = "Managed bean with Transactional annotation and TxType of REQUIRED "
-            + "encountered exception during commit {0}", level = "INFO")
+//    @LogMessageInfo(message = "Managed bean with Transactional annotation and TxType of REQUIRED "
+    //        + "encountered exception during commit {0}", level = "INFO")
     public static final String CDI_JTA_MBREQUIREDCT = "AS-JTA-00012";
 
-    @LogMessageInfo(message = "In REQUIRES_NEW TransactionalInterceptor", level = "INFO")
+//    @LogMessageInfo(message = "In REQUIRES_NEW TransactionalInterceptor", level = "INFO")
     public static final String CDI_JTA_REQNEW = "AS-JTA-00013";
 
-    @LogMessageInfo(message = "Managed bean with Transactional annotation and TxType of REQUIRES_NEW "
-            + "called inside a transaction context.  Suspending before beginning a transaction...", level = "INFO")
+//    @LogMessageInfo(message = "Managed bean with Transactional annotation and TxType of REQUIRES_NEW "
+//            + "called inside a transaction context.  Suspending before beginning a transaction...", level = "INFO")
     public static final String CDI_JTA_MBREQNEW = "AS-JTA-00014";
 
-    @LogMessageInfo(message = "Managed bean with Transactional annotation and TxType of REQUIRES_NEW "
-            + "encountered exception during begin {0}", level = "INFO")
+//    @LogMessageInfo(message = "Managed bean with Transactional annotation and TxType of REQUIRES_NEW "
+//            + "encountered exception during begin {0}", level = "INFO")
     public static final String CDI_JTA_MBREQNEWBT = "AS-JTA-00015";
 
-    @LogMessageInfo(message = "Managed bean with Transactional annotation and TxType of REQUIRES_NEW "
-            + "encountered exception during commit {0}", level = "INFO")
+//    @LogMessageInfo(message = "Managed bean with Transactional annotation and TxType of REQUIRES_NEW "
+//            + "encountered exception during commit {0}", level = "INFO")
     public static final String CDI_JTA_MBREQNEWCT = "AS-JTA-00016";
 
-    @LogMessageInfo(message = "Managed bean with Transactional annotation and TxType of REQUIRED "
-            + "encountered exception during resume {0}", level = "INFO")
+//    @LogMessageInfo(message = "Managed bean with Transactional annotation and TxType of REQUIRED "
+//            + "encountered exception during resume {0}", level = "INFO")
     public static final String CDI_JTA_MBREQNEWRT = "AS-JTA-00017";
 
-    @LogMessageInfo(message = "In SUPPORTS TransactionalInterceptor", level = "INFO")
+//    @LogMessageInfo(message = "In SUPPORTS TransactionalInterceptor", level = "INFO")
     public static final String CDI_JTA_SUPPORTS = "AS-JTA-00018";
 
     private static TransactionManager testTransactionManager;
@@ -162,12 +159,14 @@ public class TransactionalInterceptorBase implements Serializable {
         testTransactionManager = transactionManager;
     }
 
-    boolean isLifeCycleMethod(InvocationContext ctx) {
-        return ctx.getMethod().getAnnotation(PostConstruct.class) != null || ctx.getMethod().getAnnotation(PreDestroy.class) != null;
+    boolean isLifeCycleMethod(InvocationContext invocationContext) {
+        return
+            invocationContext.getMethod().getAnnotation(PostConstruct.class) != null ||
+            invocationContext.getMethod().getAnnotation(PreDestroy.class) != null;
     }
 
-    public Object proceed(InvocationContext ctx) throws Exception {
-        Transactional transactionalAnnotation = ctx.getMethod().getAnnotation(Transactional.class);
+    public Object proceed(InvocationContext invocationContext) throws Exception {
+        Transactional transactionalAnnotation = invocationContext.getMethod().getAnnotation(Transactional.class);
         Class<?>[] rollbackOn = null;
         Class<?>[] dontRollbackOn = null;
 
@@ -175,7 +174,7 @@ public class TransactionalInterceptorBase implements Serializable {
             rollbackOn = transactionalAnnotation.rollbackOn();
             dontRollbackOn = transactionalAnnotation.dontRollbackOn();
         } else { //if not, at class level
-            Class<?> targetClass = ctx.getTarget().getClass();
+            Class<?> targetClass = invocationContext.getTarget().getClass();
             transactionalAnnotation = targetClass.getAnnotation(Transactional.class);
             if (transactionalAnnotation != null) {
                 rollbackOn = transactionalAnnotation.rollbackOn();
@@ -185,7 +184,7 @@ public class TransactionalInterceptorBase implements Serializable {
 
         Object object;
         try {
-            object = ctx.proceed();
+            object = invocationContext.proceed();
         } catch (RuntimeException runtimeException) {
             _logger.log(INFO, "Error during transaction processing", runtimeException);
             Class<?> dontRollbackOnClass = getClassInArrayClosestToClassOrNull(dontRollbackOn, runtimeException.getClass());
@@ -195,8 +194,7 @@ public class TransactionalInterceptorBase implements Serializable {
             }
 
             // Spec states "if both elements are specified, dontRollbackOn takes precedence."
-            if (dontRollbackOnClass.equals(runtimeException.getClass())
-                    || dontRollbackOnClass.isAssignableFrom(runtimeException.getClass())) {
+            if (dontRollbackOnClass.equals(runtimeException.getClass()) || dontRollbackOnClass.isAssignableFrom(runtimeException.getClass())) {
                 throw runtimeException;
             }
 
@@ -208,6 +206,7 @@ public class TransactionalInterceptorBase implements Serializable {
                 if (rollbackOnClass.isAssignableFrom(dontRollbackOnClass)) {
                     throw runtimeException;
                 }
+
                 if (dontRollbackOnClass.isAssignableFrom(rollbackOnClass)) {
                 }
             }
@@ -246,6 +245,7 @@ public class TransactionalInterceptorBase implements Serializable {
             // Default for checked exception is to "not" mark transaction for rollback
             throw checkedException;
         }
+
         return object;
     }
 
@@ -267,6 +267,7 @@ public class TransactionalInterceptorBase implements Serializable {
             if (exceptionArrayElement.equals(exception)) {
                 return exceptionArrayElement;
             }
+
             if (exceptionArrayElement.isAssignableFrom(exception)) {
                 if (closestMatch == null || closestMatch.isAssignableFrom(exceptionArrayElement)) {
                     closestMatch = exceptionArrayElement;
@@ -298,8 +299,9 @@ public class TransactionalInterceptorBase implements Serializable {
 
         preexistingTransactionOperationsManager = (TransactionOperationsManager) currentInvocation.getTransactionOperationsManager();
         currentInvocation.setTransactionOperationsManager(
-                userTransactionMethodsAllowed ? transactionalTransactionOperationsManagerTransactionMethodsAllowed
-                        : transactionalTransactionOperationsManagerTransactionMethodsNotAllowed);
+                userTransactionMethodsAllowed ?
+                    transactionalTransactionOperationsManagerTransactionMethodsAllowed :
+                    transactionalTransactionOperationsManagerTransactionMethodsNotAllowed);
     }
 
     void resetTransactionOperationsManager() {
@@ -320,7 +322,7 @@ public class TransactionalInterceptorBase implements Serializable {
     }
 
     ComponentInvocation getCurrentInvocation() {
-        ServiceLocator serviceLocator = Globals.getDefaultHabitat();
+        ServiceLocator serviceLocator = Globals.getDefaultServiceLocator();
         InvocationManager invocationManager = serviceLocator == null ? null : serviceLocator.getService(InvocationManager.class);
         return invocationManager == null ? null : invocationManager.getCurrentInvocation();
     }

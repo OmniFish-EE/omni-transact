@@ -33,7 +33,8 @@ public class TransactionalExtension implements Extension {
             TransactionalInterceptorNotSupported.class,
             TransactionalInterceptorRequired.class,
             TransactionalInterceptorRequiresNew.class,
-            TransactionalInterceptorSupports.class);
+            TransactionalInterceptorSupports.class
+        );
 
     }
 

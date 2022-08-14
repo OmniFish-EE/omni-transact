@@ -17,6 +17,8 @@
 
 package com.sun.enterprise.transaction;
 
+import static jakarta.transaction.Status.STATUS_NO_TRANSACTION;
+
 import java.util.concurrent.Semaphore;
 import java.util.concurrent.locks.Lock;
 import java.util.concurrent.locks.ReentrantReadWriteLock;
@@ -26,9 +28,6 @@ import java.util.logging.Logger;
 import javax.transaction.xa.XAResource;
 import javax.transaction.xa.Xid;
 
-import org.glassfish.hk2.api.PostConstruct;
-import org.jvnet.hk2.annotations.Service;
-
 import com.sun.enterprise.transaction.api.JavaEETransaction;
 import com.sun.enterprise.transaction.api.JavaEETransactionManager;
 import com.sun.enterprise.transaction.api.TransactionAdminBean;
@@ -36,8 +35,8 @@ import com.sun.enterprise.transaction.api.XAResourceWrapper;
 import com.sun.enterprise.transaction.spi.JavaEETransactionManagerDelegate;
 import com.sun.enterprise.transaction.spi.TransactionInternal;
 import com.sun.enterprise.transaction.spi.TransactionalResource;
-import com.sun.enterprise.util.i18n.StringManager;
 
+import jakarta.enterprise.context.ApplicationScoped;
 import jakarta.resource.spi.XATerminator;
 import jakarta.resource.spi.work.WorkException;
 import jakarta.transaction.HeuristicMixedException;
@@ -53,14 +52,10 @@ import jakarta.transaction.Transaction;
  *
  * @author Marina Vatkina
  */
-@Service
-public class JavaEETransactionManagerSimplifiedDelegate implements JavaEETransactionManagerDelegate, PostConstruct {
+@ApplicationScoped
+public class JavaEETransactionManagerSimplifiedDelegate implements JavaEETransactionManagerDelegate {
 
-    // @Inject
-    private JavaEETransactionManager tm;
-
-    // Sting Manager for Localization
-    private static StringManager sm = StringManager.getManager(JavaEETransactionManagerSimplified.class);
+    private JavaEETransactionManager javaEETransactionManager;
 
     private Logger _logger;
 
@@ -71,10 +66,6 @@ public class JavaEETransactionManagerSimplifiedDelegate implements JavaEETransac
     private final Semaphore writeLock = new Semaphore(1, true);
 
     public JavaEETransactionManagerSimplifiedDelegate() {
-    }
-
-    @Override
-    public void postConstruct() {
     }
 
     @Override
@@ -92,7 +83,7 @@ public class JavaEETransactionManagerSimplifiedDelegate implements JavaEETransac
      */
     @Override
     public void commitDistributedTransaction() throws RollbackException, HeuristicMixedException, HeuristicRollbackException, SecurityException, IllegalStateException, SystemException {
-        throw new IllegalStateException(sm.getString("enterprise_distributedtx.transaction_notactive"));
+        throw new IllegalStateException("enterprise_distributedtx.transaction_notactive");
     }
 
     /**
@@ -100,21 +91,22 @@ public class JavaEETransactionManagerSimplifiedDelegate implements JavaEETransac
      */
     @Override
     public void rollbackDistributedTransaction() throws IllegalStateException, SecurityException, SystemException {
-        throw new IllegalStateException(sm.getString("enterprise_distributedtx.transaction_notactive"));
+        throw new IllegalStateException("enterprise_distributedtx.transaction_notactive");
     }
 
     @Override
     public int getStatus() throws SystemException {
-        JavaEETransaction tx = tm.getCurrentTransaction();
-        if (tx != null && tx.isLocalTx())
+        JavaEETransaction tx = javaEETransactionManager.getCurrentTransaction();
+        if (tx != null && tx.isLocalTx()) {
             return tx.getStatus();
-        else
-            return jakarta.transaction.Status.STATUS_NO_TRANSACTION;
+        }
+
+        return STATUS_NO_TRANSACTION;
     }
 
     @Override
     public Transaction getTransaction() throws SystemException {
-        return tm.getCurrentTransaction();
+        return javaEETransactionManager.getCurrentTransaction();
     }
 
     @Override
@@ -123,13 +115,13 @@ public class JavaEETransactionManagerSimplifiedDelegate implements JavaEETransac
             return (JavaEETransaction) t;
         }
 
-        throw new IllegalStateException(sm.getString("enterprise_distributedtx.nonxa_usein_jts"));
+        throw new IllegalStateException("enterprise_distributedtx.nonxa_usein_jts");
 
     }
 
     @Override
     public boolean enlistDistributedNonXAResource(Transaction tran, TransactionalResource h) throws RollbackException, IllegalStateException, SystemException {
-        throw new IllegalStateException(sm.getString("enterprise_distributedtx.nonxa_usein_jts"));
+        throw new IllegalStateException("enterprise_distributedtx.nonxa_usein_jts");
     }
 
     @Override
@@ -142,13 +134,13 @@ public class JavaEETransactionManagerSimplifiedDelegate implements JavaEETransac
      */
     @Override
     public void setRollbackOnlyDistributedTransaction() throws IllegalStateException, SystemException {
-        throw new IllegalStateException(sm.getString("enterprise_distributedtx.transaction_notactive"));
+        throw new IllegalStateException("enterprise_distributedtx.transaction_notactive");
     }
 
     @Override
     public Transaction suspend(JavaEETransaction tx) throws SystemException {
         if (tx != null) {
-            tm.setCurrentTransaction(null);
+            javaEETransactionManager.setCurrentTransaction(null);
         }
 
         return tx;
@@ -170,8 +162,8 @@ public class JavaEETransactionManagerSimplifiedDelegate implements JavaEETransac
 
     @Override
     public void setTransactionManager(JavaEETransactionManager tm) {
-        this.tm = tm;
-        _logger = ((JavaEETransactionManagerSimplified) tm).getLogger();
+        this.javaEETransactionManager = tm;
+        _logger = ((JavaEETransactionManagerImpl) tm).getLogger();
     }
 
     @Override
@@ -257,7 +249,7 @@ public class JavaEETransactionManagerSimplifiedDelegate implements JavaEETransac
 
     @Override
     public TransactionAdminBean getTransactionAdminBean(Transaction tran) throws jakarta.transaction.SystemException {
-        return ((JavaEETransactionManagerSimplified) tm).getTransactionAdminBean(tran);
+        return ((JavaEETransactionManagerImpl) javaEETransactionManager).getTransactionAdminBean(tran);
     }
 
     /**

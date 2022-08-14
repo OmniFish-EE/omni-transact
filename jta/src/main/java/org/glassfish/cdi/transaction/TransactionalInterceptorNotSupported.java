@@ -32,7 +32,10 @@ import jakarta.transaction.TransactionalException;
 
 /**
  * Transactional annotation Interceptor class for NotSupported transaction type, ie
- * jakarta.transaction.Transactional.TxType.NOT_SUPPORTED If called outside a transaction context, managed bean method
+ * jakarta.transaction.Transactional.TxType.NOT_SUPPORTED
+ *
+ * <p>
+ * If called outside a transaction context, managed bean method
  * execution will then continue outside a transaction context. If called inside a transaction context, the current
  * transaction context will be suspended, the managed bean method execution will then continue outside a transaction
  * context, and the previously suspended transaction will be resumed.
@@ -45,7 +48,7 @@ import jakarta.transaction.TransactionalException;
 public class TransactionalInterceptorNotSupported extends TransactionalInterceptorBase {
 
     private static final long serialVersionUID = 2905721637911698354L;
-    private static final Logger _logger = Logger.getLogger(CDI_JTA_LOGGER_SUBSYSTEM_NAME, SHARED_LOGMESSAGE_RESOURCE);
+    private static final Logger _logger = Logger.getLogger(CDI_JTA_LOGGER_SUBSYSTEM_NAME);
 
     @AroundInvoke
     public Object transactional(InvocationContext ctx) throws Exception {

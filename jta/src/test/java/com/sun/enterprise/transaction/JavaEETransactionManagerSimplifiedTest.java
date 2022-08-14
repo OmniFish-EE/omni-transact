@@ -17,32 +17,7 @@
 
 package com.sun.enterprise.transaction;
 
-import com.sun.enterprise.config.serverbeans.ServerTags;
-import com.sun.enterprise.transaction.api.JavaEETransactionManager;
-import com.sun.enterprise.transaction.spi.JavaEETransactionManagerDelegate;
-
-import java.beans.PropertyChangeEvent;
-import java.util.logging.Level;
-
-import javax.transaction.xa.XAException;
-import javax.transaction.xa.XAResource;
-import javax.transaction.xa.Xid;
-
-import org.glassfish.api.invocation.InvocationManager;
-import org.junit.jupiter.api.BeforeEach;
-import org.junit.jupiter.api.Test;
-import org.jvnet.hk2.config.UnprocessedChangeEvents;
-
-import jakarta.transaction.InvalidTransactionException;
-import jakarta.transaction.NotSupportedException;
-import jakarta.transaction.RollbackException;
-import jakarta.transaction.Synchronization;
-import jakarta.transaction.SystemException;
-import jakarta.transaction.Transaction;
-import jakarta.transaction.TransactionManager;
-import jakarta.transaction.UserTransaction;
-
-import static com.sun.enterprise.transaction.JavaEETransactionManagerSimplified.getStatusAsString;
+import static com.sun.enterprise.transaction.JavaEETransactionManagerImpl.getStatusAsString;
 import static org.hamcrest.CoreMatchers.instanceOf;
 import static org.hamcrest.MatcherAssert.assertThat;
 import static org.junit.jupiter.api.Assertions.assertAll;
@@ -54,6 +29,29 @@ import static org.junit.jupiter.api.Assertions.assertNull;
 import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 
+import java.util.logging.Level;
+
+import javax.transaction.xa.XAException;
+import javax.transaction.xa.XAResource;
+import javax.transaction.xa.Xid;
+
+import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.Test;
+
+import com.sun.enterprise.transaction.api.InvocationManager;
+import com.sun.enterprise.transaction.api.JavaEETransactionManager;
+import com.sun.enterprise.transaction.impl.InvocationManagerImpl;
+import com.sun.enterprise.transaction.spi.JavaEETransactionManagerDelegate;
+
+import jakarta.transaction.InvalidTransactionException;
+import jakarta.transaction.NotSupportedException;
+import jakarta.transaction.RollbackException;
+import jakarta.transaction.Synchronization;
+import jakarta.transaction.SystemException;
+import jakarta.transaction.Transaction;
+import jakarta.transaction.TransactionManager;
+import jakarta.transaction.UserTransaction;
+
 /**
  * Unit test for simple App.
  */
@@ -63,7 +61,7 @@ public class JavaEETransactionManagerSimplifiedTest {
 
     @BeforeEach
     public void setUp() {
-        txManager = new JavaEETransactionManagerSimplified();
+        txManager = new JavaEETransactionManagerImpl();
         JavaEETransactionManagerDelegate delegate = new JavaEETransactionManagerSimplifiedDelegate();
         txManager.setDelegate(delegate);
         delegate.setTransactionManager(txManager);
@@ -80,18 +78,18 @@ public class JavaEETransactionManagerSimplifiedTest {
     }
 
 
-    /**
-     * Test ConfigListener call
-     */
-    @Test
-    public void testTransactionServiceConfigListener() {
-        PropertyChangeEvent e1 = new PropertyChangeEvent("", ServerTags.KEYPOINT_INTERVAL, "1", "10");
-        PropertyChangeEvent e2 = new PropertyChangeEvent("", ServerTags.RETRY_TIMEOUT_IN_SECONDS, "1", "10");
-        TransactionServiceConfigListener listener = new TransactionServiceConfigListener();
-        listener.setTM(txManager);
-        UnprocessedChangeEvents events = listener.changed(new PropertyChangeEvent[] {e1, e2});
-        assertNull(events);
-    }
+//    /**
+//     * Test ConfigListener call
+//     */
+//    @Test
+//    public void testTransactionServiceConfigListener() {
+//        PropertyChangeEvent e1 = new PropertyChangeEvent("", ServerTags.KEYPOINT_INTERVAL, "1", "10");
+//        PropertyChangeEvent e2 = new PropertyChangeEvent("", ServerTags.RETRY_TIMEOUT_IN_SECONDS, "1", "10");
+//        TransactionServiceConfigListener listener = new TransactionServiceConfigListener();
+//        listener.setTM(txManager);
+//        UnprocessedChangeEvents events = listener.changed(new PropertyChangeEvent[] {e1, e2});
+//        assertNull(events);
+//    }
 
 
     @Test
@@ -304,7 +302,7 @@ public class JavaEETransactionManagerSimplifiedTest {
     @Test
     public void testTxCommitFailBeforeCompletion() throws Exception {
         // Suppress warnings from beforeCompletion() logging
-        ((JavaEETransactionManagerSimplified) txManager).getLogger().setLevel(Level.SEVERE);
+        ((JavaEETransactionManagerImpl) txManager).getLogger().setLevel(Level.SEVERE);
 
         txManager.begin();
         final Transaction tx = txManager.getTransaction();
@@ -325,7 +323,7 @@ public class JavaEETransactionManagerSimplifiedTest {
     @Test
     public void testTMCommitFailBeforeCompletion() throws Exception {
         // Suppress warnings from beforeCompletion() logging
-        ((JavaEETransactionManagerSimplified) txManager).getLogger().setLevel(Level.SEVERE);
+        ((JavaEETransactionManagerImpl) txManager).getLogger().setLevel(Level.SEVERE);
 
         txManager.begin();
         final Transaction tx = txManager.getTransaction();
@@ -346,7 +344,7 @@ public class JavaEETransactionManagerSimplifiedTest {
     @Test
     public void testTxCommitFailInterposedSyncBeforeCompletion() throws Exception {
         // Suppress warnings from beforeCompletion() logging
-        ((JavaEETransactionManagerSimplified) txManager).getLogger().setLevel(Level.SEVERE);
+        ((JavaEETransactionManagerImpl) txManager).getLogger().setLevel(Level.SEVERE);
 
         txManager.begin();
         Transaction tx = txManager.getTransaction();
@@ -367,7 +365,7 @@ public class JavaEETransactionManagerSimplifiedTest {
     @Test
     public void testTxCommitRollbackBeforeCompletion() throws Exception {
         // Suppress warnings from beforeCompletion() logging
-        ((JavaEETransactionManagerSimplified) txManager).getLogger().setLevel(Level.SEVERE);
+        ((JavaEETransactionManagerImpl) txManager).getLogger().setLevel(Level.SEVERE);
 
         txManager.begin();
         Transaction tx = txManager.getTransaction();
@@ -387,7 +385,7 @@ public class JavaEETransactionManagerSimplifiedTest {
 
     private UserTransaction createUtx() {
         UserTransaction utx = new UserTransactionImpl();
-        InvocationManager im = new org.glassfish.api.invocation.InvocationManagerImpl();
+        InvocationManager im = new InvocationManagerImpl();
         ((UserTransactionImpl) utx).setForTesting(txManager, im);
         return utx;
     }

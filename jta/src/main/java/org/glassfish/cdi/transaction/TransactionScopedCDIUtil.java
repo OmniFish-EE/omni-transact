@@ -25,9 +25,6 @@ import java.util.Set;
 import java.util.logging.Level;
 import java.util.logging.Logger;
 
-import org.glassfish.logging.annotation.LogMessagesResourceBundle;
-import org.glassfish.logging.annotation.LoggerInfo;
-
 import jakarta.enterprise.context.Dependent;
 import jakarta.enterprise.context.spi.CreationalContext;
 import jakarta.enterprise.inject.Any;
@@ -51,12 +48,9 @@ public class TransactionScopedCDIUtil {
     public static final String INITIALIZED_EVENT = "INITIALIZED_EVENT";
     public static final String DESTORYED_EVENT = "DESTORYED_EVENT";
 
-    @LogMessagesResourceBundle
-    public static final String SHARED_LOGMESSAGE_RESOURCE = "org.glassfish.cdi.LogMessages";
-
-    @LoggerInfo(subsystem = "AS-CDI-JTA", description = "CDI-JTA", publish = true)
+    // @LoggerInfo(subsystem = "AS-CDI-JTA", description = "CDI-JTA", publish = true)
     public static final String CDI_JTA_LOGGER_SUBSYSTEM_NAME = "jakarta.enterprise.resource.jta";
-    private static final Logger _logger = Logger.getLogger(CDI_JTA_LOGGER_SUBSYSTEM_NAME, SHARED_LOGMESSAGE_RESOURCE);
+    private static final Logger _logger = Logger.getLogger(CDI_JTA_LOGGER_SUBSYSTEM_NAME);
 
     public static void log(String message) {
         _logger.log(Level.WARNING, message);
