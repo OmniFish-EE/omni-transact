@@ -14,18 +14,7 @@
  * SPDX-License-Identifier: EPL-2.0 OR GPL-2.0 WITH Classpath-exception-2.0
  */
 
-package org.omnifish.transact.cdi.beans;
-
-import org.omnifish.transact.jta.transaction.JavaEETransactionManagerImpl;
-import org.omnifish.transact.jta.transaction.JavaEETransactionManagerSimplifiedDelegate;
-import org.omnifish.transact.jta.transaction.TransactionManagerImpl;
-import org.omnifish.transact.jta.transaction.TransactionSynchronizationRegistryImpl;
-import org.omnifish.transact.jta.transaction.UserTransactionImpl;
-
-import com.sun.enterprise.transaction.impl.InvocationManagerImpl;
-import com.sun.enterprise.transaction.impl.TransactionServiceConfigImpl;
-import com.sun.enterprise.transaction.jts.JavaEETransactionManagerJTSDelegate;
-import com.sun.enterprise.transaction.jts.ResourceRecoveryManagerImpl;
+package org.omnifish.transact.jta.cdi;
 
 import jakarta.enterprise.event.Observes;
 import jakarta.enterprise.inject.spi.BeanManager;
@@ -39,22 +28,12 @@ public class TransactionalExtension implements Extension {
 
     public void beforeBeanDiscovery(@Observes BeforeBeanDiscovery beforeBeanDiscoveryEvent, BeanManager beanManager) {
         addAnnotatedTypes(beforeBeanDiscoveryEvent, beanManager,
-            CDIServiceLocator.class,
-
-            // Jakarta Transactions
-            UserTransactionImpl.class,
-            TransactionManagerImpl.class,
-            JavaEETransactionManagerImpl.class,
-            TransactionSynchronizationRegistryImpl.class,
-            JavaEETransactionManagerSimplifiedDelegate.class,
-
-            // Java Transaction Service
-            JavaEETransactionManagerJTSDelegate.class,
-            ResourceRecoveryManagerImpl.class,
-
-            // Transact API default implementations
-            TransactionServiceConfigImpl.class,
-            InvocationManagerImpl.class
+            TransactionalInterceptorMandatory.class,
+            TransactionalInterceptorNever.class,
+            TransactionalInterceptorNotSupported.class,
+            TransactionalInterceptorRequired.class,
+            TransactionalInterceptorRequiresNew.class,
+            TransactionalInterceptorSupports.class
         );
 
     }

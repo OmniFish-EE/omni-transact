@@ -33,8 +33,9 @@ import java.util.logging.Logger;
 import javax.transaction.xa.XAResource;
 import javax.transaction.xa.Xid;
 
-import com.sun.enterprise.transaction.JavaEETransactionImpl;
-import com.sun.enterprise.transaction.JavaEETransactionManagerImpl;
+import org.omnifish.transact.jta.transaction.JavaEETransactionImpl;
+import org.omnifish.transact.jta.transaction.JavaEETransactionManagerImpl;
+
 import com.sun.enterprise.transaction.api.JavaEETransaction;
 import com.sun.enterprise.transaction.api.JavaEETransactionManager;
 import com.sun.enterprise.transaction.api.TransactionAdminBean;

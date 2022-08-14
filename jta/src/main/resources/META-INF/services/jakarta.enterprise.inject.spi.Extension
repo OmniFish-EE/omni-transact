@@ -1,2 +1,2 @@
-org.glassfish.cdi.transaction.TransactionalExtension
-org.glassfish.cdi.transaction.TransactionScopedContextExtension
+org.omnifish.transact.jta.cdi.TransactionalExtension
+org.omnifish.transact.jta.cdi.TransactionScopedContextExtension

@@ -133,7 +133,7 @@
                     <archive>
                         <manifestEntries>
                             <probe-provider-class-names>
-                                com.sun.enterprise.transaction.monitoring.TransactionServiceProbeProvider
+                                org.omnifish.transact.jta.transaction.monitoring.TransactionServiceProbeProvider
                             </probe-provider-class-names>
                         </manifestEntries>
                     </archive>
