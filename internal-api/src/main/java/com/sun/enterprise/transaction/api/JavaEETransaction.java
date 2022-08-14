@@ -16,45 +16,42 @@
 
 package com.sun.enterprise.transaction.api;
 
-import org.jvnet.hk2.annotations.Contract;
-
-import jakarta.persistence.EntityManagerFactory;
-import jakarta.transaction.Transaction;
 import java.util.Set;
 
 import com.sun.enterprise.transaction.spi.TransactionalResource;
 
-@Contract
-public interface JavaEETransaction
-    extends Transaction {
+import jakarta.persistence.EntityManagerFactory;
+import jakarta.transaction.Transaction;
 
-    public  SimpleResource getExtendedEntityManagerResource(EntityManagerFactory factory);
+public interface JavaEETransaction extends Transaction {
 
-    public SimpleResource getTxEntityManagerResource(EntityManagerFactory factory);
+    SimpleResource getExtendedEntityManagerResource(EntityManagerFactory factory);
 
-    public void addTxEntityManagerMapping(EntityManagerFactory factory, SimpleResource em);
+    SimpleResource getTxEntityManagerResource(EntityManagerFactory factory);
 
-    public void addExtendedEntityManagerMapping(EntityManagerFactory factory, SimpleResource em);
+    void addTxEntityManagerMapping(EntityManagerFactory factory, SimpleResource em);
 
-    public void removeExtendedEntityManagerMapping(EntityManagerFactory factory);
+    void addExtendedEntityManagerMapping(EntityManagerFactory factory, SimpleResource em);
 
-    public <T> void setContainerData(T data);
+    void removeExtendedEntityManagerMapping(EntityManagerFactory factory);
 
-    public <T> T getContainerData();
+    <T> void setContainerData(T data);
 
-    public Set getAllParticipatingPools();
+    <T> T getContainerData();
 
-    public Set getResources(Object poolInfo);
+    Set getAllParticipatingPools();
 
-    public TransactionalResource getLAOResource();
+    Set getResources(Object poolInfo);
 
-    public void setLAOResource(TransactionalResource h);
+    TransactionalResource getLAOResource();
 
-    public TransactionalResource getNonXAResource();
+    void setLAOResource(TransactionalResource h);
 
-    public void setResources(Set resources, Object poolInfo);
+    TransactionalResource getNonXAResource();
 
-    public boolean isLocalTx();
+    void setResources(Set resources, Object poolInfo);
 
-    public boolean isTimedOut();
+    boolean isLocalTx();
+
+    boolean isTimedOut();
 }

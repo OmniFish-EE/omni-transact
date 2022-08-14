@@ -16,33 +16,29 @@
 
 package com.sun.enterprise.transaction.spi;
 
-import org.jvnet.hk2.annotations.Contract;
-
 import java.util.List;
 
 /**
  * RecoveryResourceHandler will be used by transaction-manager to get resource instances.<br>
  * Using these resource instances, transaction recovery will be done.<br>
- * All type of (xa)resources will have a resource recovery handler which will be used by
- * transaction-manager
+ * All type of (xa)resources will have a resource recovery handler which will be used by transaction-manager
  *
  * @author Jagadish Ramu
  */
-@Contract
 public interface RecoveryResourceHandler {
     /**
      * load xa-resource instances for recovery
      *
      * @param xaresList List of xa-resources, populate it with the xa-capable resources that needs recovery
-     * @param connList  populate it with connections used to provide these xa-resources, if any.
-     * Transaction-recovery will call close the connections in connList once recovery is over.
+     * @param connList populate it with connections used to provide these xa-resources, if any. Transaction-recovery will
+     * call close the connections in connList once recovery is over.
      */
-    public void loadXAResourcesAndItsConnections(List xaresList, List connList);
+    void loadXAResourcesAndItsConnections(List xaresList, List connList);
 
     /**
      * close the connections that were used to provide xa-resources for recovery
      *
      * @param connList list of connections
      */
-    public void closeConnections(List connList);
+    void closeConnections(List connList);
 }

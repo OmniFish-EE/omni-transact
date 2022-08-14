@@ -16,29 +16,26 @@
 
 package com.sun.enterprise.transaction.api;
 
-import org.jvnet.hk2.annotations.Contract;
-
 /**
- * ResourceRecoveryManager interface to be implemented by the resource manager
- * that supports XA recovery.
+ * ResourceRecoveryManager interface to be implemented by the resource manager that supports XA recovery.
  *
  * @author Marina Vatkina
  */
-
-@Contract
 public interface ResourceRecoveryManager {
 
     /**
      * recover incomplete transactions
+     *
      * @param delegated indicates whether delegated recovery is needed
      * @param logPath transaction log directory path
      * @return boolean indicating the status of transaction recovery
      * @throws Exception when unable to recover
      */
-    public boolean recoverIncompleteTx(boolean delegated, String logPath) throws Exception;
+    boolean recoverIncompleteTx(boolean delegated, String logPath) throws Exception;
 
     /**
      * recover incomplete transactions with before and after event notifications
+     *
      * @param delegated indicates whether delegated recovery is needed
      * @param logPath transaction log directory path
      * @param instance the name opf the instance for which delegated recovery is requested, null if unknown
@@ -46,24 +43,25 @@ public interface ResourceRecoveryManager {
      * @return boolean indicating the status of transaction recovery
      * @throws Exception when unable to recover
      */
-    public boolean recoverIncompleteTx(boolean delegated, String logPath, String instance,
-            boolean notifyRecoveryListeners) throws Exception;
+    boolean recoverIncompleteTx(boolean delegated, String logPath, String instance, boolean notifyRecoveryListeners)
+            throws Exception;
 
     /**
      * recover the xa-resources
+     *
      * @param force boolean to indicate if it has to be forced.
      */
-    public void recoverXAResources(boolean force);
+    void recoverXAResources(boolean force);
 
     /**
      * to recover xa resources
      */
-    public void recoverXAResources();
+    void recoverXAResources();
 
     /**
      * to enable lazy recovery, setting lazy to "true" will
      *
      * @param lazy boolean
      */
-    public void setLazyRecovery(boolean lazy);
+    void setLazyRecovery(boolean lazy);
 }

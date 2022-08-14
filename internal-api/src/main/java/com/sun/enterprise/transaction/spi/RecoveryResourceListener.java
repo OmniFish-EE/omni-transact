@@ -19,13 +19,12 @@ package com.sun.enterprise.transaction.spi;
 import javax.transaction.xa.XAResource;
 
 /**
- * Interface implemented by the consumers of recoveryResource
- * registry and recoveryresourcelistener.
+ * Interface implemented by the consumers of recoveryResource registry and recoveryresourcelistener.
  *
  * @author Binod PG
  * @since 9.1
  */
-public interface RecoveryResourceListener  {
+public interface RecoveryResourceListener {
 
     /**
      * Return the XAResource objects for recovery processing.

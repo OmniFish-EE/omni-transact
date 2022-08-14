@@ -16,76 +16,79 @@
 
 package com.sun.enterprise.transaction.api;
 
-import java.util.ArrayList;
+import java.io.Serializable;
+import java.util.List;
 
-public class TransactionAdminBean implements java.io.Serializable {
-    private Object m_identifier;
-    private String m_id;
-    private String m_status;
-    private long m_elapsedTime;
-    private String m_componentName;
-    private ArrayList<String> m_resourceNames;
+public class TransactionAdminBean implements Serializable {
 
-    public TransactionAdminBean(Object identifier, String id, String status, long elapsedTime,
-        String componentName, ArrayList<String> resourceNames) {
-        m_identifier = identifier;
-        m_id=id;
-        m_status = status;
-        m_elapsedTime = elapsedTime;
-        m_componentName = componentName;
-        m_resourceNames = resourceNames;
+    private static final long serialVersionUID = 1L;
+
+    private Object identifier;
+    private String id;
+    private String status;
+    private long elapsedTime;
+    private String componentName;
+    private List<String> resourceNames;
+
+    public TransactionAdminBean(Object identifier, String id, String status, long elapsedTime, String componentName, List<String> resourceNames) {
+        this.identifier = identifier;
+        this.id = id;
+        this.status = status;
+        this.elapsedTime = elapsedTime;
+        this.componentName = componentName;
+        this.resourceNames = resourceNames;
     }
 
     // getter functions ...
 
-    public Object getIdentifier(){
-        return m_identifier;
+    public Object getIdentifier() {
+        return identifier;
     }
 
-    public String getId(){
-        return m_id;
+    public String getId() {
+        return id;
     }
 
-    public String getStatus(){
-        return m_status;
+    public String getStatus() {
+        return status;
     }
 
-    public long getElapsedTime(){
-        return m_elapsedTime;
+    public long getElapsedTime() {
+        return elapsedTime;
     }
 
     public String getComponentName() {
-        return m_componentName;
+        return componentName;
     }
 
-    public ArrayList<String> getResourceNames() {
-        return m_resourceNames;
+    public List<String> getResourceNames() {
+        return resourceNames;
     }
 
     // setter functions ...
 
-    public void setIdentifier(Object id){
-        m_identifier = id;
+    public void setIdentifier(Object id) {
+        identifier = id;
     }
 
-    public void setId(String id){
-        m_id=id;
+    public void setId(String id) {
+        this.id = id;
     }
 
-    public void setStatus(String sts){
-        m_status = sts;
+    public void setStatus(String sts) {
+        status = sts;
     }
 
-    public void setElapsedTime(long time){
-        m_elapsedTime = time;
+    public void setElapsedTime(long time) {
+        elapsedTime = time;
     }
 
     public void setComponentName(String componentName) {
-        m_componentName = componentName;
+        this.componentName = componentName;
     }
 
-    public void setResourceNames(ArrayList<String> resourceNames) {
-        m_resourceNames = resourceNames;
+    public void setResourceNames(List<String> resourceNames) {
+        this.resourceNames = resourceNames;
     }
 
 }

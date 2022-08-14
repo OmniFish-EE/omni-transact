@@ -16,17 +16,20 @@
 
 package com.sun.enterprise.transaction.spi;
 
-import jakarta.transaction.*;
+import jakarta.transaction.RollbackException;
+import jakarta.transaction.Synchronization;
+import jakarta.transaction.SystemException;
+import jakarta.transaction.Transaction;
+import jakarta.transaction.TransactionSynchronizationRegistry;
 
 public interface TransactionInternal extends Transaction {
 
     /**
      * Register a Synchronization instance with special ordering semantics.
+     *
      * @see TransactionSynchronizationRegistry#registerInterposedSynchronization(Synchronization)
      *
-     * @param sync - the Synchronization instance.
+     * @param synchronization - the Synchronization instance.
      */
-    public void registerInterposedSynchronization(Synchronization sync)
-        throws RollbackException, IllegalStateException,
-        SystemException;
+    void registerInterposedSynchronization(Synchronization synchronization) throws RollbackException, IllegalStateException, SystemException;
 }

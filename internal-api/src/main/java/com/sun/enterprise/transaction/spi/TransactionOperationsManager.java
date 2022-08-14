@@ -17,25 +17,21 @@
 package com.sun.enterprise.transaction.spi;
 
 import javax.naming.NameNotFoundException;
-import org.jvnet.hk2.annotations.Contract;
 
 /**
- * TransactionOperationsManager interface to be used by various components
- * to perform notifications by UserTransaction instance.
+ * TransactionOperationsManager interface to be used by various components to perform notifications by UserTransaction
+ * instance.
  *
  * @author Marina Vatkina
  */
-@Contract
 public interface TransactionOperationsManager {
     /**
-     * Called by the UserTransaction implementation to verify
-     * access to the UserTransaction methods.
+     * Called by the UserTransaction implementation to verify access to the UserTransaction methods.
      */
     boolean userTransactionMethodsAllowed();
 
     /**
-     * Called by the UserTransaction lookup to verify
-     * access to the UserTransaction itself.
+     * Called by the UserTransaction lookup to verify access to the UserTransaction itself.
      */
     void userTransactionLookupAllowed() throws NameNotFoundException;
 

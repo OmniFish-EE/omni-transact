@@ -16,43 +16,34 @@
 
 package com.sun.enterprise.transaction.api;
 
-import org.jvnet.hk2.annotations.Service;
+import java.util.HashSet;
+import java.util.Set;
 
-import jakarta.inject.Singleton;
-
-import java.util.*;
-
-import com.sun.enterprise.transaction.spi.RecoveryResourceListener;
 import com.sun.enterprise.transaction.spi.RecoveryEventListener;
-
+import com.sun.enterprise.transaction.spi.RecoveryResourceListener;
 
 /**
- * This is a registry class that keep the recoveryresource and event listeners.
- * A module will be able to use this singleton to register
- * its recoveryresource listeners and/or event listeners.
+ * This is a registry class that keep the recoveryresource and event listeners. A module will be able to use this
+ * singleton to register its recoveryresource listeners and/or event listeners.
  *
  * @author Binod PG
  * @since 9.1
  */
-@Service
-@Singleton
-public class RecoveryResourceRegistry  {
+public class RecoveryResourceRegistry {
 
-    private final static Set<RecoveryResourceListener> resourceListeners =
-            new HashSet<RecoveryResourceListener>();
+    private final static Set<RecoveryResourceListener> resourceListeners = new HashSet<>();
 
-    private final static Set<RecoveryEventListener> recoveryEventListeners =
-            new HashSet<RecoveryEventListener>();
+    private final static Set<RecoveryEventListener> recoveryEventListeners = new HashSet<>();
 
     public RecoveryResourceRegistry() {
     }
 
-    public void addListener(RecoveryResourceListener rrl) {
-        resourceListeners.add(rrl);
+    public void addListener(RecoveryResourceListener recoveryResourceListener) {
+        resourceListeners.add(recoveryResourceListener);
     }
 
-    public void addEventListener(RecoveryEventListener rrl) {
-        recoveryEventListeners.add(rrl);
+    public void addEventListener(RecoveryEventListener recoveryEventListener) {
+        recoveryEventListeners.add(recoveryEventListener);
     }
 
     public Set<RecoveryResourceListener> getListeners() {

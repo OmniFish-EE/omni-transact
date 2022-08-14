@@ -17,16 +17,16 @@
 package com.sun.enterprise.transaction.spi;
 
 /**
- * Interface implemented by the consumers that are interested in
- * recovery start and end events
+ * Interface implemented by the consumers that are interested in recovery start and end events
  *
  * @author Marina Vatkina
  * @since 3.1
  */
-public interface RecoveryEventListener  {
+public interface RecoveryEventListener {
 
     /**
      * Indicate to the listener that recovery for a specific instance is about to start.
+     *
      * @param delegated identifies whether it is part of a delegated transaction recovery
      * @param instance the instance name for which transaction recovery is performed, null if unknown
      */
@@ -34,6 +34,7 @@ public interface RecoveryEventListener  {
 
     /**
      * Indicate to the listener that recovery is over.
+     *
      * @param success <code>true</code> if the recovery operation finished successfully
      * @param delegated identifies whether it is part of a delegated transaction recovery
      * @param instance the instance name for which transaction recovery is performed, null if unknown

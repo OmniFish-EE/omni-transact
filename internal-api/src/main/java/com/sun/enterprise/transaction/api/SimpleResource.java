@@ -18,9 +18,9 @@ package com.sun.enterprise.transaction.api;
 
 /**
  * Represents a resource that can be queried for open status and can be closed
- * @author  Mitesh Meswani
+ *
+ * @author Mitesh Meswani
  */
-
 public interface SimpleResource {
 
     /**

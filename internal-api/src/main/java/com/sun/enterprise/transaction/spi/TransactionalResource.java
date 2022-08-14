@@ -16,46 +16,47 @@
 
 package com.sun.enterprise.transaction.spi;
 
-import jakarta.transaction.Transaction;
 import javax.transaction.xa.XAResource;
 
+import jakarta.transaction.Transaction;
+
 /**
- * TransactionalResource interface to be implemented by the resource handlers
- * to be able to communicate with used the transaction manager components
+ * TransactionalResource interface to be implemented by the resource handlers to be able to communicate with used the
+ * transaction manager components
  *
  * @author Marina Vatkina
  */
-
 public interface TransactionalResource {
 
-    public boolean isTransactional();
+    boolean isTransactional();
 
-    //TODO V3 not needed as of now.
-    public boolean isEnlistmentSuspended();
+    // TODO V3 not needed as of now.
+    boolean isEnlistmentSuspended();
 
-    public XAResource getXAResource();
+    XAResource getXAResource();
 
-    public boolean supportsXA();
+    boolean supportsXA();
 
-    public Object getComponentInstance();
+    Object getComponentInstance();
 
-    public void setComponentInstance(Object instance);
+    void setComponentInstance(Object instance);
 
-    public void closeUserConnection() throws Exception;
+    void closeUserConnection() throws Exception;
 
-    public boolean isEnlisted();
+    boolean isEnlisted();
 
-    public boolean isShareable();
+    boolean isShareable();
 
-    public void destroyResource();
+    void destroyResource();
 
     /**
      * @return the String that can identify this resource
      */
-    public String getName();
+    String getName();
 
     /**
      * Indicates that a resource has been enlisted in the transaction.
+     *
      * @param tran Transaction to which the resource is enlisted
      * @throws IllegalStateException when unable to enlist the resource
      */

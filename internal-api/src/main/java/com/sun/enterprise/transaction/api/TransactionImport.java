@@ -16,66 +16,63 @@
 
 package com.sun.enterprise.transaction.api;
 
-import jakarta.transaction.SystemException;
 import javax.transaction.xa.XAResource;
 import javax.transaction.xa.Xid;
+
 import jakarta.resource.spi.XATerminator;
+import jakarta.transaction.SystemException;
 
 /**
  * Transaction Manager extensions to support transaction inflow w/o resource adapter.
  */
 public interface TransactionImport {
-  /**
-     * Recreate a transaction based on the Xid. This call causes the calling
-     * thread to be associated with the specified transaction.
+    /**
+     * Recreate a transaction based on the Xid. This call causes the calling thread to be associated with the specified
+     * transaction.
      *
      * <p>
      * This method imports a transactional context controlled by an external transaction manager.
      *
      * @param xid the Xid object representing a transaction.
      */
-    public void recreate(Xid xid, long timeout);
+    void recreate(Xid xid, long timeout);
 
     /**
-     * Release a transaction. This call causes the calling thread to be
-     * dissociated from the specified transaction.
+     * Release a transaction. This call causes the calling thread to be dissociated from the specified transaction.
      *
      * <p>
      * This call releases transactional context imported by recreate method.
      *
      * @param xid the Xid object representing a transaction.
      */
-    public void release(Xid xid);
+    void release(Xid xid);
 
     /**
      * Provides a handle to a <code>XATerminator</code> instance.
      *
-     * <p> The XATerminator exports 2PC protocol control to an external root transaction coordinator.
+     * <p>
+     * The XATerminator exports 2PC protocol control to an external root transaction coordinator.
      *
      * @return a <code>XATerminator</code> instance.
      */
-    public XATerminator getXATerminator();
+    XATerminator getXATerminator();
 
     /**
      * Return duration before current transaction would timeout.
      *
-     * @return Returns the duration in seconds before current transaction would
-     *         timeout.
-     *         Returns zero if transaction has no timeout set and returns
-     *         negative value if transaction already timed out.
+     * @return Returns the duration in seconds before current transaction would timeout. Returns zero if transaction has no
+     * timeout set and returns negative value if transaction already timed out.
      *
-     * @exception IllegalStateException Thrown if the current thread is
-     *    not associated with a transaction.
+     * @exception IllegalStateException Thrown if the current thread is not associated with a transaction.
      *
-     * @exception SystemException Thrown if the transaction manager
-     *    encounters an unexpected error condition.
+     * @exception SystemException Thrown if the transaction manager encounters an unexpected error condition.
      */
-    public int getTransactionRemainingTimeout() throws SystemException;
+    int getTransactionRemainingTimeout() throws SystemException;
 
     /**
      * Allows an arbitrary XAResource to register for recovery
      *
      * @param xaResource XAResource to register for recovery
      */
-    public void registerRecoveryResourceHandler(XAResource xaResource);
+    void registerRecoveryResourceHandler(XAResource xaResource);
 }
