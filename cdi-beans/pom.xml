@@ -21,14 +21,14 @@
     <modelVersion>4.0.0</modelVersion>
 
     <parent>
-        <groupId>org.omnifish</groupId>
-        <artifactId>transact</artifactId>
+        <groupId>org.omnifish.transact</groupId>
+        <artifactId>parent</artifactId>
         <version>1.0.0-SNAPSHOT</version>
     </parent>
 
-    <artifactId>cdi-beans</artifactId>
+    <artifactId>transact-cdi-beans</artifactId>
 
-    <name>CDI Beans</name>
+    <name>Transact CDI Beans</name>
 
     <developers>
         <developer>
@@ -42,6 +42,8 @@
     </developers>
 
     <dependencies>
+        <!-- Jakarta EE dependencies -->
+    
         <dependency>
             <groupId>jakarta.transaction</groupId>
             <artifactId>jakarta.transaction-api</artifactId>
@@ -63,23 +65,26 @@
             <version>2.1.0</version>
         </dependency>
         
+        
+        <!-- Transact dependencies -->
+        
         <dependency>
-            <groupId>org.omnifish</groupId>
-            <artifactId>transaction-internal-api</artifactId>
+            <groupId>org.omnifish.transact</groupId>
+            <artifactId>transact-api</artifactId>
             <version>1.0.0-SNAPSHOT</version>
         </dependency>
         <dependency>
-            <groupId>org.omnifish</groupId>
-            <artifactId>jta</artifactId>
+            <groupId>org.omnifish.transact</groupId>
+            <artifactId>transact-jta</artifactId>
             <version>1.0.0-SNAPSHOT</version>
         </dependency>
         <dependency>
-            <groupId>org.omnifish</groupId>
-            <artifactId>jts</artifactId>
+            <groupId>org.omnifish.transact</groupId>
+            <artifactId>transact-jts</artifactId>
             <version>1.0.0-SNAPSHOT</version>
         </dependency>
     </dependencies>
-    
+
     <build>
         <plugins>
              <plugin>
