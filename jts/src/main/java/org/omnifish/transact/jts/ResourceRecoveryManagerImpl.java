@@ -32,10 +32,10 @@ import java.util.logging.Logger;
 
 import javax.transaction.xa.XAResource;
 
-import org.omnifish.transact.api.api.JavaEETransactionManager;
-import org.omnifish.transact.api.api.RecoveryResourceRegistry;
-import org.omnifish.transact.api.api.ResourceRecoveryManager;
-import org.omnifish.transact.api.api.TransactionServiceConfig;
+import org.omnifish.transact.api.JavaEETransactionManager;
+import org.omnifish.transact.api.RecoveryResourceRegistry;
+import org.omnifish.transact.api.ResourceRecoveryManager;
+import org.omnifish.transact.api.TransactionServiceConfig;
 import org.omnifish.transact.api.spi.RecoveryEventListener;
 import org.omnifish.transact.api.spi.RecoveryResourceHandler;
 import org.omnifish.transact.api.spi.RecoveryResourceListener;

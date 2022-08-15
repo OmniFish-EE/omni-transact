@@ -17,17 +17,17 @@
 
 package org.omnifish.transact.jta.transaction;
 
-import static org.omnifish.transact.api.api.ComponentInvocation.ComponentInvocationType.SERVLET_INVOCATION;
+import static org.omnifish.transact.api.ComponentInvocation.ComponentInvocationType.SERVLET_INVOCATION;
 
 import java.rmi.RemoteException;
 
 import javax.transaction.xa.XAResource;
 import javax.transaction.xa.Xid;
 
-import org.omnifish.transact.api.api.ComponentInvocation;
-import org.omnifish.transact.api.api.InvocationManager;
-import org.omnifish.transact.api.api.JavaEETransactionManager;
-import org.omnifish.transact.api.api.TransactionImport;
+import org.omnifish.transact.api.ComponentInvocation;
+import org.omnifish.transact.api.InvocationManager;
+import org.omnifish.transact.api.JavaEETransactionManager;
+import org.omnifish.transact.api.TransactionImport;
 
 import jakarta.enterprise.context.ApplicationScoped;
 import jakarta.inject.Inject;

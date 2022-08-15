@@ -3,9 +3,9 @@ package org.omnifish.transact.api.impl;
 import java.util.ArrayList;
 import java.util.List;
 
-import org.omnifish.transact.api.api.ComponentInvocation;
-import org.omnifish.transact.api.api.InvocationManager;
-import org.omnifish.transact.api.api.ComponentInvocation.ComponentInvocationType;
+import org.omnifish.transact.api.ComponentInvocation;
+import org.omnifish.transact.api.InvocationManager;
+import org.omnifish.transact.api.ComponentInvocation.ComponentInvocationType;
 
 import jakarta.enterprise.context.ApplicationScoped;
 

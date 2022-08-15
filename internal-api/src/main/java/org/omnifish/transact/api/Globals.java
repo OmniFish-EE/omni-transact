@@ -1,4 +1,4 @@
-package org.omnifish.transact.api.api;
+package org.omnifish.transact.api;
 
 import org.omnifish.transact.api.spi.ServiceLocator;
 

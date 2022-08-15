@@ -31,7 +31,7 @@ import javax.transaction.xa.XAResource;
 
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
-import org.omnifish.transact.api.api.InvocationManager;
+import org.omnifish.transact.api.InvocationManager;
 import org.omnifish.transact.api.impl.InvocationManagerImpl;
 import org.omnifish.transact.api.spi.JavaEETransactionManagerDelegate;
 import org.omnifish.transact.jta.transaction.JavaEETransactionManagerImpl;

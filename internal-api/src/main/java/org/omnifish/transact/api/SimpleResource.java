@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 1997, 2018 Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2013, 2018 Oracle and/or its affiliates. All rights reserved.
  *
  * This program and the accompanying materials are made available under the
  * terms of the Eclipse Public License v. 2.0, which is available at
@@ -14,14 +14,22 @@
  * SPDX-License-Identifier: EPL-2.0 OR GPL-2.0 WITH Classpath-exception-2.0
  */
 
-package org.omnifish.transact.api.api;
+package org.omnifish.transact.api;
 
 /**
- * Transaction constants that can be referenced by other components.
+ * Represents a resource that can be queried for open status and can be closed
+ *
+ * @author Mitesh Meswani
  */
-public interface TransactionConstants {
-    // LAO_PREPARE_OK is a magic number. Assimung no valid XAResource.prepare returns
-    // 123456 as a return value. LAO resource'd prepare method returns this value
-    int LAO_PREPARE_OK = 123456;
+public interface SimpleResource {
 
+    /**
+     * Returns true if the resource is open
+     */
+    boolean isOpen();
+
+    /**
+     * Close the resource
+     */
+    void close();
 }

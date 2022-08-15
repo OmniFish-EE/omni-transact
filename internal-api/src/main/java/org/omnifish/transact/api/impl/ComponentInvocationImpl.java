@@ -1,7 +1,7 @@
 package org.omnifish.transact.api.impl;
 
-import org.omnifish.transact.api.api.ComponentInvocation;
-import org.omnifish.transact.api.api.ResourceHandler;
+import org.omnifish.transact.api.ComponentInvocation;
+import org.omnifish.transact.api.ResourceHandler;
 
 public class ComponentInvocationImpl implements ComponentInvocation {
 

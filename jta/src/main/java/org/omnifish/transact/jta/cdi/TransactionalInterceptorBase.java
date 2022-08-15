@@ -27,9 +27,9 @@ import javax.naming.InitialContext;
 import javax.naming.NameNotFoundException;
 import javax.naming.NamingException;
 
-import org.omnifish.transact.api.api.ComponentInvocation;
-import org.omnifish.transact.api.api.Globals;
-import org.omnifish.transact.api.api.InvocationManager;
+import org.omnifish.transact.api.ComponentInvocation;
+import org.omnifish.transact.api.Globals;
+import org.omnifish.transact.api.InvocationManager;
 import org.omnifish.transact.api.spi.ServiceLocator;
 import org.omnifish.transact.api.spi.TransactionOperationsManager;
 

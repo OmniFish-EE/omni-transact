@@ -1,4 +1,4 @@
-package org.omnifish.transact.api.api;
+package org.omnifish.transact.api;
 
 import org.omg.CORBA.TSIdentification;
 import org.omg.CosTSPortability.Receiver;

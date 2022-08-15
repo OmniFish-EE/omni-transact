@@ -21,10 +21,10 @@ import java.util.concurrent.locks.Lock;
 import javax.transaction.xa.XAResource;
 import javax.transaction.xa.Xid;
 
-import org.omnifish.transact.api.api.JavaEETransaction;
-import org.omnifish.transact.api.api.JavaEETransactionManager;
-import org.omnifish.transact.api.api.TransactionAdminBean;
-import org.omnifish.transact.api.api.XAResourceWrapper;
+import org.omnifish.transact.api.JavaEETransaction;
+import org.omnifish.transact.api.JavaEETransactionManager;
+import org.omnifish.transact.api.TransactionAdminBean;
+import org.omnifish.transact.api.XAResourceWrapper;
 
 import jakarta.resource.spi.XATerminator;
 import jakarta.resource.spi.work.WorkException;

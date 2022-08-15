@@ -65,7 +65,7 @@ import org.omg.PortableInterceptor.Current;
 import org.omg.PortableInterceptor.ForwardRequest;
 import org.omg.PortableInterceptor.ServerRequestInfo;
 import org.omg.PortableInterceptor.ServerRequestInterceptor;
-import org.omnifish.transact.api.api.Corba;
+import org.omnifish.transact.api.Corba;
 import org.omnifish.transact.jts.CosTransactions.CurrentTransaction;
 
 /**

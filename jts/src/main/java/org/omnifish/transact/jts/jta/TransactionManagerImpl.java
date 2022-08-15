@@ -61,7 +61,7 @@ import org.omg.CosTransactions.NoTransaction;
 import org.omg.CosTransactions.Status;
 import org.omg.CosTransactions.SubtransactionsUnavailable;
 import org.omg.CosTransactions.Unavailable;
-import org.omnifish.transact.api.api.Globals;
+import org.omnifish.transact.api.Globals;
 import org.omnifish.transact.jts.CosTransactions.Configuration;
 import org.omnifish.transact.jts.CosTransactions.ControlImpl;
 import org.omnifish.transact.jts.CosTransactions.CurrentTransaction;

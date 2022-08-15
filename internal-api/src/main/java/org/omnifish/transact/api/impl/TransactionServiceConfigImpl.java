@@ -4,7 +4,7 @@ import java.beans.PropertyVetoException;
 import java.util.List;
 import java.util.Map;
 
-import org.omnifish.transact.api.api.TransactionServiceConfig;
+import org.omnifish.transact.api.TransactionServiceConfig;
 
 
 public class TransactionServiceConfigImpl implements TransactionServiceConfig {

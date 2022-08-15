@@ -33,11 +33,11 @@ import java.util.logging.Logger;
 import javax.transaction.xa.XAResource;
 import javax.transaction.xa.Xid;
 
-import org.omnifish.transact.api.api.JavaEETransaction;
-import org.omnifish.transact.api.api.JavaEETransactionManager;
-import org.omnifish.transact.api.api.TransactionAdminBean;
-import org.omnifish.transact.api.api.TransactionServiceConfig;
-import org.omnifish.transact.api.api.XAResourceWrapper;
+import org.omnifish.transact.api.JavaEETransaction;
+import org.omnifish.transact.api.JavaEETransactionManager;
+import org.omnifish.transact.api.TransactionAdminBean;
+import org.omnifish.transact.api.TransactionServiceConfig;
+import org.omnifish.transact.api.XAResourceWrapper;
 import org.omnifish.transact.api.spi.JavaEETransactionManagerDelegate;
 import org.omnifish.transact.api.spi.ServiceLocator;
 import org.omnifish.transact.api.spi.TransactionInternal;
