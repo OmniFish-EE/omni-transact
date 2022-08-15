@@ -1,11 +1,15 @@
 package com.sun.enterprise.transaction.impl;
 
 import java.beans.PropertyVetoException;
+import java.util.List;
+import java.util.Map;
 
 import com.sun.enterprise.transaction.api.TransactionServiceConfig;
 
 
 public class TransactionServiceConfigImpl implements TransactionServiceConfig {
+
+    private List<Map.Entry<String, String>> properties = getProperties();
 
     @Override
     public String getAutomaticRecovery() {
@@ -81,6 +85,12 @@ public class TransactionServiceConfigImpl implements TransactionServiceConfig {
     @Override
     public String getPropertyValue(String key) {
         // TODO Auto-generated method stub
+        for (Map.Entry<String, String> entry : properties) {
+            if (entry.getKey().equals(key)) {
+                return entry.getValue();
+            }
+        }
+
         return null;
     }
 

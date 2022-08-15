@@ -32,7 +32,6 @@ import org.omnifish.transact.jts.utils.RecoveryHooks.FailureInducer;
 import com.sun.enterprise.transaction.api.ResourceRecoveryManager;
 import com.sun.enterprise.transaction.api.TransactionServiceConfig;
 import com.sun.enterprise.transaction.spi.ServiceLocator;
-import com.todo.GetORBPort;
 
 /**
  *
@@ -144,7 +143,7 @@ public class TransactionServiceProperties {
                     int jtsServerId = DEFAULT_SERVER_ID; // default value
 
                     if (isORBAvailable) {
-                        jtsServerId = GetORBPort.getInitialPort();
+                        jtsServerId = Integer.parseInt(txnService.getPropertyValue("orb-port"));
                         if (jtsServerId == 0) {
                             // XXX Can this ever happen?
                             jtsServerId = DEFAULT_SERVER_ID; // default value
