@@ -1,4 +1,4 @@
-package com.sun.enterprise.transaction.jts;
+package org.omnifish.transact.jts;
 
 import javax.transaction.xa.XAException;
 import javax.transaction.xa.XAResource;
