@@ -56,7 +56,6 @@
             <version>2.0.1</version>
         </dependency>
         
-        
         <dependency>
             <groupId>org.glassfish.corba</groupId>
             <artifactId>glassfish-corba-omgapi</artifactId>
@@ -82,13 +81,6 @@
             <version>2.2</version>
             <scope>test</scope>
         </dependency>
-        <dependency>
-            <groupId>org.glassfish.main.connectors</groupId>
-            <artifactId>connectors-runtime</artifactId>
-            <version>7.0.0-SNAPSHOT</version>
-            <scope>test</scope>
-        </dependency>
-
     </dependencies>
 
     <build>
