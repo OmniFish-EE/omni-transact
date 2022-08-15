@@ -32,19 +32,18 @@ import java.util.logging.Logger;
 
 import javax.transaction.xa.XAResource;
 
+import org.omnifish.transact.api.api.JavaEETransactionManager;
+import org.omnifish.transact.api.api.RecoveryResourceRegistry;
+import org.omnifish.transact.api.api.ResourceRecoveryManager;
+import org.omnifish.transact.api.api.TransactionServiceConfig;
+import org.omnifish.transact.api.spi.RecoveryEventListener;
+import org.omnifish.transact.api.spi.RecoveryResourceHandler;
+import org.omnifish.transact.api.spi.RecoveryResourceListener;
+import org.omnifish.transact.api.spi.ServiceLocator;
 import org.omnifish.transact.jta.transaction.JavaEETransactionManagerImpl;
 import org.omnifish.transact.jts.CosTransactions.Configuration;
 import org.omnifish.transact.jts.CosTransactions.DelegatedRecoveryManager;
 import org.omnifish.transact.jts.CosTransactions.RecoveryManager;
-
-import com.sun.enterprise.transaction.api.JavaEETransactionManager;
-import com.sun.enterprise.transaction.api.RecoveryResourceRegistry;
-import com.sun.enterprise.transaction.api.ResourceRecoveryManager;
-import com.sun.enterprise.transaction.api.TransactionServiceConfig;
-import com.sun.enterprise.transaction.spi.RecoveryEventListener;
-import com.sun.enterprise.transaction.spi.RecoveryResourceHandler;
-import com.sun.enterprise.transaction.spi.RecoveryResourceListener;
-import com.sun.enterprise.transaction.spi.ServiceLocator;
 
 import jakarta.enterprise.context.ApplicationScoped;
 import jakarta.inject.Inject;

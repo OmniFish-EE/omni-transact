@@ -28,8 +28,7 @@ import javax.transaction.xa.Xid;
 
 import org.omg.CosTransactions.HeuristicMixed;
 import org.omg.CosTransactions.Vote;
-
-import com.sun.enterprise.transaction.api.TransactionImport;
+import org.omnifish.transact.api.api.TransactionImport;
 
 import jakarta.resource.spi.XATerminator;
 

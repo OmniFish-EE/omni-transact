@@ -15,7 +15,7 @@
 #
 
 -exportcontents: \
-                        com.sun.enterprise.transaction.api; \
-                        com.sun.enterprise.transaction.config; \
-                        com.sun.enterprise.transaction.spi; version=${project.osgi.version}
+                        org.omnifish.transact.api.api; \
+                        org.omnifish.transact.api.config; \
+                        org.omnifish.transact.api.spi; version=${project.osgi.version}
 

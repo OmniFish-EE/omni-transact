@@ -31,11 +31,10 @@ import org.omg.CosTransactions.HeuristicMixed;
 import org.omg.CosTransactions.Inactive;
 import org.omg.CosTransactions.Status;
 import org.omg.CosTransactions.Unavailable;
+import org.omnifish.transact.api.spi.TransactionInternal;
 import org.omnifish.transact.jts.CosTransactions.Configuration;
 import org.omnifish.transact.jts.CosTransactions.ControlImpl;
 import org.omnifish.transact.jts.CosTransactions.GlobalTID;
-
-import com.sun.enterprise.transaction.spi.TransactionInternal;
 
 import jakarta.transaction.HeuristicMixedException;
 import jakarta.transaction.HeuristicRollbackException;

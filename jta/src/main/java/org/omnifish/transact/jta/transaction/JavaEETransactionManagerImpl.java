@@ -40,22 +40,21 @@ import javax.transaction.xa.XAException;
 import javax.transaction.xa.XAResource;
 import javax.transaction.xa.Xid;
 
+import org.omnifish.transact.api.api.ComponentInvocation;
+import org.omnifish.transact.api.api.InvocationException;
+import org.omnifish.transact.api.api.InvocationManager;
+import org.omnifish.transact.api.api.JavaEETransaction;
+import org.omnifish.transact.api.api.JavaEETransactionManager;
+import org.omnifish.transact.api.api.ResourceHandler;
+import org.omnifish.transact.api.api.TransactionAdminBean;
+import org.omnifish.transact.api.api.TransactionServiceConfig;
+import org.omnifish.transact.api.api.XAResourceWrapper;
+import org.omnifish.transact.api.spi.JavaEETransactionManagerDelegate;
+import org.omnifish.transact.api.spi.ServiceLocator;
+import org.omnifish.transact.api.spi.TransactionInternal;
+import org.omnifish.transact.api.spi.TransactionalResource;
 import org.omnifish.transact.jta.cache.BaseCache;
 import org.omnifish.transact.jta.cache.Cache;
-
-import com.sun.enterprise.transaction.api.ComponentInvocation;
-import com.sun.enterprise.transaction.api.InvocationException;
-import com.sun.enterprise.transaction.api.InvocationManager;
-import com.sun.enterprise.transaction.api.JavaEETransaction;
-import com.sun.enterprise.transaction.api.JavaEETransactionManager;
-import com.sun.enterprise.transaction.api.ResourceHandler;
-import com.sun.enterprise.transaction.api.TransactionAdminBean;
-import com.sun.enterprise.transaction.api.TransactionServiceConfig;
-import com.sun.enterprise.transaction.api.XAResourceWrapper;
-import com.sun.enterprise.transaction.spi.JavaEETransactionManagerDelegate;
-import com.sun.enterprise.transaction.spi.ServiceLocator;
-import com.sun.enterprise.transaction.spi.TransactionInternal;
-import com.sun.enterprise.transaction.spi.TransactionalResource;
 
 import jakarta.annotation.PostConstruct;
 import jakarta.enterprise.context.ApplicationScoped;

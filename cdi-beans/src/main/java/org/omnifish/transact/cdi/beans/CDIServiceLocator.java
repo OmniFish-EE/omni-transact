@@ -5,7 +5,7 @@ import static java.util.stream.Collectors.toList;
 import java.lang.annotation.Annotation;
 import java.util.List;
 
-import com.sun.enterprise.transaction.spi.ServiceLocator;
+import org.omnifish.transact.api.spi.ServiceLocator;
 
 import jakarta.enterprise.context.ApplicationScoped;
 import jakarta.enterprise.inject.spi.CDI;

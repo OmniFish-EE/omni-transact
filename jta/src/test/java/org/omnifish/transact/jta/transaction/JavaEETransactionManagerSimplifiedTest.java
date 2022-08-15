@@ -37,15 +37,14 @@ import javax.transaction.xa.Xid;
 
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
+import org.omnifish.transact.api.api.InvocationManager;
+import org.omnifish.transact.api.api.JavaEETransactionManager;
+import org.omnifish.transact.api.impl.InvocationManagerImpl;
+import org.omnifish.transact.api.spi.JavaEETransactionManagerDelegate;
 import org.omnifish.transact.jta.transaction.JavaEETransactionImpl;
 import org.omnifish.transact.jta.transaction.JavaEETransactionManagerImpl;
 import org.omnifish.transact.jta.transaction.JavaEETransactionManagerSimplifiedDelegate;
 import org.omnifish.transact.jta.transaction.UserTransactionImpl;
-
-import com.sun.enterprise.transaction.api.InvocationManager;
-import com.sun.enterprise.transaction.api.JavaEETransactionManager;
-import com.sun.enterprise.transaction.impl.InvocationManagerImpl;
-import com.sun.enterprise.transaction.spi.JavaEETransactionManagerDelegate;
 
 import jakarta.transaction.InvalidTransactionException;
 import jakarta.transaction.NotSupportedException;

@@ -33,6 +33,15 @@ import java.util.logging.Logger;
 import javax.transaction.xa.XAResource;
 import javax.transaction.xa.Xid;
 
+import org.omnifish.transact.api.api.JavaEETransaction;
+import org.omnifish.transact.api.api.JavaEETransactionManager;
+import org.omnifish.transact.api.api.TransactionAdminBean;
+import org.omnifish.transact.api.api.TransactionServiceConfig;
+import org.omnifish.transact.api.api.XAResourceWrapper;
+import org.omnifish.transact.api.spi.JavaEETransactionManagerDelegate;
+import org.omnifish.transact.api.spi.ServiceLocator;
+import org.omnifish.transact.api.spi.TransactionInternal;
+import org.omnifish.transact.api.spi.TransactionalResource;
 import org.omnifish.transact.jta.transaction.JavaEETransactionImpl;
 import org.omnifish.transact.jta.transaction.JavaEETransactionManagerImpl;
 import org.omnifish.transact.jts.CosTransactions.Configuration;
@@ -42,16 +51,6 @@ import org.omnifish.transact.jts.CosTransactions.RWLock;
 import org.omnifish.transact.jts.CosTransactions.RecoveryManager;
 import org.omnifish.transact.jts.jta.TransactionManagerImpl;
 import org.omnifish.transact.jts.jta.TransactionServiceProperties;
-
-import com.sun.enterprise.transaction.api.JavaEETransaction;
-import com.sun.enterprise.transaction.api.JavaEETransactionManager;
-import com.sun.enterprise.transaction.api.TransactionAdminBean;
-import com.sun.enterprise.transaction.api.TransactionServiceConfig;
-import com.sun.enterprise.transaction.api.XAResourceWrapper;
-import com.sun.enterprise.transaction.spi.JavaEETransactionManagerDelegate;
-import com.sun.enterprise.transaction.spi.ServiceLocator;
-import com.sun.enterprise.transaction.spi.TransactionInternal;
-import com.sun.enterprise.transaction.spi.TransactionalResource;
 
 import jakarta.enterprise.context.ApplicationScoped;
 import jakarta.inject.Inject;

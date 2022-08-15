@@ -335,7 +335,7 @@ public class DefaultTransactionService implements ProxyChecker {
     @Override
     public final boolean isProxy(org.omg.CORBA.Object obj) {
         // TN POA changes
-        return true; // com.sun.enterprise.transaction.Corba.isProxy(obj);
+        return true; // org.omnifish.transact.api.Corba.isProxy(obj);
     }
 
     /**

@@ -31,15 +31,14 @@ import javax.transaction.xa.XAResource;
 
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
+import org.omnifish.transact.api.api.InvocationManager;
+import org.omnifish.transact.api.impl.InvocationManagerImpl;
+import org.omnifish.transact.api.spi.JavaEETransactionManagerDelegate;
 import org.omnifish.transact.jta.transaction.JavaEETransactionManagerImpl;
 import org.omnifish.transact.jta.transaction.JavaEETransactionManagerSimplifiedDelegate;
 import org.omnifish.transact.jta.transaction.TransactionSynchronizationRegistryImpl;
 import org.omnifish.transact.jta.transaction.UserTransactionImpl;
 import org.omnifish.transact.jts.JavaEETransactionManagerJTSDelegate;
-
-import com.sun.enterprise.transaction.api.InvocationManager;
-import com.sun.enterprise.transaction.impl.InvocationManagerImpl;
-import com.sun.enterprise.transaction.spi.JavaEETransactionManagerDelegate;
 
 import jakarta.transaction.HeuristicMixedException;
 import jakarta.transaction.HeuristicRollbackException;

@@ -61,6 +61,7 @@ import org.omg.CosTransactions.NoTransaction;
 import org.omg.CosTransactions.Status;
 import org.omg.CosTransactions.SubtransactionsUnavailable;
 import org.omg.CosTransactions.Unavailable;
+import org.omnifish.transact.api.api.Globals;
 import org.omnifish.transact.jts.CosTransactions.Configuration;
 import org.omnifish.transact.jts.CosTransactions.ControlImpl;
 import org.omnifish.transact.jts.CosTransactions.CurrentTransaction;
@@ -71,8 +72,6 @@ import org.omnifish.transact.jts.CosTransactions.RecoveryManager;
 import org.omnifish.transact.jts.CosTransactions.XATerminatorImpl;
 import org.omnifish.transact.jts.codegen.otsidl.JControlHelper;
 import org.omnifish.transact.jts.utils.LogFormatter;
-
-import com.sun.enterprise.transaction.api.Globals;
 
 import jakarta.resource.spi.work.WorkCompletedException;
 import jakarta.resource.spi.work.WorkException;

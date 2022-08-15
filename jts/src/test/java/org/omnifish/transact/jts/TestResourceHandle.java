@@ -2,7 +2,7 @@ package org.omnifish.transact.jts;
 
 import javax.transaction.xa.XAResource;
 
-import com.sun.enterprise.transaction.spi.TransactionalResource;
+import org.omnifish.transact.api.spi.TransactionalResource;
 
 import jakarta.transaction.Transaction;
 

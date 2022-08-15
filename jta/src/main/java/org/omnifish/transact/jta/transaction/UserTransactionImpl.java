@@ -24,12 +24,12 @@ import java.io.Serializable;
 import java.rmi.RemoteException;
 import java.util.logging.Logger;
 
-import com.sun.enterprise.transaction.api.ComponentInvocation;
-import com.sun.enterprise.transaction.api.Globals;
-import com.sun.enterprise.transaction.api.InvocationManager;
-import com.sun.enterprise.transaction.api.JavaEETransactionManager;
-import com.sun.enterprise.transaction.spi.ServiceLocator;
-import com.sun.enterprise.transaction.spi.TransactionOperationsManager;
+import org.omnifish.transact.api.api.ComponentInvocation;
+import org.omnifish.transact.api.api.Globals;
+import org.omnifish.transact.api.api.InvocationManager;
+import org.omnifish.transact.api.api.JavaEETransactionManager;
+import org.omnifish.transact.api.spi.ServiceLocator;
+import org.omnifish.transact.api.spi.TransactionOperationsManager;
 
 import jakarta.enterprise.context.ApplicationScoped;
 import jakarta.inject.Inject;

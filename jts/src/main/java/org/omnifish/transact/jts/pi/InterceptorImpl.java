@@ -65,9 +65,8 @@ import org.omg.PortableInterceptor.Current;
 import org.omg.PortableInterceptor.ForwardRequest;
 import org.omg.PortableInterceptor.ServerRequestInfo;
 import org.omg.PortableInterceptor.ServerRequestInterceptor;
+import org.omnifish.transact.api.api.Corba;
 import org.omnifish.transact.jts.CosTransactions.CurrentTransaction;
-
-import com.sun.enterprise.transaction.api.Corba;
 
 /**
  * This is the implementation of the JTS PI-based client/server interceptor. This will be called during request/reply

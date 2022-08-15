@@ -16,6 +16,8 @@
 
 package org.omnifish.transact.cdi.beans;
 
+import org.omnifish.transact.api.impl.InvocationManagerImpl;
+import org.omnifish.transact.api.impl.TransactionServiceConfigImpl;
 import org.omnifish.transact.jta.transaction.JavaEETransactionManagerImpl;
 import org.omnifish.transact.jta.transaction.JavaEETransactionManagerSimplifiedDelegate;
 import org.omnifish.transact.jta.transaction.TransactionManagerImpl;
@@ -23,9 +25,6 @@ import org.omnifish.transact.jta.transaction.TransactionSynchronizationRegistryI
 import org.omnifish.transact.jta.transaction.UserTransactionImpl;
 import org.omnifish.transact.jts.JavaEETransactionManagerJTSDelegate;
 import org.omnifish.transact.jts.ResourceRecoveryManagerImpl;
-
-import com.sun.enterprise.transaction.impl.InvocationManagerImpl;
-import com.sun.enterprise.transaction.impl.TransactionServiceConfigImpl;
 
 import jakarta.enterprise.event.Observes;
 import jakarta.enterprise.inject.spi.BeanManager;

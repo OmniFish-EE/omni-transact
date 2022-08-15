@@ -39,9 +39,8 @@ import java.util.logging.Logger;
 
 import org.omg.CosTransactions.TransactionFactory;
 import org.omg.PortableServer.POA;
+import org.omnifish.transact.api.api.TransactionConstants;
 import org.omnifish.transact.jts.utils.LogFormatter;
-
-import com.sun.enterprise.transaction.api.TransactionConstants;
 
 /**
  * Provides interaction with the execution environment.

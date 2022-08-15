@@ -27,11 +27,11 @@ import javax.naming.InitialContext;
 import javax.naming.NameNotFoundException;
 import javax.naming.NamingException;
 
-import com.sun.enterprise.transaction.api.ComponentInvocation;
-import com.sun.enterprise.transaction.api.Globals;
-import com.sun.enterprise.transaction.api.InvocationManager;
-import com.sun.enterprise.transaction.spi.ServiceLocator;
-import com.sun.enterprise.transaction.spi.TransactionOperationsManager;
+import org.omnifish.transact.api.api.ComponentInvocation;
+import org.omnifish.transact.api.api.Globals;
+import org.omnifish.transact.api.api.InvocationManager;
+import org.omnifish.transact.api.spi.ServiceLocator;
+import org.omnifish.transact.api.spi.TransactionOperationsManager;
 
 import jakarta.annotation.PostConstruct;
 import jakarta.annotation.PreDestroy;

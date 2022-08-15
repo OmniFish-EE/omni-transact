@@ -38,11 +38,11 @@ import java.util.logging.Logger;
 import javax.transaction.xa.XAResource;
 import javax.transaction.xa.Xid;
 
-import com.sun.enterprise.transaction.api.JavaEETransaction;
-import com.sun.enterprise.transaction.api.JavaEETransactionManager;
-import com.sun.enterprise.transaction.api.SimpleResource;
-import com.sun.enterprise.transaction.spi.TransactionInternal;
-import com.sun.enterprise.transaction.spi.TransactionalResource;
+import org.omnifish.transact.api.api.JavaEETransaction;
+import org.omnifish.transact.api.api.JavaEETransactionManager;
+import org.omnifish.transact.api.api.SimpleResource;
+import org.omnifish.transact.api.spi.TransactionInternal;
+import org.omnifish.transact.api.spi.TransactionalResource;
 
 import jakarta.persistence.EntityManagerFactory;
 import jakarta.transaction.HeuristicMixedException;

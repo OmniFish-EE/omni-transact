@@ -25,13 +25,12 @@ import java.util.Properties;
 import java.util.logging.Level;
 import java.util.logging.Logger;
 
+import org.omnifish.transact.api.api.ResourceRecoveryManager;
+import org.omnifish.transact.api.api.TransactionServiceConfig;
+import org.omnifish.transact.api.spi.ServiceLocator;
 import org.omnifish.transact.jts.CosTransactions.Configuration;
 import org.omnifish.transact.jts.CosTransactions.RecoveryManager;
 import org.omnifish.transact.jts.utils.RecoveryHooks.FailureInducer;
-
-import com.sun.enterprise.transaction.api.ResourceRecoveryManager;
-import com.sun.enterprise.transaction.api.TransactionServiceConfig;
-import com.sun.enterprise.transaction.spi.ServiceLocator;
 
 /**
  *
