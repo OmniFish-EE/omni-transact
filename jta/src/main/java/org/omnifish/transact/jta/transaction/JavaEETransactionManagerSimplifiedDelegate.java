@@ -36,7 +36,6 @@ import org.omnifish.transact.api.spi.JavaEETransactionManagerDelegate;
 import org.omnifish.transact.api.spi.TransactionInternal;
 import org.omnifish.transact.api.spi.TransactionalResource;
 
-import jakarta.enterprise.context.ApplicationScoped;
 import jakarta.resource.spi.XATerminator;
 import jakarta.resource.spi.work.WorkException;
 import jakarta.transaction.HeuristicMixedException;
@@ -52,7 +51,6 @@ import jakarta.transaction.Transaction;
  *
  * @author Marina Vatkina
  */
-@ApplicationScoped
 public class JavaEETransactionManagerSimplifiedDelegate implements JavaEETransactionManagerDelegate {
 
     private JavaEETransactionManager javaEETransactionManager;

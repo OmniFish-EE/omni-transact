@@ -45,7 +45,7 @@ import org.omnifish.transact.jts.CosTransactions.Configuration;
 import org.omnifish.transact.jts.CosTransactions.DelegatedRecoveryManager;
 import org.omnifish.transact.jts.CosTransactions.RecoveryManager;
 
-import jakarta.enterprise.context.ApplicationScoped;
+import jakarta.annotation.PostConstruct;
 import jakarta.inject.Inject;
 
 /**
@@ -53,7 +53,6 @@ import jakarta.inject.Inject;
  *
  * @author Jagadish Ramu
  */
-@ApplicationScoped
 public class ResourceRecoveryManagerImpl implements ResourceRecoveryManager {
 
     private static Logger _logger = Logger.getLogger(JavaEETransactionManagerImpl.class.getName());
@@ -74,6 +73,7 @@ public class ResourceRecoveryManagerImpl implements ResourceRecoveryManager {
     private volatile boolean lazyRecovery;
     private volatile boolean configured;
 
+    @PostConstruct
     public void postConstruct() {
         if (configured) {
             _logger.log(WARNING, "", new IllegalStateException());

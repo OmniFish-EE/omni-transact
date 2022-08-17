@@ -31,9 +31,7 @@ import org.omnifish.transact.api.JavaEETransactionManager;
 import org.omnifish.transact.api.spi.ServiceLocator;
 import org.omnifish.transact.api.spi.TransactionOperationsManager;
 
-import jakarta.enterprise.context.ApplicationScoped;
 import jakarta.inject.Inject;
-import jakarta.inject.Named;
 import jakarta.transaction.HeuristicMixedException;
 import jakarta.transaction.HeuristicRollbackException;
 import jakarta.transaction.NotSupportedException;
@@ -51,8 +49,6 @@ import jakarta.transaction.UserTransaction;
  * @author Tony Ng
  * @author Marina Vatkina
  */
-@ApplicationScoped
-@Named("java:comp/UserTransaction")
 public class UserTransactionImpl implements UserTransaction, Serializable {
 
     private static final long serialVersionUID = -9058595590726479777L;

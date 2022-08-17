@@ -25,6 +25,10 @@ import java.util.Set;
 import java.util.logging.Level;
 import java.util.logging.Logger;
 
+import javax.naming.InitialContext;
+import javax.naming.NameNotFoundException;
+import javax.naming.NamingException;
+
 import jakarta.enterprise.context.Dependent;
 import jakarta.enterprise.context.spi.CreationalContext;
 import jakarta.enterprise.inject.Any;
@@ -54,6 +58,76 @@ public class TransactionScopedCDIUtil {
 
     public static void log(String message) {
         _logger.log(Level.WARNING, message);
+    }
+
+    public static <T> T createManaged(Class<T> clazz, CreationalContext<Object> context) {
+        BeanManager beanManager = getBeanManager();
+
+        InjectionTargetFactory<T> injectionTargetFactory = beanManager
+                .getInjectionTargetFactory(beanManager.createAnnotatedType(clazz));
+
+        InjectionTarget<T> target = injectionTargetFactory.createInjectionTarget(null);
+
+        @SuppressWarnings("unchecked")
+        CreationalContext<T> contextT = (CreationalContext<T>) context; // beanManager.createCreationalContext(null);
+        T managedObject = target.produce(contextT);
+
+        target.inject(managedObject, contextT);
+        target.postConstruct(managedObject);
+
+        return managedObject;
+    }
+
+    public static BeanManager getBeanManager() {
+        BeanManager beanManager = jndiLookup("java:comp/BeanManager");
+
+        if (beanManager == null) {
+            // Servlet containers
+            beanManager = jndiLookup("java:comp/env/BeanManager");
+        }
+
+        return beanManager;
+    }
+
+    @SuppressWarnings("unchecked")
+    public static <T> T jndiLookup(String name) {
+        InitialContext context = null;
+        try {
+            context = new InitialContext();
+            return (T) context.lookup(name);
+        } catch (NamingException e) {
+            if (is(e, NameNotFoundException.class)) {
+                return null;
+            } else {
+                throw new IllegalStateException(e);
+            }
+        } finally {
+            close(context);
+        }
+    }
+
+    private static void close(InitialContext context) {
+        try {
+            if (context != null) {
+                context.close();
+            }
+        } catch (NamingException e) {
+            throw new IllegalStateException(e);
+        }
+    }
+
+    public static <T extends Throwable> boolean is(Throwable exception, Class<T> type) {
+        Throwable unwrappedException = exception;
+
+        while (unwrappedException != null) {
+            if (type.isInstance(unwrappedException)) {
+                return true;
+            }
+
+            unwrappedException = unwrappedException.getCause();
+        }
+
+        return false;
     }
 
     /* Copied from JSF */

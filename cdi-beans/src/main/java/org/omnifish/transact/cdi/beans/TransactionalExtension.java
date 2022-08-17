@@ -16,8 +16,14 @@
 
 package org.omnifish.transact.cdi.beans;
 
+import static org.omnifish.transact.jta.cdi.TransactionScopedCDIUtil.createManaged;
+
+import org.omnifish.transact.api.JavaEETransactionManager;
+import org.omnifish.transact.api.ResourceRecoveryManager;
 import org.omnifish.transact.api.impl.InvocationManagerImpl;
 import org.omnifish.transact.api.impl.TransactionServiceConfigImpl;
+import org.omnifish.transact.api.spi.JavaEETransactionManagerDelegate;
+import org.omnifish.transact.api.spi.ServiceLocator;
 import org.omnifish.transact.jta.transaction.JavaEETransactionManagerImpl;
 import org.omnifish.transact.jta.transaction.JavaEETransactionManagerSimplifiedDelegate;
 import org.omnifish.transact.jta.transaction.TransactionManagerImpl;
@@ -26,10 +32,15 @@ import org.omnifish.transact.jta.transaction.UserTransactionImpl;
 import org.omnifish.transact.jts.JavaEETransactionManagerJTSDelegate;
 import org.omnifish.transact.jts.ResourceRecoveryManagerImpl;
 
+import jakarta.enterprise.context.ApplicationScoped;
 import jakarta.enterprise.event.Observes;
+import jakarta.enterprise.inject.spi.AfterBeanDiscovery;
 import jakarta.enterprise.inject.spi.BeanManager;
 import jakarta.enterprise.inject.spi.BeforeBeanDiscovery;
 import jakarta.enterprise.inject.spi.Extension;
+import jakarta.transaction.TransactionManager;
+import jakarta.transaction.TransactionSynchronizationRegistry;
+import jakarta.transaction.UserTransaction;
 
 /**
  * The CDI Portable Extension for @Transactional.
@@ -38,18 +49,6 @@ public class TransactionalExtension implements Extension {
 
     public void beforeBeanDiscovery(@Observes BeforeBeanDiscovery beforeBeanDiscoveryEvent, BeanManager beanManager) {
         addAnnotatedTypes(beforeBeanDiscoveryEvent, beanManager,
-            CDIServiceLocator.class,
-
-            // Jakarta Transactions
-            UserTransactionImpl.class,
-            TransactionManagerImpl.class,
-            JavaEETransactionManagerImpl.class,
-            TransactionSynchronizationRegistryImpl.class,
-            JavaEETransactionManagerSimplifiedDelegate.class,
-
-            // Java Transaction Service
-            JavaEETransactionManagerJTSDelegate.class,
-            ResourceRecoveryManagerImpl.class,
 
             // Transact API default implementations
             TransactionServiceConfigImpl.class,
@@ -57,6 +56,62 @@ public class TransactionalExtension implements Extension {
         );
 
     }
+
+    public void afterBean(final @Observes AfterBeanDiscovery afterBeanDiscovery, BeanManager beanManager) {
+
+        afterBeanDiscovery.addBean()
+                          .scope(ApplicationScoped.class)
+                          .types(ServiceLocator.class, CDIServiceLocator.class)
+                          .createWith(e -> new CDIServiceLocator());
+
+        // Jakarta Transactions
+
+        afterBeanDiscovery.addBean()
+                           .scope(ApplicationScoped.class)
+                           .name("java:comp/UserTransaction")
+                           .types(UserTransaction.class, UserTransactionImpl.class)
+                           .createWith(e -> createManaged(UserTransactionImpl.class, e));
+
+        afterBeanDiscovery.addBean()
+                          .scope(ApplicationScoped.class)
+                          .name("java:comp/TransactionSynchronizationRegistry")
+                          .types(TransactionSynchronizationRegistry.class)
+                          .createWith(e -> createManaged(TransactionSynchronizationRegistryImpl.class, e));
+
+        afterBeanDiscovery.addBean()
+                           .scope(ApplicationScoped.class)
+                           .name("java:appserver/TransactionManager")
+                           .types(TransactionManager.class)
+                           .createWith(e -> createManaged(TransactionManagerImpl.class, e));
+
+        afterBeanDiscovery.addBean()
+                          .scope(ApplicationScoped.class)
+                          .types(JavaEETransactionManagerDelegate.class)
+                          .createWith(e -> createManaged(JavaEETransactionManagerSimplifiedDelegate.class, e));
+
+        afterBeanDiscovery.addBean()
+                           .scope(ApplicationScoped.class)
+                           .types(JavaEETransactionManager.class)
+                           .createWith(e -> createManaged(JavaEETransactionManagerImpl.class, e));
+
+
+        // Java Transaction Service
+
+        afterBeanDiscovery.addBean()
+                          .scope(ApplicationScoped.class)
+                          .types(JavaEETransactionManagerDelegate.class)
+                          .createWith(e -> createManaged(JavaEETransactionManagerJTSDelegate.class, e));
+
+        afterBeanDiscovery.addBean()
+                          .scope(ApplicationScoped.class)
+                          .types(ResourceRecoveryManager.class)
+                          .createWith(e -> createManaged(ResourceRecoveryManagerImpl.class, e));
+
+    }
+
+
+
+
 
     public static void addAnnotatedTypes(BeforeBeanDiscovery beforeBean, BeanManager beanManager, Class<?>... types) {
         for (Class<?> type : types) {

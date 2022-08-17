@@ -7,10 +7,8 @@ import java.util.List;
 
 import org.omnifish.transact.api.spi.ServiceLocator;
 
-import jakarta.enterprise.context.ApplicationScoped;
 import jakarta.enterprise.inject.spi.CDI;
 
-@ApplicationScoped
 public class CDIServiceLocator implements ServiceLocator {
 
     @Override

@@ -57,8 +57,6 @@ import org.omnifish.transact.jta.cache.BaseCache;
 import org.omnifish.transact.jta.cache.Cache;
 
 import jakarta.annotation.PostConstruct;
-import jakarta.enterprise.context.ApplicationScoped;
-import jakarta.enterprise.inject.Typed;
 import jakarta.inject.Inject;
 import jakarta.resource.spi.XATerminator;
 import jakarta.resource.spi.work.WorkException;
@@ -80,8 +78,6 @@ import jakarta.transaction.Transaction;
  * @author Tony Ng
  * @author Marina Vatkina
  */
-@ApplicationScoped
-@Typed(JavaEETransactionManager.class)
 public class JavaEETransactionManagerImpl implements JavaEETransactionManager {
 
     protected Logger _logger = Logger.getLogger(JavaEETransactionManagerImpl.class.getName());

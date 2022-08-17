@@ -52,7 +52,6 @@ import org.omnifish.transact.jts.CosTransactions.RecoveryManager;
 import org.omnifish.transact.jts.jta.TransactionManagerImpl;
 import org.omnifish.transact.jts.jta.TransactionServiceProperties;
 
-import jakarta.enterprise.context.ApplicationScoped;
 import jakarta.inject.Inject;
 import jakarta.resource.spi.XATerminator;
 import jakarta.resource.spi.work.WorkException;
@@ -70,7 +69,6 @@ import jakarta.transaction.TransactionManager;
  *
  * @author Marina Vatkina
  */
-@ApplicationScoped
 public class JavaEETransactionManagerJTSDelegate implements JavaEETransactionManagerDelegate {
 
     // Use JavaEETransactionManagerSimplified logger and Sting Manager for Localization

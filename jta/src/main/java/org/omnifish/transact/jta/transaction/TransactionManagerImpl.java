@@ -29,9 +29,7 @@ import org.omnifish.transact.api.InvocationManager;
 import org.omnifish.transact.api.JavaEETransactionManager;
 import org.omnifish.transact.api.TransactionImport;
 
-import jakarta.enterprise.context.ApplicationScoped;
 import jakarta.inject.Inject;
-import jakarta.inject.Named;
 import jakarta.resource.spi.XATerminator;
 import jakarta.resource.spi.work.WorkException;
 import jakarta.transaction.HeuristicMixedException;
@@ -47,8 +45,6 @@ import jakarta.transaction.TransactionManager;
  * This class is wrapper for the actual transaction manager implementation. JNDI lookup name
  * "java:appserver/TransactionManager" see the com/sun/enterprise/naming/java/javaURLContext.java
  **/
-@ApplicationScoped
-@Named("java:appserver/TransactionManager")
 public class TransactionManagerImpl implements TransactionManager, TransactionImport {
 
     @Inject
