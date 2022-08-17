@@ -18,8 +18,10 @@ package org.omnifish.transact.cdi.beans;
 
 import static org.omnifish.transact.jta.cdi.TransactionScopedCDIUtil.createManaged;
 
+import org.omnifish.transact.api.InvocationManager;
 import org.omnifish.transact.api.JavaEETransactionManager;
 import org.omnifish.transact.api.ResourceRecoveryManager;
+import org.omnifish.transact.api.TransactionServiceConfig;
 import org.omnifish.transact.api.impl.InvocationManagerImpl;
 import org.omnifish.transact.api.impl.TransactionServiceConfigImpl;
 import org.omnifish.transact.api.spi.JavaEETransactionManagerDelegate;
@@ -47,22 +49,14 @@ import jakarta.transaction.UserTransaction;
  */
 public class TransactionalExtension implements Extension {
 
-    public void beforeBeanDiscovery(@Observes BeforeBeanDiscovery beforeBeanDiscoveryEvent, BeanManager beanManager) {
-        addAnnotatedTypes(beforeBeanDiscoveryEvent, beanManager,
-
-            // Transact API default implementations
-            TransactionServiceConfigImpl.class,
-            InvocationManagerImpl.class
-        );
-
-    }
-
     public void afterBean(final @Observes AfterBeanDiscovery afterBeanDiscovery, BeanManager beanManager) {
 
         afterBeanDiscovery.addBean()
                           .scope(ApplicationScoped.class)
                           .types(ServiceLocator.class, CDIServiceLocator.class)
                           .createWith(e -> new CDIServiceLocator());
+
+
 
         // Jakarta Transactions
 
@@ -95,6 +89,7 @@ public class TransactionalExtension implements Extension {
                            .createWith(e -> createManaged(JavaEETransactionManagerImpl.class, e));
 
 
+
         // Java Transaction Service
 
         afterBeanDiscovery.addBean()
@@ -107,10 +102,21 @@ public class TransactionalExtension implements Extension {
                           .types(ResourceRecoveryManager.class)
                           .createWith(e -> createManaged(ResourceRecoveryManagerImpl.class, e));
 
+
+
+        // Transact API default implementations
+
+        afterBeanDiscovery.addBean()
+                          .scope(ApplicationScoped.class)
+                          .types(TransactionServiceConfig.class)
+                          .createWith(e -> createManaged(TransactionServiceConfigImpl.class, e));
+
+        afterBeanDiscovery.addBean()
+                          .scope(ApplicationScoped.class)
+                          .types(InvocationManager.class)
+                          .createWith(e -> createManaged(InvocationManagerImpl.class, e));
+
     }
-
-
-
 
 
     public static void addAnnotatedTypes(BeforeBeanDiscovery beforeBean, BeanManager beanManager, Class<?>... types) {

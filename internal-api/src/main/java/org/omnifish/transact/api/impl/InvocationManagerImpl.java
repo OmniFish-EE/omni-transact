@@ -4,12 +4,9 @@ import java.util.ArrayList;
 import java.util.List;
 
 import org.omnifish.transact.api.ComponentInvocation;
-import org.omnifish.transact.api.InvocationManager;
 import org.omnifish.transact.api.ComponentInvocation.ComponentInvocationType;
+import org.omnifish.transact.api.InvocationManager;
 
-import jakarta.enterprise.context.ApplicationScoped;
-
-@ApplicationScoped
 public class InvocationManagerImpl implements InvocationManager {
 
     // This TLS variable stores an ArrayList.
