@@ -17,6 +17,8 @@
 
 package ee.omnifish.transact.jts.CosTransactions;
 
+import static java.util.logging.Level.SEVERE;
+
 import java.io.File;
 import java.io.IOException;
 import java.io.RandomAccessFile;
@@ -38,6 +40,7 @@ import org.omg.CORBA.COMM_FAILURE;
 import org.omg.CORBA.SystemException;
 import org.omg.CORBA.TRANSIENT;
 import org.omg.CosTransactions.Status;
+
 import ee.omnifish.transact.jts.codegen.jtsxa.OTSResource;
 import ee.omnifish.transact.jts.jtsxa.OTSResourceImpl;
 import ee.omnifish.transact.jts.utils.LogFormatter;
@@ -45,16 +48,14 @@ import ee.omnifish.transact.jts.utils.RecoveryHooks.FailureInducer;
 
 /**
  * This class manages information required for Delegated recovery. This class supports multiple delegated recoveries at
- * the same time. Functionality is alsomost same as RecoveryManager.java. This class maintains the map between state and
+ * the same time. Functionality is almost the same as RecoveryManager.java. This class maintains the map between state and
  * log location instead of static data incase of Recovery Manager.
  *
  * @version 0.01
  *
  * @author Sankara Rao Bhogi
  *
- * @see
  */
-
 public class DelegatedRecoveryManager {
 
     private static Hashtable recoveryStatetable = new Hashtable();
@@ -217,7 +218,7 @@ public class DelegatedRecoveryManager {
             try {
                 (new TopCoordinator()).delegated_reconstruct((CoordinatorLog) logRecords.nextElement(), logPath);
             } catch (Exception exc) {
-                _logger.log(Level.SEVERE, "jts.recovery_in_doubt_exception", exc);
+                _logger.log(SEVERE, "jts.recovery_in_doubt_exception", exc);
                 String msg = LogFormatter.getLocalizedMessage(_logger, "jts.recovery_in_doubt", new java.lang.Object[] { exc.toString() });
                 throw new org.omg.CORBA.INTERNAL(msg);
             }
@@ -697,7 +698,7 @@ public class DelegatedRecoveryManager {
             try {
                 state.recoveryInProgress.waitEvent();
             } catch (InterruptedException exc) {
-                _logger.log(Level.SEVERE, "jts.wait_for_resync_complete_interrupted");
+                _logger.log(SEVERE, "jts.wait_for_resync_complete_interrupted");
                 String msg = LogFormatter.getLocalizedMessage(_logger, "jts.wait_for_resync_complete_interrupted");
                 throw new org.omg.CORBA.INTERNAL(msg);
             }
@@ -708,10 +709,6 @@ public class DelegatedRecoveryManager {
      * Waits for resync to complete.
      *
      * @param logPath log location for which the delegated recovery is done
-     *
-     * @return
-     *
-     * @see
      */
     public static void waitForResync(String logPath) {
         RecoveryStateHolder state = (RecoveryStateHolder) recoveryStatetable.get(logPath);
@@ -719,7 +716,7 @@ public class DelegatedRecoveryManager {
             try {
                 state.resyncInProgress.waitEvent();
             } catch (InterruptedException exc) {
-                _logger.log(Level.SEVERE, "jts.wait_for_resync_complete_interrupted");
+                _logger.log(SEVERE, "jts.wait_for_resync_complete_interrupted");
                 String msg = LogFormatter.getLocalizedMessage(_logger, "jts.wait_for_resync_complete_interrupted");
                 throw new org.omg.CORBA.INTERNAL(msg);
             }
@@ -733,7 +730,7 @@ class RecoveryStateHolder {
     /**
      * list of XA Resources to be recovered.
      */
-    Enumeration uniqueRMSet = null;
+    Enumeration uniqueRMSet;
 
     /**
      * This attribute indicates the number of Coordinator objects which require resync. This is set to the number of
@@ -754,5 +751,4 @@ class RecoveryStateHolder {
 
     Hashtable coordsByGlobalTID = new Hashtable();
     Hashtable coordsByLocalTID = new Hashtable();
-    // Hashtable transactionIds = new Hashtable();
 }

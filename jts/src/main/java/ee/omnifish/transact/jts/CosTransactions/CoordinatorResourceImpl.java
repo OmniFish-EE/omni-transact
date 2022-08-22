@@ -50,6 +50,7 @@ import org.omg.CosTransactions.Vote;
 import org.omg.PortableServer.POA;
 import org.omg.PortableServer.POAPackage.ServantAlreadyActive;
 import org.omg.PortableServer.POAPackage.ServantNotActive;
+
 import ee.omnifish.transact.jts.codegen.otsidl.CoordinatorResource;
 import ee.omnifish.transact.jts.codegen.otsidl.CoordinatorResourceHelper;
 import ee.omnifish.transact.jts.codegen.otsidl.CoordinatorResourcePOA;
@@ -64,7 +65,6 @@ import ee.omnifish.transact.jts.utils.LogFormatter;
  *
  * @author Simon Holdsworth, IBM Corporation
  *
- * @see
  */
 //----------------------------------------------------------------------------
 // CHANGE HISTORY
@@ -76,21 +76,21 @@ import ee.omnifish.transact.jts.utils.LogFormatter;
 //-----------------------------------------------------------------------------
 
 class CoordinatorResourceImpl extends CoordinatorResourcePOA implements CompletionHandler {
-    private static POA poa = null;
-    private static boolean recoverable = false;
-    private CoordinatorResource thisRef = null;
+    private static POA poa;
+    private static boolean recoverable;
+    private CoordinatorResource thisRef;
 
     /**
      * This flag may be set to indicate that the transaction is being forced.
      */
-    boolean beingForced = false;
+    boolean beingForced;
 
-    private GlobalTID globalTID = null;
-    private boolean subtransaction = false;
-    private boolean aborted = false;
-    private boolean heuristicDamage = false;
-    private boolean completed = false;
-    private boolean setAsTerminator = false;
+    private GlobalTID globalTID;
+    private boolean subtransaction;
+    private boolean aborted;
+    private boolean heuristicDamage;
+    private boolean completed;
+    private boolean setAsTerminator;
 
     /*
      * Logger to log transaction messages

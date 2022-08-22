@@ -50,8 +50,8 @@ public class XID implements Xid {
     /**
      * The format identifier for the XID. A value of -1 indicates that the NULLXID.
      */
-    private int formatID; // Format identifier
-                          // (-1) means that the XID is null
+    private int formatID; // Format identifier (-1) means that the XID is null
+
     /**
      * The number of bytes in the global transaction identfier
      */
@@ -105,6 +105,7 @@ public class XID implements Xid {
 
     /**
      * Constructs a new null XID.
+     *
      * <p>
      * After construction the data within the XID should be initialized.
      */
@@ -329,7 +330,7 @@ public class XID implements Xid {
     /**
      * Set the format identifier part of the XID.
      *
-     * @param Format identifier. -1 indicates a null Xid.
+     * @param formatID identifier. -1 indicates a null Xid.
      */
     public void setFormatID(int formatID) {
         this.formatID = formatID;
@@ -346,7 +347,6 @@ public class XID implements Xid {
      * @return true if equal
      */
     public boolean isEqualBranchQualifier(byte[] data) {
-
         int L = data.length > MAXBQUALSIZE ? MAXBQUALSIZE : data.length;
         int i;
 

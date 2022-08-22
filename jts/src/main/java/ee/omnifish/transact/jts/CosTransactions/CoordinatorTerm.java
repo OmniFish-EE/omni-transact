@@ -46,6 +46,7 @@ import org.omg.CosTransactions.NotPrepared;
 import org.omg.CosTransactions.Status;
 import org.omg.CosTransactions.Unavailable;
 import org.omg.CosTransactions.Vote;
+
 import ee.omnifish.transact.jts.utils.LogFormatter;
 
 /**
@@ -56,7 +57,6 @@ import ee.omnifish.transact.jts.utils.LogFormatter;
  *
  * @author Simon Holdsworth, IBM Corporation
  *
- * @see
  */
 //----------------------------------------------------------------------------
 // CHANGE HISTORY

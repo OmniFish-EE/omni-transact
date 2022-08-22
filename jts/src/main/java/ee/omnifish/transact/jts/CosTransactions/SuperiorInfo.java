@@ -46,7 +46,6 @@ import org.omg.CosTransactions.SubtransactionAwareResourceHelper;
  *
  * @author Simon Holdsworth, IBM Corporation
  *
- * @see
  */
 
 //----------------------------------------------------------------------------
@@ -92,12 +91,6 @@ class SuperiorInfo {
 
     /**
      * Default SuperiorInfo constructor.
-     *
-     * @param
-     *
-     * @return
-     *
-     * @see
      */
     SuperiorInfo() {
     }
@@ -112,10 +105,6 @@ class SuperiorInfo {
      * @paran globalTID The global identifier for the transaction.
      * @param superior The superior Coordinator reference (may be null).
      * @param log The CoordinatorLog object (may be null).
-     *
-     * @return
-     *
-     * @see
      */
     SuperiorInfo(Long localTID, GlobalTID globalTID, Coordinator superior, CoordinatorLog log) {
         this.localTID = localTID;
@@ -142,12 +131,6 @@ class SuperiorInfo {
 
     /**
      * Cleans up the objects state.
-     *
-     * @param
-     *
-     * @return
-     *
-     * @see
      */
     public void doFinalize() {
 
@@ -187,10 +170,6 @@ class SuperiorInfo {
      *
      * @param log The CoordinatorLog object for the transaction.
      * @param coord The Coordinator object recreated after recovery.
-     *
-     * @return
-     *
-     * @see
      */
     void reconstruct(CoordinatorLog log, CoordinatorImpl coord) {
 
@@ -327,10 +306,6 @@ class SuperiorInfo {
      * Records the RecoveryCoordinator for the transaction.
      *
      * @param rec The RecoveryCoordinator from the superior.
-     *
-     * @return
-     *
-     * @see
      */
     void setRecovery(RecoveryCoordinator rec) {
 
@@ -349,10 +324,6 @@ class SuperiorInfo {
      * Records the CoordinatorResource for the transaction.
      *
      * @param res The CoordinatorResource registered with the superior.
-     *
-     * @return
-     *
-     * @see
      */
     void setResource(SubtransactionAwareResource res) {
 
@@ -370,11 +341,7 @@ class SuperiorInfo {
     /**
      * Returns the number of retries so far, and increments the count.
      *
-     * @param
-     *
      * @return The number of retries so far.
-     *
-     * @see
      */
     int resyncRetries() {
 

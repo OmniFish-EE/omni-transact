@@ -39,6 +39,7 @@ import java.util.logging.Logger;
 
 import org.omg.CosTransactions.TransactionFactory;
 import org.omg.PortableServer.POA;
+
 import ee.omnifish.transact.api.TransactionConstants;
 import ee.omnifish.transact.jts.utils.LogFormatter;
 
@@ -49,7 +50,6 @@ import ee.omnifish.transact.jts.utils.LogFormatter;
  *
  * @author Simon Holdsworth, IBM Corporation
  *
- * @see
  */
 // CHANGE HISTORY
 //
@@ -300,15 +300,11 @@ public class Configuration extends Object {
      * <p>
      * Non-recoverable servers may not have a name, in which case the method returns null.
      *
-     * @param
      * @return The server name.
      */
     public static final String getServerName() {
         // Determine the server name.
-
-        String result = serverName;
-
-        return result;
+        return serverName;
     }
 
     /**
@@ -336,7 +332,6 @@ public class Configuration extends Object {
      * <p>
      * Non-recoverable servers may not have a name, in which case the method returns null.
      *
-     * @param
      * @return The server name (byte array).
      */
     public static final byte[] getServerNameByteArray() {
@@ -348,7 +343,7 @@ public class Configuration extends Object {
     /**
      * Sets the Properties object to be used for this JTS instance.
      *
-     * @param prop The Properties.
+     * @param newProp The Properties.
      */
     public static final void setProperties(Properties newProp) {
         // Store the Properties object.
@@ -414,7 +409,6 @@ public class Configuration extends Object {
     /**
      * Returns the identity of the ORB.
      *
-     * @param
      * @return The ORB.
      */
     public static final org.omg.CORBA.ORB getORB() {
@@ -427,7 +421,7 @@ public class Configuration extends Object {
      * Sets the identity of the TransactionFactory and indicates if it is local or remote.
      *
      * @param newFactory The TransactionFactory.
-     * @param localFactory Indicates if the factory is local or remote.
+     * @param localTxFactory Indicates if the factory is local or remote.
      */
     public static final void setFactory(TransactionFactory newFactory, boolean localTxFactory) {
         // Store the factory identity and if it is local or not.
@@ -439,41 +433,31 @@ public class Configuration extends Object {
     /**
      * Returns the identity of the TransactionFactory.
      *
-     * @param
      * @return The TransactionFactory.
      */
     public static final TransactionFactory getFactory() {
         // Return the TransactionFactory identity.
-
         return factory;
     }
 
     /**
      * Determines whether we hava a local factory or a remote factory.
      *
-     * @param
      * @return Indicates whether we have a local factory.
      */
     public static final boolean isLocalFactory() {
         // This is a local factory if localFactory is TRUE
-
-        boolean result = localFactory;
-
-        return result;
+        return localFactory;
     }
 
     /**
      * Determines whether the JTS instance is recoverable.
      *
-     * @param
      * @return Indicates whether the JTS is recoverable.
      */
     public static final boolean isRecoverable() {
         // This JTS is recoverable if recoverable is set to TRUE.
-
-        boolean result = recoverable;
-
-        return result;
+        return recoverable;
     }
 
     /**
@@ -483,15 +467,12 @@ public class Configuration extends Object {
      */
     public static final void setProxyChecker(ProxyChecker newChecker) {
         // Store the checker identity.
-
         checker = newChecker;
-
     }
 
     /**
      * Returns the identity of the ProxyChecker.
      *
-     * @param
      * @return The ProxyChecker.
      */
     public static final ProxyChecker getProxyChecker() {
@@ -505,15 +486,12 @@ public class Configuration extends Object {
      */
     public static final void setLogFile(LogFile newLogFile) {
         // Store the logFile identity.
-
         logFile = newLogFile;
-
     }
 
     /**
      * Returns the identity of the LogFile for the process.
      *
-     * @param
      * @return The LogFile.
      */
     public static final LogFile getLogFile() {
@@ -550,9 +528,7 @@ public class Configuration extends Object {
      */
     public static final void setPOA(String type, POA poa) {
         // Store the mapping.
-
         poas.put(type, poa);
-
     }
 
     /**
@@ -562,30 +538,21 @@ public class Configuration extends Object {
      * @return The POA.
      */
     public static final POA getPOA(String type) {
-        POA result = (POA) poas.get(type);
-
-        return result;
+        return (POA) poas.get(type);
     }
 
     public static final boolean isTraceEnabled() {
-
         return traceOn;
-
     }
 
     public static final void enableTrace() {
-
         traceOn = true;
-
     }
 
     public static final void disableTrace() {
-
         traceOn = false;
-
     }
 
-    // START IASRI 4662745
     public static void setKeypointTrigger(int keypoint) {
         CoordinatorLogPool.getCoordinatorLog();
         CoordinatorLog.setKeypointTrigger(keypoint);
@@ -604,7 +571,6 @@ public class Configuration extends Object {
         }
     }
 
-    // END IASRI 4662745
     public static int getRetries() {
         return retries;
     }

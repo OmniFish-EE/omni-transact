@@ -38,7 +38,6 @@ package ee.omnifish.transact.jts.CosTransactions;
  *
  * @author Simon Holdsworth, IBM Corporation
  *
- * @see
  */
 
 //----------------------------------------------------------------------------
@@ -49,6 +48,7 @@ package ee.omnifish.transact.jts.CosTransactions;
 //----------------------------------------------------------------------------
 
 public class Messages_en_US extends Messages {
+
     /**
      * Return the contents of the bundle.
      */

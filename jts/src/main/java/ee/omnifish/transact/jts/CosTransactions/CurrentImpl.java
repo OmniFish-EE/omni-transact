@@ -51,6 +51,7 @@ import org.omg.CosTransactions.SubtransactionsUnavailable;
 import org.omg.CosTransactions.Terminator;
 import org.omg.CosTransactions.TransactionFactory;
 import org.omg.CosTransactions.Unavailable;
+
 import ee.omnifish.transact.jts.codegen.otsidl.JControl;
 import ee.omnifish.transact.jts.codegen.otsidl.JControlHelper;
 
@@ -64,7 +65,6 @@ import ee.omnifish.transact.jts.codegen.otsidl.JControlHelper;
  *
  * @author Simon Holdsworth, IBM Corporation
  *
- * @see
  */
 //----------------------------------------------------------------------------
 // CHANGE HISTORY
@@ -107,9 +107,6 @@ public class CurrentImpl extends org.omg.CORBA.LocalObject implements org.omg.Co
      * current Control the existing Control that represents the parent transaction is stacked behind the new one, which
      * becomes the current one.
      *
-     * @param
-     *
-     * @return
      *
      * @exception SubtransactionsUnavailable A subtransaction cannot be begun, either because the Transaction Service does
      * not support nested transactions or because the current transaction is completing.
@@ -117,7 +114,6 @@ public class CurrentImpl extends org.omg.CORBA.LocalObject implements org.omg.Co
      * non-transactional work.
      * @exception SystemException The operation failed.
      *
-     * @see
      */
     @Override
     public void begin() throws INVALID_TRANSACTION, SystemException, SubtransactionsUnavailable {
@@ -283,17 +279,12 @@ public class CurrentImpl extends org.omg.CORBA.LocalObject implements org.omg.Co
      * current Control the existing Control that represents the parent transaction is stacked behind the new one, which
      * becomes the current one.
      *
-     * @param
-     *
-     * @return
-     *
      * @exception SubtransactionsUnavailable A subtransaction cannot be begun, either because the Transaction Service does
      * not support nested transactions or because the current transaction is completing.
      * @exception INVALID_TRANSACTION The transaction could not be begun as the current thread of control has pending
      * non-transactional work.
      * @exception SystemException The operation failed.
      *
-     * @see
      */
     public void begin(int time_out) throws INVALID_TRANSACTION, SystemException, SubtransactionsUnavailable {
 
@@ -448,12 +439,11 @@ public class CurrentImpl extends org.omg.CORBA.LocalObject implements org.omg.Co
 
     /**
      * Completes the current transaction.
+     *
      * <p>
      * This operation can only be called if there is a Terminator object available.
      *
      * @param reportHeuristics Indicates that heuristic exceptions should be passed back to the caller.
-     *
-     * @return
      *
      * @exception NoTransaction There is no current transaction to commit.
      * @exception INVALID_TRANSACTION The current transaction has outstanding work and the Transaction Service is "checked".
@@ -462,8 +452,6 @@ public class CurrentImpl extends org.omg.CORBA.LocalObject implements org.omg.Co
      * @exception HeuristicHazard Heuristic action may have been taken by a participant in the transaction.
      * @exception HeuristicMixed Heuristic action has been taken by a participant in the transaction.
      * @exception SystemException The operation failed.
-     *
-     * @see
      */
     @Override
     public void commit(boolean reportHeuristics) throws NO_PERMISSION, INVALID_TRANSACTION, TRANSACTION_ROLLEDBACK, NoTransaction,
@@ -589,12 +577,9 @@ public class CurrentImpl extends org.omg.CORBA.LocalObject implements org.omg.Co
 
     /**
      * Rolls back the changes performed under the current transaction.
+     *
      * <p>
      * This operation can only be called if there is a Terminator object available.
-     *
-     * @param
-     *
-     * @return
      *
      * @exception NoTransaction There is no current transaction to rollback.
      * @exception INVALID_TRANSACTION The current transaction has outstanding work and the Transaction Service is "checked".
@@ -602,7 +587,6 @@ public class CurrentImpl extends org.omg.CORBA.LocalObject implements org.omg.Co
      * @exception TRANSACTION_ROLLEDBACK The transaction has already been rolled back.
      * @exception SystemException The operation failed.
      *
-     * @see
      */
     @Override
     public void rollback() throws NoTransaction, INVALID_TRANSACTION, NO_PERMISSION, TRANSACTION_ROLLEDBACK, SystemException {
@@ -729,13 +713,7 @@ public class CurrentImpl extends org.omg.CORBA.LocalObject implements org.omg.Co
     /**
      * Marks the current transaction such that is cannot be committed and only rolled back.
      *
-     * @param
-     *
-     * @return
-     *
      * @exception NoTransaction There is no current transaction to mark rollback- only.
-     *
-     * @see
      */
     @Override
     public void rollback_only() throws NoTransaction {
@@ -758,12 +736,8 @@ public class CurrentImpl extends org.omg.CORBA.LocalObject implements org.omg.Co
     /**
      * Returns the status of the current transaction.
      *
-     * @param
-     *
      * @return The current status of the transaction. If there is no current transaction, the value StatusNoTransaction is
      * returned.
-     *
-     * @see
      */
     @Override
     public Status get_status() {
@@ -789,11 +763,7 @@ public class CurrentImpl extends org.omg.CORBA.LocalObject implements org.omg.Co
     /**
      * Returns a printable string representing the current transaction.
      *
-     * @param
-     *
      * @return The transaction name. If there is no current transaction, null is returned.
-     *
-     * @see
      */
     @Override
     public String get_transaction_name() {
@@ -821,10 +791,6 @@ public class CurrentImpl extends org.omg.CORBA.LocalObject implements org.omg.Co
      * Sets the timeout value to be used for all subsequent transactions.
      *
      * @param timeout The timeout value in seconds.
-     *
-     * @return
-     *
-     * @see
      */
     @Override
     public void set_timeout(int timeout) {
@@ -844,13 +810,9 @@ public class CurrentImpl extends org.omg.CORBA.LocalObject implements org.omg.Co
     /**
      * Returns the current ControlImpl object.
      *
-     * @param
-     *
      * @return The Control object for the current transaction, or null if there is no current transaction.
      *
      * @exception TRANSACTION_ROLLEDBACK The current transaction has been rolled back.
-     *
-     * @see
      */
     @Override
     public Control get_control() throws TRANSACTION_ROLLEDBACK {
@@ -877,11 +839,7 @@ public class CurrentImpl extends org.omg.CORBA.LocalObject implements org.omg.Co
     /**
      * Disassociates the current ControlImpl from the calling thread.
      *
-     * @param
-     *
      * @return The Control object for the suspended transaction. If there was no transaction, this will be null.
-     *
-     * @see
      */
     @Override
     public Control suspend() {
@@ -904,19 +862,16 @@ public class CurrentImpl extends org.omg.CORBA.LocalObject implements org.omg.Co
 
     /**
      * Re-associates the given Control to the calling thread.
+     *
      * <p>
      * If there is already a current ControlImpl, it is replaced as the current one.
      *
      * @param control The Control object to be made current.
      *
-     * @return
-     *
      * @exception InvalidControl The Control object passed as a parameter is not valid. This may be because the transaction
      * it represents has already completed, or because the object is of the wrong type.
      * @exception INVALID_TRANSACTION The transaction could not be begun as the current thread of control has pending
      * non-transactional work.
-     *
-     * @see
      */
     @Override
     public void resume(Control control) throws InvalidControl, INVALID_TRANSACTION {
@@ -980,18 +935,10 @@ public class CurrentImpl extends org.omg.CORBA.LocalObject implements org.omg.Co
      * Shuts down all services.
      *
      * @param immediate Indicates whether to ignore running transactions.
-     *
-     * @return
-     *
-     * @see
      */
-
     synchronized void shutdown(boolean immediate) {
-
         // Inform the basic transaction services to shutdown.
-
         CurrentTransaction.shutdown(immediate);
-
     }
 
     /**

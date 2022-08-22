@@ -36,8 +36,6 @@ package ee.omnifish.transact.jts.CosTransactions;
  * @version 0.01
  *
  * @author Simon Holdsworth, IBM Corporation
- *
- * @see
  */
 public interface MinorCode {
 

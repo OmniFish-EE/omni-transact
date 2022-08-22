@@ -38,7 +38,6 @@ import java.util.Stack;
  *
  * @author Arun Krishnan
  *
- * @see
  */
 class CoordinatorLogPool {
 

@@ -37,20 +37,11 @@ package ee.omnifish.transact.jts.CosTransactions;
  * @version 0.01
  *
  * @author Simon Holdsworth, IBM Corporation
- *
- * @see
  */
-
 interface LogUpcallTarget {
 
     /**
      * This is the upcall which is called by the log file.
-     *
-     * @param
-     *
-     * @return
-     *
-     * @see
      */
     void upcall(int reason);
 }

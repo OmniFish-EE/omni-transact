@@ -47,7 +47,6 @@ import ee.omnifish.transact.jts.utils.LogFormatter;
  *
  * @author Simon Holdsworth, IBM Corporation
  *
- * @see
  */
 //----------------------------------------------------------------------------
 // CHANGE HISTORY
@@ -61,13 +60,12 @@ class Log {
     /**
      * A reference to the LogControl object.
      */
-    private LogControl logControl = null;
+    private LogControl logControl;
 
     /**
      * The log path.
      */
-    // private static String logPath = null;
-    private String logPath = null;
+    private String logPath;
     /*
      * Logger to log transaction messages
      */
@@ -76,11 +74,6 @@ class Log {
     /**
      * Default Log constructor.
      *
-     * @param
-     *
-     * @return
-     *
-     * @see
      */
     Log() {
         // We need to ensure that messaging is initialised as this may be called
@@ -98,11 +91,6 @@ class Log {
     /**
      * Initialises the log.
      *
-     * @param
-     *
-     * @return
-     *
-     * @see
      */
     boolean initialise() {
         boolean result = true;
@@ -125,8 +113,6 @@ class Log {
      * @param upcall The object which will handle upcalls from the log.
      *
      * @return The object representing the physical log file.
-     *
-     * @see
      */
     LogFile open(String serverName, LogUpcallTarget upcall) {
 
@@ -159,11 +145,6 @@ class Log {
     /**
      * Terminates the log.
      *
-     * @param
-     *
-     * @return
-     *
-     * @see
      */
     boolean terminate() {
 
@@ -182,9 +163,6 @@ class Log {
      *
      * @param String
      *
-     * @return
-     *
-     * @see
      */
     static boolean checkFileExists(String serverName) {
         // Check whether the file exists.
@@ -201,11 +179,6 @@ class Log {
     /**
      * Dumps the state of the object.
      *
-     * @param
-     *
-     * @return
-     *
-     * @see
      */
     void dump() {
         // ! somtrDUMP_OBJECT_HEADER;

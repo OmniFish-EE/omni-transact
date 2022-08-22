@@ -37,7 +37,6 @@ package ee.omnifish.transact.jts.CosTransactions;
  *
  * @author Simon Holdsworth, IBM Corporation
  *
- * @see
  */
 
 //----------------------------------------------------------------------------
@@ -66,11 +65,7 @@ class LogicErrorException extends Exception {
     /**
      * Converts the LogicErrorException to a string.
      *
-     * @param
-     *
      * @return The string representation.
-     *
-     * @see
      */
     @Override
     public String toString() {

@@ -57,6 +57,7 @@ import org.omg.CosTransactions.otid_t;
 import org.omg.PortableServer.POA;
 import org.omg.PortableServer.POAPackage.ServantAlreadyActive;
 import org.omg.PortableServer.POAPackage.ServantNotActive;
+
 import ee.omnifish.transact.jts.codegen.otsidl.JControl;
 import ee.omnifish.transact.jts.codegen.otsidl.JControlPOA;
 import ee.omnifish.transact.jts.utils.LogFormatter;
@@ -70,7 +71,6 @@ import ee.omnifish.transact.jts.utils.LogFormatter;
  *
  * @author Simon Holdsworth, IBM Corporation
  *
- * @see
  */
 //----------------------------------------------------------------------------
 // CHANGE HISTORY
@@ -203,12 +203,6 @@ public class ControlImpl extends JControlPOA implements Control {
 
     /**
      * Cleans up the state of the object.
-     *
-     * @param
-     *
-     * @return
-     *
-     * @see
      */
     synchronized public void doFinalize() {
 
@@ -224,22 +218,12 @@ public class ControlImpl extends JControlPOA implements Control {
             term.destroy();
 
         // Remove the reference from the map.
-
-        /*
-         * TN - do not nullify the references yet thisRef = null; coord = null; coordRef = null; term = null; termRef = null;
-         * stacked = null; globalTID = null; localTID = null;
-         */
-
     }
 
     /**
      * Returns the identifier that globally represents the transaction
      *
-     * @param
-     *
      * @return The global identifier.
-     *
-     * @see
      */
     public GlobalTID getGlobalTID() {
         return globalTID;
@@ -254,8 +238,6 @@ public class ControlImpl extends JControlPOA implements Control {
      * @return The global identifier.
      *
      * @exception SystemException An error occurred. The minor code indicates the reason for the exception.
-     *
-     * @see
      */
     @Override
     synchronized public otid_t getGlobalTID(StatusHolder status) throws SystemException {
@@ -291,8 +273,6 @@ public class ControlImpl extends JControlPOA implements Control {
      * @return The local transaction identifier.
      *
      * @exception SystemException An error occurred. The minor code indicates the reason for the exception.
-     *
-     * @see
      */
     @Override
     synchronized public long getLocalTID(StatusHolder status) throws SystemException {
@@ -327,8 +307,6 @@ public class ControlImpl extends JControlPOA implements Control {
      * @param status An object to hold the status value, or null.
      *
      * @return The stacked Control object.
-     *
-     * @see
      */
     synchronized ControlImpl popControl(StatusHolder status) {
 
@@ -356,11 +334,7 @@ public class ControlImpl extends JControlPOA implements Control {
      * @param control The Control object to be stacked.
      * @param status An object to hold the status value, or null.
      *
-     * @return
-     *
      * @exception SystemException An error occurred. The minor code indicates the reason for the exception.
-     *
-     * @see
      */
     synchronized void pushControl(ControlImpl control, StatusHolder status) throws SystemException {
 
@@ -392,16 +366,11 @@ public class ControlImpl extends JControlPOA implements Control {
      * This operation is part of the OMG interface and must not return any exceptions other than those defined in the OMG
      * interface.
      *
-     * @param
-     *
      * @return The Terminator for the transaction.
      *
      * @exception Unavailable The Terminator object is not available.
      * @exception SystemException The operation failed.
-     *
-     * @see
      */
-
     @Override
     synchronized public Terminator get_terminator() throws Unavailable, SystemException {
 
@@ -474,14 +443,10 @@ public class ControlImpl extends JControlPOA implements Control {
      * This operation is part of the OMG interface and must not return any exceptions other than those defined in the OMG
      * interface.
      *
-     * @param
-     *
      * @return The Coordinator for the transaction.
      *
      * @exception Unavailable The Coordinator is not available.
      * @exception SystemException The operation failed.
-     *
-     * @see
      */
     @Override
     synchronized public Coordinator get_coordinator() throws Unavailable, SystemException {
@@ -527,14 +492,10 @@ public class ControlImpl extends JControlPOA implements Control {
      * This operation is part of the OMG interface and must not return any exceptions other than those defined in the OMG
      * interface.
      *
-     * @param
-     *
      * @return The Coordinator for the transaction.
      *
      * @exception Unavailable The Coordinator is not available.
      * @exception SystemException The operation failed.
-     *
-     * @see
      */
     synchronized public Coordinator get_localCoordinator() throws Unavailable, SystemException {
 
@@ -568,13 +529,8 @@ public class ControlImpl extends JControlPOA implements Control {
      * This operation returns a value indicating that asynchonrous requests issued within the context of the current
      * ControlImpl instance have not yet completed.
      *
-     * @param
-     *
      * @return Indicates there are outgoing requests.
-     *
-     * @see
      */
-
     synchronized boolean isOutgoing() {
         boolean result = (outgoing != 0);
         return result;
@@ -583,11 +539,7 @@ public class ControlImpl extends JControlPOA implements Control {
     /**
      * This operation returns a value which indicates that this ControlImpl instance is associated with one or more threads.
      *
-     * @param
-     *
      * @return Indicates an exisiting association.
-     *
-     * @see
      */
     synchronized boolean isAssociated() {
         boolean result = (association != 0);
@@ -597,11 +549,7 @@ public class ControlImpl extends JControlPOA implements Control {
     /**
      * This operation returns the number of thread associations
      *
-     * @param
-     *
      * @return Indicates the number of thread associations.
-     *
-     * @see
      */
     synchronized int numAssociated() {
         int result = association;
@@ -610,12 +558,6 @@ public class ControlImpl extends JControlPOA implements Control {
 
     /**
      * Increment the thread association count.
-     *
-     * @param
-     *
-     * @return
-     *
-     * @see
      */
     synchronized void incrementAssociation() {
         association++;
@@ -624,11 +566,7 @@ public class ControlImpl extends JControlPOA implements Control {
     /**
      * Decrement the thread association count.
      *
-     * @param
-     *
      * @return Indicates the association count was above zero.
-     *
-     * @see
      */
     synchronized boolean decrementAssociation() {
         boolean result = (association > 0);
@@ -639,12 +577,6 @@ public class ControlImpl extends JControlPOA implements Control {
 
     /**
      * Increment the incomplete asynchronous request counter.
-     *
-     * @param
-     *
-     * @return
-     *
-     * @see
      */
     synchronized void incrementOutgoing() {
         outgoing++;
@@ -653,11 +585,7 @@ public class ControlImpl extends JControlPOA implements Control {
     /**
      * Decrement the incomplete asynchronous request counter.
      *
-     * @param
-     *
      * @return Indicates the request counter was above zero.
-     *
-     * @see
      */
     synchronized boolean decrementOutgoing() {
         boolean result = (outgoing > 0);
@@ -669,27 +597,18 @@ public class ControlImpl extends JControlPOA implements Control {
     /**
      * Returns the state of the transaction as the Control object knows it.
      *
-     * @param
-     *
      * @return The transaction state.
-     *
-     * @see
      */
     @Override
     synchronized public Status getTranState() {
-        Status result = tranState;
-        return result;
+        return tranState;
     }
 
     /**
      * Sets the state of the transaction as the Control object knows it. No checking is done to verify the state change is
      * valid.
      *
-     * @param int The new state.
-     *
-     * @return
-     *
-     * @see
+     * @param newState The new state.
      */
     @Override
     synchronized public void setTranState(Status newState) {
@@ -699,11 +618,7 @@ public class ControlImpl extends JControlPOA implements Control {
     /**
      * Locates the first stacked ancestor which has not aborted. If there is no such ancestor the operation returns null.
      *
-     * @param
-     *
      * @return The first stacked Control which does not represent an aborted transaction.
-     *
-     * @see
      */
     synchronized ControlImpl popAborted() {
 
@@ -748,13 +663,8 @@ public class ControlImpl extends JControlPOA implements Control {
     /**
      * Determines whether the ControlImpl object represents a remote Control object or a local one.
      *
-     * @param
-     *
      * @return Indicates whether the ControlImpl represents a remote Control.
-     *
-     * @see
      */
-
     synchronized boolean representsRemoteControl() {
         boolean result = representsRemote;
         return result;
@@ -763,13 +673,9 @@ public class ControlImpl extends JControlPOA implements Control {
     /**
      * Returns the transaction context for the Coordinator.
      *
-     * @param
-     *
      * @return The transaction context.
      *
      * @exception Unavailable No transaction context is available.
-     *
-     * @see
      */
     synchronized PropagationContext getTXContext() throws Unavailable {
         PropagationContext result = null;
@@ -798,12 +704,6 @@ public class ControlImpl extends JControlPOA implements Control {
 
     /**
      * Dumps the state of the object.
-     *
-     * @param
-     *
-     * @return
-     *
-     * @see
      */
     void dump() {
     }
@@ -811,11 +711,7 @@ public class ControlImpl extends JControlPOA implements Control {
     /**
      * Returns the CORBA Object which represents this object.
      *
-     * @param
-     *
      * @return The CORBA object.
-     *
-     * @see
      */
     synchronized final Control object() {
         if (thisRef == null) {
@@ -846,11 +742,9 @@ public class ControlImpl extends JControlPOA implements Control {
     /**
      * Returns the ControlImpl which serves the given object.
      *
-     * @param The CORBA Object.
+     * @param control The CORBA Object.
      *
      * @return The ControlImpl object which serves it.
-     *
-     * @see
      */
     synchronized public static final ControlImpl servant(JControl control) {
         ControlImpl result = null;
@@ -879,12 +773,6 @@ public class ControlImpl extends JControlPOA implements Control {
 
     /**
      * Destroys the ControlImpl object.
-     *
-     * @param
-     *
-     * @return
-     *
-     * @see
      */
     synchronized final void destroy() {
         // GDH: We have no desire to destroy an underlying remote control object, instead we
@@ -908,12 +796,6 @@ public class ControlImpl extends JControlPOA implements Control {
 
     /**
      * Added to prevent null delegate problem.
-     *
-     * @param
-     *
-     * @return
-     *
-     * @see
      */
     @Override
     public boolean equals(java.lang.Object o) {

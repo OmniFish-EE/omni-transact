@@ -58,16 +58,10 @@ class LogRecordEnding implements Serializable {
     /**
      * The log record ending contains the current LSN.
      */
-    LogLSN currentLSN = null;
+    LogLSN currentLSN;
 
     /**
      * Default LogRecordEnding constructor.
-     *
-     * @param
-     *
-     * @return
-     *
-     * @see
      */
     LogRecordEnding() {
     }
@@ -77,10 +71,6 @@ class LogRecordEnding implements Serializable {
      *
      * @param bytes The array of bytes from which the object is to be constructed.
      * @param index The index in the array where copy is to start.
-     *
-     * @return
-     *
-     * @see
      */
     LogRecordEnding(byte[] bytes, int index) {
         currentLSN = new LogLSN(bytes, index);
@@ -93,8 +83,6 @@ class LogRecordEnding implements Serializable {
      * @param index The index in the array where copy is to start.
      *
      * @return Number of bytes copied.
-     *
-     * @see
      */
     final int toBytes(byte[] bytes, int index) {
         currentLSN.toBytes(bytes, index);
@@ -105,11 +93,7 @@ class LogRecordEnding implements Serializable {
     /**
      * This method is called to direct the object to format its state to a String.
      *
-     * @param
-     *
      * @return The formatted representation of the object.
-     *
-     * @see
      */
     @Override
     public final String toString() {

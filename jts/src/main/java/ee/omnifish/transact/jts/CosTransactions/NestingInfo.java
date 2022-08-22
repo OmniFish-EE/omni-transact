@@ -45,8 +45,6 @@ import org.omg.CosTransactions.Coordinator;
  * @version 0.01
  *
  * @author Simon Holdsworth, IBM Corporation
- *
- * @see
  */
 class NestingInfo {
     CoordinatorImpl[] ancestorSeq = null;
@@ -55,12 +53,6 @@ class NestingInfo {
 
     /**
      * Default NestingInfo constructor.
-     *
-     * @param
-     *
-     * @return
-     *
-     * @see
      */
     NestingInfo() {
     }
@@ -69,10 +61,6 @@ class NestingInfo {
      * Defines the sequence of ancestors and initialises the set of children to be empty.
      *
      * @param ancestors The ancestors
-     *
-     * @return
-     *
-     * @see
      */
     NestingInfo(CoordinatorImpl[] ancestors) {
 
@@ -85,17 +73,15 @@ class NestingInfo {
 
     /**
      * Adds the given SubCoordinator as a child.
+     *
      * <p>
      * If the reference is already in the set, the operation returns false.
      *
      * @param child The child Coordinator.
      *
      * @return Indicates success of the operation.
-     *
-     * @see
      */
     boolean addChild(CoordinatorImpl child) {
-
         boolean result = !childSet.contains(child);
         if (result)
             childSet.addElement(child);
@@ -111,8 +97,6 @@ class NestingInfo {
      * @param child The child Coordinator.
      *
      * @return Indicates success of the operation.
-     *
-     * @see
      */
     boolean removeChild(CoordinatorImpl child) {
         boolean result = childSet.removeElement(child);
@@ -121,12 +105,6 @@ class NestingInfo {
 
     /**
      * Empties the set of children.
-     *
-     * @param
-     *
-     * @return
-     *
-     * @see
      */
     void empty() {
         childSet.removeAllElements();
@@ -140,8 +118,6 @@ class NestingInfo {
      * @param child The child coordinator.
      *
      * @return Indicates success of the operation.
-     *
-     * @see
      */
     boolean removeFromParent(CoordinatorImpl child) {
 
@@ -173,8 +149,6 @@ class NestingInfo {
      * @param forgetting Indicates whether the transaction is being forgotten.
      *
      * @return The parent Coordinator.
-     *
-     * @see
      */
     CoordinatorImpl getParent(boolean forgetting) {
 
@@ -202,11 +176,7 @@ class NestingInfo {
      * <p>
      * The top-level Coordinator is the last in the sequence of ancestors.
      *
-     * @param
-     *
      * @return The top-level ancestor.
-     *
-     * @see
      */
     CoordinatorImpl getTopLevel() {
 
@@ -228,11 +198,7 @@ class NestingInfo {
      * <p>
      * The caller is responsible for freeing the sequence storage.
      *
-     * @param
-     *
      * @return The sequence of ancestors.
-     *
-     * @see
      */
     CoordinatorImpl[] getAncestors() {
 
@@ -252,11 +218,7 @@ class NestingInfo {
      * <p>
      * If no nesting information has been defined, the operation returns 0.
      *
-     * @param
-     *
      * @return The number of children.
-     *
-     * @see
      */
     int numChildren() {
         return childSet.size();
@@ -270,11 +232,7 @@ class NestingInfo {
      * 'active' here means subordinate children that have not registered with their superior, or root children - these
      * represent parts of a transaction that may not be committed or rolled back before the parent completes.
      *
-     * @param
-     *
      * @return Indicates if all is OK.
-     *
-     * @see
      */
     boolean replyCheck() {
 
@@ -298,8 +256,6 @@ class NestingInfo {
      * @param other The other Coordinator.
      *
      * @return Indicates success of the operation.
-     *
-     * @see
      */
     boolean isDescendant(Coordinator other) {
 
@@ -321,12 +277,6 @@ class NestingInfo {
 
     /**
      * Rolls back all children in the set; if there are none the operation does nothing.
-     *
-     * @param
-     *
-     * @return
-     *
-     * @see
      */
     void rollbackFamily() {
 

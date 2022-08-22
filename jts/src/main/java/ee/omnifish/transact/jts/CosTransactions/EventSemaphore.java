@@ -40,7 +40,6 @@ package ee.omnifish.transact.jts.CosTransactions;
  *
  * @author Simon Holdsworth, IBM Corporation
  *
- * @see
  */
 //----------------------------------------------------------------------------
 // CHANGE HISTORY
@@ -55,11 +54,6 @@ public class EventSemaphore {
     /**
      * Default EventSemaphore constructor.
      *
-     * @param
-     *
-     * @return
-     *
-     * @see
      */
     EventSemaphore() {
     }
@@ -69,9 +63,6 @@ public class EventSemaphore {
      *
      * @param posted Indicates whether the semaphore should be posted.
      *
-     * @return
-     *
-     * @see
      */
     EventSemaphore(boolean posted) {
         this.posted = posted;
@@ -86,16 +77,12 @@ public class EventSemaphore {
 
     /**
      * Waits for the event to be posted.
+     * 
      * <p>
      * If the event has already been posted, then the operation returns immediately.
      *
-     * @param
-     *
-     * @return
-     *
      * @exception InterruptedException The wait was interrupted.
      *
-     * @see
      */
     synchronized public void waitEvent() throws InterruptedException {
         if (!posted)
@@ -127,14 +114,10 @@ public class EventSemaphore {
 
     /**
      * Posts the event semaphore.
+     * 
      * <p>
      * All waiters are notified.
      *
-     * @param
-     *
-     * @return
-     *
-     * @see
      */
     synchronized void post() {
         if (!posted)
@@ -144,12 +127,6 @@ public class EventSemaphore {
 
     /**
      * Clears a posted event semaphore.
-     *
-     * @param
-     *
-     * @return
-     *
-     * @see
      */
     synchronized void clear() {
         posted = false;

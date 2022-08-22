@@ -45,6 +45,7 @@ import java.util.logging.Logger;
 
 import org.omg.CORBA.MARSHAL;
 import org.omg.CORBA.ORB;
+
 import ee.omnifish.transact.jts.utils.LogFormatter;
 
 /**
@@ -62,7 +63,6 @@ import ee.omnifish.transact.jts.utils.LogFormatter;
  *
  * @author Simon Holdsworth, IBM Corporation
  *
- * @see
  */
 //----------------------------------------------------------------------------
 // CHANGE HISTORY

@@ -41,7 +41,6 @@ import java.io.RandomAccessFile;
  *
  * @author Simon Holdsworth, IBM Corporation
  *
- * @see
  */
 //----------------------------------------------------------------------------
 // CHANGE HISTORY
@@ -152,11 +151,7 @@ class LogFileHandle {
      * @param file The File to be opened.
      * @param int Open options
      *
-     * @return
-     *
      * @exception LogException Opening the file failed.
-     *
-     * @see
      */
     LogFileHandle(File file, int openOptions) throws LogException {
 
@@ -186,13 +181,8 @@ class LogFileHandle {
     /**
      * Destroys the FileHandle, closing the file, if open.
      *
-     * @param
-     *
-     * @return
-     *
      * @exception LogException The close of the file failed.
      *
-     * @see
      */
     void destroy() throws LogException {
 
@@ -207,7 +197,6 @@ class LogFileHandle {
 
     @Override
     protected void finalize() throws LogException {
-
         destroy();
     }
 
@@ -220,7 +209,6 @@ class LogFileHandle {
      *
      * @exception LogException The read failed.
      *
-     * @see
      */
     int fileRead(byte[] buffer) throws LogException {
 
@@ -274,7 +262,6 @@ class LogFileHandle {
      *
      * @exception LogException The write failed.
      *
-     * @see
      */
     int fileWrite(byte[] buffer) throws LogException {
 
@@ -340,11 +327,8 @@ class LogFileHandle {
      * @param file The name of the file.
      * @param fileMode The mode to open in.
      *
-     * @return
-     *
      * @exception LogException The open failed.
      *
-     * @see
      */
     void fileOpen(File file, String fileMode) throws LogException {
         fhandle = null;
@@ -372,13 +356,8 @@ class LogFileHandle {
     /**
      * Closes the file.
      *
-     * @param
-     *
-     * @return
-     *
      * @exception LogException The close failed
      *
-     * @see
      */
     void fileClose() throws LogException {
 
@@ -411,11 +390,8 @@ class LogFileHandle {
      * @param position Position to seek.
      * @param seekMode Mode of seek.
      *
-     * @return
-     *
      * @exception LogException The seek failed.
      *
-     * @see
      */
 
     void fileSeek(long position, int seekMode) throws LogException {
@@ -452,13 +428,8 @@ class LogFileHandle {
     /**
      * Synchronises (flushes) the file to the file system.
      *
-     * @param
-     *
-     * @return
-     *
      * @exception LogException The sync failed
      *
-     * @see
      */
     void fileSync() throws LogException {
 
@@ -491,7 +462,6 @@ class LogFileHandle {
      *
      * @exception LogException The read failed.
      *
-     * @see
      */
     int readVector(byte[][] vector) throws LogException {
         int bytesRead = 0;
@@ -507,13 +477,9 @@ class LogFileHandle {
      *
      * @param bytesToClear Number of bytes to allocate for the file.
      *
-     * @return
-     *
      * @exception LogException The allocation failed.
      *
-     * @see
      */
-
     void allocFileStorage(int bytesToClear) throws LogException {
         int numberOfBlocks; // Number of blocks to write
         int bytesRemaining; // Remaining bytes

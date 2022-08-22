@@ -48,7 +48,6 @@ import java.util.logging.Logger;
  *
  * @author Simon Holdsworth, IBM Corporation
  *
- * @see
  */
 //----------------------------------------------------------------------------
 // CHANGE HISTORY
@@ -140,8 +139,6 @@ public class LogControl {
      * @return Handle for the log file.
      *
      * @exception LogException The open failed.
-     *
-     * @see
      */
     synchronized LogHandle openFile(String logFileName, LogUpcallTarget upcallTarget, String baseNewName, boolean[] newlyCreated) throws LogException {
 
@@ -661,9 +658,7 @@ public class LogControl {
      *
      * @return Indicates whether the file exists.
      *
-     * @see
      */
-
     static boolean checkFileExists(String logId, String logDirectory) {
         if (logDirectory == null) {
             return false;
@@ -677,9 +672,6 @@ public class LogControl {
      *
      * @param logHandle
      *
-     * @return
-     *
-     * @see
      */
     synchronized void removeFile(LogHandle logHandle) {
 

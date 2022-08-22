@@ -57,6 +57,7 @@ import org.omg.CosTransactions.TransactionFactory;
 import org.omg.CosTransactions.TransactionFactoryHelper;
 import org.omg.CosTransactions.TransactionFactoryPOA;
 import org.omg.PortableServer.POA;
+
 import ee.omnifish.transact.jts.utils.LogFormatter;
 
 /**
@@ -67,7 +68,6 @@ import ee.omnifish.transact.jts.utils.LogFormatter;
  *
  * @author Simon Holdsworth, IBM Corporation
  *
- * @see
  */
 
 //----------------------------------------------------------------------------
@@ -90,12 +90,6 @@ class TransactionFactoryImpl extends TransactionFactoryPOA implements Transactio
 
     /**
      * Constructor for the TransactionFactoryImpl. Passes through to the parent constructor.
-     *
-     * @param
-     *
-     * @return
-     *
-     * @see
      */
     TransactionFactoryImpl() {
         // Initialise the TimeoutManager and RecoveryManager.
@@ -112,8 +106,6 @@ class TransactionFactoryImpl extends TransactionFactoryPOA implements Transactio
      * @return The Control object for the new transaction.
      *
      * @exception SystemException An error occurred.
-     *
-     * @see
      */
     @Override
     public Control create(int timeOut) throws SystemException {
@@ -142,8 +134,6 @@ class TransactionFactoryImpl extends TransactionFactoryPOA implements Transactio
      * @return The local Control object for the new transaction.
      *
      * @exception SystemException An error occurred.
-     *
-     * @see
      */
     public ControlImpl localCreate(int timeOut) throws SystemException {
         // If the transaction service is not active, throw an exception.
@@ -217,8 +207,6 @@ class TransactionFactoryImpl extends TransactionFactoryPOA implements Transactio
      * @return The Control object for the new transaction.
      *
      * @exception SystemException An error occurred.
-     *
-     * @see
      */
     @Override
     public Control recreate(PropagationContext context) throws SystemException {
@@ -461,12 +449,6 @@ class TransactionFactoryImpl extends TransactionFactoryPOA implements Transactio
 
     /**
      * Prevents any further transactional activity in the process.
-     *
-     * @param
-     *
-     * @return
-     *
-     * @see
      */
     static void deactivate() {
         active = false;
@@ -480,12 +462,8 @@ class TransactionFactoryImpl extends TransactionFactoryPOA implements Transactio
 
     /**
      * Returns the CORBA Object which represents this object.
-     *
-     * @param
-     *
      * @return The CORBA object.
      *
-     * @see
      */
     synchronized TransactionFactory object() {
         if (thisRef == null) {
@@ -535,8 +513,6 @@ class TransactionFactoryImpl extends TransactionFactoryPOA implements Transactio
      * @param The CORBA Object.
      *
      * @return The TransactionFactoryImpl object which serves it.
-     *
-     * @see
      */
     synchronized static final TransactionFactoryImpl servant(TransactionFactory factory) {
         TransactionFactoryImpl result = null;

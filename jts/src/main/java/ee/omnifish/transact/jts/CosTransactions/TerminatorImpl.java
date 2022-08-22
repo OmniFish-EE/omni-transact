@@ -54,6 +54,7 @@ import org.omg.CosTransactions.TerminatorPOA;
 import org.omg.PortableServer.POA;
 import org.omg.PortableServer.POAPackage.ServantAlreadyActive;
 import org.omg.PortableServer.POAPackage.ServantNotActive;
+
 import ee.omnifish.transact.jts.utils.LogFormatter;
 
 /**
@@ -66,7 +67,6 @@ import ee.omnifish.transact.jts.utils.LogFormatter;
  *
  * @author Simon Holdsworth, IBM Corporation
  *
- * @see
  */
 
 //----------------------------------------------------------------------------
@@ -85,7 +85,7 @@ class TerminatorImpl extends TerminatorPOA implements Terminator {
     CoordinatorTerm coordTerm;
 
     // this is needed to cleanup properly on completion and to avoid leaks.
-    ControlImpl control = null;
+    ControlImpl control;
     /*
      * Logger to log transaction messages
      */
@@ -93,12 +93,6 @@ class TerminatorImpl extends TerminatorPOA implements Terminator {
 
     /**
      * Default TerminatorImpl constructor.
-     *
-     * @param
-     *
-     * @return
-     *
-     * @see
      */
     TerminatorImpl() {
     }
@@ -110,9 +104,6 @@ class TerminatorImpl extends TerminatorPOA implements Terminator {
      * @param coordinator The Coordinator for the transaction.
      * @param subtran A flag indicating whether the transaction is a child.
      *
-     * @return
-     *
-     * @see
      */
     TerminatorImpl(CoordinatorImpl coordinator, boolean subtran) {
 
@@ -175,14 +166,10 @@ class TerminatorImpl extends TerminatorPOA implements Terminator {
      *
      * @param reportHeuristics Indicates whether heuristic exceptions should be passed to the caller.
      *
-     * @return
-     *
      * @exception HeuristicHazard Heuristic action may have been taken by a participant in the transaction.
      * @exception HeuristicMixed Heuristic action has been taken by a participant in the transaction so part of the
      * transaction has been rolled back.
      * @exception SystemException The operation failed.
-     *
-     * @see
      */
     @Override
     synchronized public void commit(boolean reportHeuristics) throws HeuristicMixed, HeuristicHazard, TRANSACTION_ROLLEDBACK {
@@ -232,13 +219,7 @@ class TerminatorImpl extends TerminatorPOA implements Terminator {
      * This operation is part of the OMG interface and must not return any exceptions other than those defined in the OMG
      * interface.
      *
-     * @param
-     *
-     * @return
-     *
      * @exception SystemException The operation failed.
-     *
-     * @see
      */
     @Override
     public void rollback() throws SystemException {
@@ -275,11 +256,7 @@ class TerminatorImpl extends TerminatorPOA implements Terminator {
     /**
      * Returns the CORBA Object which represents this object.
      *
-     * @param
-     *
      * @return The CORBA object.
-     *
-     * @see
      */
     synchronized final Terminator object() {
         if (thisRef == null) {
@@ -311,12 +288,6 @@ class TerminatorImpl extends TerminatorPOA implements Terminator {
 
     /**
      * Destroys the TerminatorImpl object.
-     *
-     * @param
-     *
-     * @return
-     *
-     * @see
      */
     synchronized final void destroy() {
         if (poa != null && thisRef != null) {

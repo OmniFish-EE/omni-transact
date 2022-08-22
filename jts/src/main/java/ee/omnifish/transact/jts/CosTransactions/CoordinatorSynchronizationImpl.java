@@ -44,6 +44,7 @@ import org.omg.CosTransactions.SynchronizationPOA;
 import org.omg.PortableServer.POA;
 import org.omg.PortableServer.POAPackage.ServantAlreadyActive;
 import org.omg.PortableServer.POAPackage.ServantNotActive;
+
 import ee.omnifish.transact.jts.utils.LogFormatter;
 
 /**
@@ -56,7 +57,6 @@ import ee.omnifish.transact.jts.utils.LogFormatter;
  *
  * @author Simon Holdsworth, IBM Corporation
  *
- * @see
  */
 //----------------------------------------------------------------------------
 // CHANGE HISTORY

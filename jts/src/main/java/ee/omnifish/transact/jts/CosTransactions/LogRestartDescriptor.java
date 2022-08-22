@@ -42,6 +42,7 @@ import java.io.Serializable;
  * @see LogHandle
  */
 class LogRestartDescriptor implements Serializable {
+
     /**
      * This constant holds the size of the LogRestartDecriptor object.
      */
@@ -53,12 +54,6 @@ class LogRestartDescriptor implements Serializable {
 
     /**
      * Default LogRestartDescriptor constructor.
-     *
-     * @param
-     *
-     * @return
-     *
-     * @see
      */
     LogRestartDescriptor() {
     }
@@ -68,10 +63,6 @@ class LogRestartDescriptor implements Serializable {
      *
      * @param bytes The array of bytes from which the object is to be constructed.
      * @param index The index in the array where copy is to start.
-     *
-     * @return
-     *
-     * @see
      */
     LogRestartDescriptor(byte[] bytes, int index) {
         restartValid = (bytes[index++] & 255) + ((bytes[index++] & 255) << 8) + ((bytes[index++] & 255) << 16)
@@ -91,8 +82,6 @@ class LogRestartDescriptor implements Serializable {
      * @param index The index in the array where copy is to start.
      *
      * @return Number of bytes copied.
-     *
-     * @see
      */
     final int toBytes(byte[] bytes, int index) {
         bytes[index++] = (byte) restartValid;
@@ -117,8 +106,6 @@ class LogRestartDescriptor implements Serializable {
      * @param other The other LogRestartDescriptor to be compared.
      *
      * @return Indicates whether the objects are equal.
-     *
-     * @see
      */
     final boolean equals(LogRestartDescriptor other) {
         return (restartValid == other.restartValid && restartDataLength == other.restartDataLength && timeStamp == other.timeStamp);
@@ -127,11 +114,7 @@ class LogRestartDescriptor implements Serializable {
     /**
      * This method is called to direct the object to format its state to a String.
      *
-     * @param
-     *
      * @return The formatted representation of the object.
-     *
-     * @see
      */
     @Override
     public final String toString() {

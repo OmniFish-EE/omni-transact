@@ -46,17 +46,17 @@ import jakarta.transaction.TransactionSynchronizationRegistry;
 /**
  * The Context implementation for obtaining contextual instances of {@link TransactionScoped} beans.
  *
- * <p/>
+ * <p>
  * The contextual instances are destroyed when the transaction completes.
  *
- * <p/>
+ * <p>
  * Any attempt to call a method on a {@link TransactionScoped} bean when a transaction is not active will result in a
- * {@Link jakarta.enterprise.context.ContextNotActiveException}.
+ * <code>jakarta.enterprise.context.ContextNotActiveException</code>.
  *
- * <p/>
- * A CDI Event: @Initialized(TransactionScoped.class) is fired with {@link TransactionScopedCDIEventPayload}, when the
+ * <p>
+ * A CDI Event: @Initialized(TransactionScoped.class) is fired with <code>TransactionScopedCDIEventPayload</code>, when the
  * context is initialized for the first time and @Destroyed(TransactionScoped.class) is fired with
- * {@link TransactionScopedCDIEventPayload}, when the context is destroyed at the end. Currently this payload is empty
+ * <code>TransactionScopedCDIEventPayload</code>, when the context is destroyed at the end. Currently this payload is empty
  * i.e. it doesn't contain any information.
  *
  * @author <a href="mailto:j.j.snyder@oracle.com">JJ Snyder</a>
@@ -103,7 +103,7 @@ public class TransactionScopedContextImpl implements Context {
      * Determines if this context object is active.
      *
      * @return true if there is a current global transaction and its status is
-     * {@Link jakarta.transaction.Status.STATUS_ACTIVE} false otherwise
+     * <code>jakarta.transaction.Status.STATUS_ACTIVE</code> false otherwise
      */
     @Override
     public boolean isActive() {

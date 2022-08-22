@@ -57,6 +57,7 @@ import org.omg.CosTransactions.TransIdentity;
 import org.omg.CosTransactions.Unavailable;
 import org.omg.CosTransactions.Vote;
 import org.omg.CosTransactions.otid_t;
+
 import ee.omnifish.transact.jts.codegen.otsidl.CoordinatorResource;
 import ee.omnifish.transact.jts.codegen.otsidl.JCoordinator;
 import ee.omnifish.transact.jts.codegen.otsidl.JCoordinatorHelper;
@@ -73,7 +74,6 @@ import ee.omnifish.transact.jts.utils.LogFormatter;
  *
  * @author Simon Holdsworth, IBM Corporation
  *
- * @see
  */
 
 //----------------------------------------------------------------------------
@@ -113,11 +113,8 @@ class SubCoordinator extends CoordinatorImpl {
      * @param parentLocalTID The parent's local transaction identifier.
      * @param ancestors This transactions's ancestors (includes parent).
      *
-     * @return
-     *
      * @exception LogicErrorException An internal logic error occurred.
      *
-     * @see
      */
     SubCoordinator(GlobalTID parentGlobalTID, Long parentLocalTID, CoordinatorImpl[] ancestors) throws LogicErrorException {
 
@@ -180,9 +177,7 @@ class SubCoordinator extends CoordinatorImpl {
      * @param superior The superior Coordinator.
      * @param temporary The temporary flag.
      * @param ancestors The ancestors of the transaction.
-     * @return
      * @exception LogicErrorException An internal logic error occurred.
-     * @see
      */
     SubCoordinator(GlobalTID globalTID, Coordinator superior, boolean temporary, CoordinatorImpl[] ancestors) throws LogicErrorException {
 
@@ -238,12 +233,6 @@ class SubCoordinator extends CoordinatorImpl {
 
     /**
      * Cleans up the state of the object.
-     *
-     * @param
-     *
-     * @return
-     *
-     * @see
      */
     @Override
     public void doFinalize() {
@@ -297,11 +286,8 @@ class SubCoordinator extends CoordinatorImpl {
     /**
      * Returns the local status of the target transaction.
      *
-     * @param
-     *
      * @return The status of the transaction.
      *
-     * @see
      */
     @Override
     synchronized public Status get_status() {
@@ -372,13 +358,9 @@ class SubCoordinator extends CoordinatorImpl {
      * Gets the local state of the parent transaction. This operation references no instance variables and so can be
      * implemented locally in the proxy class.
      *
-     * @param
-     *
      * @return The parent transaction's status.
      *
      * @exception SystemException The parent could not be reached.
-     *
-     * @see
      */
     @Override
     synchronized public Status get_parent_status() throws SystemException {
@@ -405,13 +387,9 @@ class SubCoordinator extends CoordinatorImpl {
      * Gets the local state of the top-level transaction. This operation references no instance variables and so can be
      * implemented locally in a proxy class.
      *
-     * @param
-     *
      * @return The top-level transaction status.
      *
      * @exception SystemException The top-level ancestor could not be reached.
-     *
-     * @see
      */
     @Override
     synchronized public Status get_top_level_status() throws SystemException {
@@ -445,8 +423,6 @@ class SubCoordinator extends CoordinatorImpl {
      * @return Indicates equality of the transactions the objects represent.
      *
      * @exception SystemException The other Coordinator could not be reached.
-     *
-     * @see
      */
     @Override
     synchronized public boolean is_same_transaction(Coordinator other) throws SystemException {
@@ -476,8 +452,6 @@ class SubCoordinator extends CoordinatorImpl {
      * @return Indicates the relationship.
      *
      * @exception SystemException The other Coordinator could not be reached.
-     *
-     * @see
      */
     @Override
     synchronized public boolean is_related_transaction(Coordinator other) throws SystemException {
@@ -508,8 +482,6 @@ class SubCoordinator extends CoordinatorImpl {
      * @return Indicates the relationship.
      *
      * @exception SystemException The other Coordinator could not be reached.
-     *
-     * @see
      */
     @Override
     public boolean is_ancestor_transaction(Coordinator other) throws SystemException {
@@ -534,8 +506,6 @@ class SubCoordinator extends CoordinatorImpl {
      * @return Indicates the relationship.
      *
      * @exception SystemException The other Coordinator could not be reached.
-     *
-     * @see
      */
     @Override
     synchronized public boolean is_descendant_transaction(Coordinator other) throws SystemException {
@@ -562,16 +532,14 @@ class SubCoordinator extends CoordinatorImpl {
 
     /**
      * Determines whether the target SubCoordinator represents a top-level (non-nested) transaction.
+     *
      * <p>
      * For a subtransaction returns FALSE.
+     *
      * <p>
      * This operation references no instance variables and so can be implemented locally in a proxy class.
      *
-     * @param
-     *
      * @return Indicates the transaction is top-level.
-     *
-     * @see
      */
     @Override
     public boolean is_top_level_transaction() {
@@ -588,11 +556,7 @@ class SubCoordinator extends CoordinatorImpl {
     /**
      * Returns a hash value based on the transaction associated with the target object.
      *
-     * @param
-     *
      * @return The hash value for the transaction.
-     *
-     * @see
      */
     @Override
     synchronized public int hash_transaction() {
@@ -610,13 +574,9 @@ class SubCoordinator extends CoordinatorImpl {
     /**
      * Returns a hash value based on the top-level ancestor of the transaction associated with the target object.
      *
-     * @param
-     *
      * @return The hash value for the top-level ancestor.
      *
      * @exception SystemException The other Coordinator could not be reached.
-     *
-     * @see
      */
     @Override
     synchronized public int hash_top_level_tran() throws SystemException {
@@ -650,7 +610,6 @@ class SubCoordinator extends CoordinatorImpl {
      * been marked rollback-only.
      * @exception SystemException The operation failed.
      *
-     * @see
      */
     @Override
     synchronized public RecoveryCoordinator register_resource(Resource res) throws SystemException, Inactive, TRANSACTION_ROLLEDBACK {
@@ -777,14 +736,10 @@ class SubCoordinator extends CoordinatorImpl {
      *
      * @param sares The SubtransactionAwareResource to be registered.
      *
-     * @return
-     *
      * @exception Inactive The Coordinator is completing the transaction and cannot accept this registration.
      * @exception TRANSACTION_ROLLEDBACK The transaction which the Coordinator represents has already been rolled back, or
      * has been marked rollback-only.
      * @exception SystemException The operation failed.
-     *
-     * @see
      */
     @Override
     synchronized public void register_subtran_aware(SubtransactionAwareResource sares)
@@ -871,12 +826,7 @@ class SubCoordinator extends CoordinatorImpl {
     /**
      * Ensures that the transaction represented by the target SubCoordinator cannot be committed.
      *
-     * @param
-     *
-     * @return
-     *
      * @exception Inactive The Coordinator is already completing the transaction.
-     * @see
      */
     @Override
     synchronized public void rollback_only() throws Inactive {
@@ -894,11 +844,8 @@ class SubCoordinator extends CoordinatorImpl {
      * Returns a printable string that represents the SubCoordinator. This operation references only the global TID, and so
      * can be implemented locally in a proxy class.
      *
-     * @param
-     *
      * @return The transaction name.
      *
-     * @see
      */
     @Override
     synchronized public String get_transaction_name() {
@@ -917,13 +864,9 @@ class SubCoordinator extends CoordinatorImpl {
     /**
      * Creates a subtransaction and returns a Control object that represents the child transaction.
      *
-     * @param
-     *
      * @return The Control object for the new child transaction.
      *
      * @exception Inactive The Coordinator is completing the subtransaction and cannot create a new child.
-     *
-     * @see
      */
     @Override
     synchronized public Control create_subtransaction() throws Inactive {
@@ -990,11 +933,7 @@ class SubCoordinator extends CoordinatorImpl {
      * This method is currently not synchronized because that causes a deadlock in resync. I don't think this is a problem
      * as the global identifier is allocated in the constructor and then never changes.
      *
-     * @param
-     *
      * @return The global identifier for the transaction.
-     *
-     * @see
      */
     @Override
     public otid_t getGlobalTID() {
@@ -1009,11 +948,7 @@ class SubCoordinator extends CoordinatorImpl {
      * Returns the internal identifier for the transaction. This method is currently not synchronized because that causes a
      * deadlock in resync.
      *
-     * @param
-     *
      * @return The local transaction identifier.
-     *
-     * @see
      */
     @Override
     public long getLocalTID() {
@@ -1034,7 +969,6 @@ class SubCoordinator extends CoordinatorImpl {
      *
      * @exception SystemException An error occurred. The minor code indicates the reason for the exception.
      *
-     * @see
      */
     @Override
     synchronized CoordinatorImpl replyAction(int[/* 1 */] action) throws SystemException {
@@ -1086,11 +1020,7 @@ class SubCoordinator extends CoordinatorImpl {
     /**
      * Marks the SubCoordinator as permanent.
      *
-     * @param
-     *
      * @return The local transaction identifier.
-     *
-     * @see
      */
     @Override
     synchronized Long setPermanent() {
@@ -1104,11 +1034,7 @@ class SubCoordinator extends CoordinatorImpl {
     /**
      * Checks whether the SubCoordinator is marked rollback-only.
      *
-     * @param
-     *
      * @return Indicates whether the transaction is rollback-only.
-     *
-     * @see
      */
     @Override
     synchronized public boolean isRollbackOnly() {
@@ -1118,11 +1044,7 @@ class SubCoordinator extends CoordinatorImpl {
     /**
      * Checks whether the SubCoordinator is active.
      *
-     * @param
-     *
      * @return Indicates the transaction is active.
-     *
-     * @see
      */
     @Override
     synchronized boolean isActive() {
@@ -1132,11 +1054,7 @@ class SubCoordinator extends CoordinatorImpl {
     /**
      * Checks whether the SubCoordinator has registered with its superior.
      *
-     * @param
-     *
      * @return Indicates the registration status.
-     *
-     * @see
      */
     @Override
     synchronized boolean hasRegistered() {
@@ -1146,11 +1064,7 @@ class SubCoordinator extends CoordinatorImpl {
     /**
      * Returns the sequence of ancestors of the transaction.
      *
-     * @param
-     *
      * @return The sequence of ancestors.
-     *
-     * @see
      */
     @Override
     synchronized public TransIdentity[] getAncestors() {
@@ -1173,8 +1087,6 @@ class SubCoordinator extends CoordinatorImpl {
      * @param child The child Coordinator.
      *
      * @return Indicates success of the operation.
-     *
-     * @see
      */
     @Override
     synchronized boolean addChild(CoordinatorImpl child) {
@@ -1188,8 +1100,6 @@ class SubCoordinator extends CoordinatorImpl {
      * @param child The child Coordinator.
      *
      * @return Indicates success of the operation.
-     *
-     * @see
      */
     @Override
     synchronized boolean removeChild(CoordinatorImpl child) {
@@ -1225,13 +1135,9 @@ class SubCoordinator extends CoordinatorImpl {
      * Directs the SubCoordinator to prepare to commit. The SubCoordinator checks that the subtransaction can be committed.
      * It does not distribute prepare operations to the participants.
      *
-     * @param
-     *
      * @return The consolidated vote.
      *
      * @exception INVALID_TRANSACTION The transaction is not in a state to commit, due to outstanding work.
-     *
-     * @see
      */
     static String[] resultName = { "Commit"/* #Frozen */, "Rollback"/* #Frozen */, "Read-only"/* #Frozen */ };
 
@@ -1285,12 +1191,6 @@ class SubCoordinator extends CoordinatorImpl {
 
     /**
      * Directs the SubCoordinator to commit the transaction. The SubCoordinator directs all registered Resources to commit.
-     *
-     * @param
-     *
-     * @return
-     *
-     * @see
      */
     @Override
     void commit() {
@@ -1386,10 +1286,6 @@ class SubCoordinator extends CoordinatorImpl {
      * rollback.
      *
      * @param force
-     *
-     * @return
-     *
-     * @see
      */
     @Override
     void rollback(boolean force) {
@@ -1503,7 +1399,6 @@ class SubCoordinator extends CoordinatorImpl {
      * registration.
      * @exception SynchronizationUnavailable The transaction service cannot support synchronization.
      *
-     * @see
      */
     @Override
     synchronized public void register_synchronization(Synchronization sync) throws Inactive, SynchronizationUnavailable {
@@ -1529,9 +1424,6 @@ class SubCoordinator extends CoordinatorImpl {
      *
      * @param term The object normally responsible for terminating the Coordinator.
      *
-     * @return
-     *
-     * @see
      */
     @Override
     synchronized void setTerminator(CompletionHandler term) {
@@ -1541,11 +1433,7 @@ class SubCoordinator extends CoordinatorImpl {
     /**
      * Gets the parent coordinator of the transaction.
      *
-     * @param
-     *
      * @return The parent Coordinator
-     *
-     * @see
      */
     @Override
     Coordinator getParent() {
@@ -1556,11 +1444,7 @@ class SubCoordinator extends CoordinatorImpl {
     /**
      * Gets the superior Coordinator for this transaction.
      *
-     * @param
-     *
      * @return The superior Coordinator
-     *
-     * @see
      */
     @Override
     Coordinator getSuperior() {
@@ -1581,11 +1465,7 @@ class SubCoordinator extends CoordinatorImpl {
     /**
      * Gets the object normally responsible for terminating this Coordinator.
      *
-     * @param
-     *
      * @return The object normally responsible for terminating the Coordinator.
-     *
-     * @see
      */
     @Override
     CompletionHandler getTerminator() {
@@ -1599,14 +1479,10 @@ class SubCoordinator extends CoordinatorImpl {
      * Creates a PropagationContext which contains the information which would normally be passed implicitly via the
      * CosTSPropagation interfaces.
      *
-     * @param
-     *
      * @return The transaction context.
      *
      * @exception Inactive The Coordinator is in the process of completing the transaction and cannot return the
      * information.
-     *
-     * @see
      */
     @Override
     synchronized public PropagationContext get_txcontext() throws Unavailable {
@@ -1662,9 +1538,6 @@ class SubCoordinator extends CoordinatorImpl {
      *
      * @param parent The parent Coordinator, if any.
      *
-     * @return
-     *
-     * @see
      */
     @Override
     void cleanUpEmpty(CoordinatorImpl parent) {
@@ -1689,11 +1562,6 @@ class SubCoordinator extends CoordinatorImpl {
      * Directs the SubCoordinator to commit the transaction in one phase The SubCoordinator directs all registered Resources
      * to commit.
      *
-     * @param
-     *
-     * @return
-     *
-     * @see
      */
     @Override
     boolean commitOnePhase() {
@@ -1722,11 +1590,7 @@ class SubCoordinator extends CoordinatorImpl {
      * Returns a hash code for the object. This very basic method is used by the trace facility and should not call any
      * method which is traced.
      *
-     * @param
-     *
      * @return The hash code for the object.
-     *
-     * @see
      */
     @Override
     public int hashCode() {
@@ -1748,8 +1612,6 @@ class SubCoordinator extends CoordinatorImpl {
      * @param other The other object.
      *
      * @return Indicates equality.
-     *
-     * @see
      */
     @Override
     public boolean equals(java.lang.Object other) throws INVALID_TRANSACTION {

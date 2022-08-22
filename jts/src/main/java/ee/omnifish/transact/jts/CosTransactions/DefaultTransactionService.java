@@ -67,7 +67,6 @@ import org.omg.PortableServer.ServantActivator;
  * @author Simon Holdsworth, IBM Corporation
  * @author mvatkina
  *
- * @see
  */
 //----------------------------------------------------------------------------// CHANGE HISTORY
 //
@@ -93,18 +92,11 @@ public class DefaultTransactionService implements ProxyChecker {
 
     /**
      * Default constructor.
-     *
-     * @param
-     *
-     * @return
-     *
-     * @see
      */
     public DefaultTransactionService() {
         // We do not set up the Current instance until we know the ORB.
         // This method is not traced as trace is not configured until the init method
         // is called.
-
     }
 
     /**
@@ -117,32 +109,21 @@ public class DefaultTransactionService implements ProxyChecker {
     /**
      * Obtain the implementation of the Current interface provided by the transaction service implementation.
      *
-     * @param
-     *
      * @return An instance of the Current class
-     *
-     * @see
      */
     public org.omg.CosTransactions.Current get_current() {
-        org.omg.CosTransactions.Current result = null;
-
-        result = currentInstance;
-
-        return result;
+        return currentInstance;
     }
 
     /**
      * Request the transaction service to identify itself with a communication manager.
+     *
      * <p>
      * Multiple communication managers may request a transaction service to identify itself.
      *
      * @param orb The ORB to be used for communication.
      * @param ident The TSIdentification object with which the Sender and Receiver must be registered.
      * @param properties The Properties with which the ORB was initialised.
-     *
-     * @return
-     *
-     * @see
      */
     public void identify_ORB(ORB orb, TSIdentification ident, Properties properties) {
         if (DefaultTransactionService.orb == null) {
@@ -287,10 +268,6 @@ public class DefaultTransactionService implements ProxyChecker {
      * Request the transaction service to stop any further transactional activity.
      *
      * @param immediate Indicates whether to ignore running transactions.
-     *
-     * @return
-     *
-     * @see
      */
     public static void shutdown(boolean immediate) {
         // Remove the admin and factory objects from the naming service.
@@ -329,8 +306,6 @@ public class DefaultTransactionService implements ProxyChecker {
      * @param obj The potential proxy.
      *
      * @return Indicates whether the object is a proxy.
-     *
-     * @see
      */
     @Override
     public final boolean isProxy(org.omg.CORBA.Object obj) {
@@ -341,13 +316,7 @@ public class DefaultTransactionService implements ProxyChecker {
     /**
      * Creates the POA objects which are used for objects within the JTS.
      *
-     * @param
-     *
-     * @return
-     *
      * @exception Exception The operation failed.
-     *
-     * @see
      */
     final static void createPOAs() throws Exception {
 
@@ -454,8 +423,6 @@ public class DefaultTransactionService implements ProxyChecker {
  * @version 0.01
  *
  * @author Simon Holdsworth, IBM Corporation
- *
- * @see
  */
 //----------------------------------------------------------------------------
 // CHANGE HISTORY
@@ -465,31 +432,13 @@ public class DefaultTransactionService implements ProxyChecker {
 //------------------------------------------------------------------------------
 
 class RecoveryCoordinatorServantActivator extends LocalObject implements ServantActivator {
-    private ORB orb = null;
+    private ORB orb;
 
-    /*
-     * COMMENT(Ram J) The _ids() method needs to be removed/modified (along with LocalObjectImpl) once OMG standardizes the
-     * local object interfaces.
-     *
-     * TN - removed ids after switching to LocalObject
-     */
-
-    // Type-specific CORBA::Object operations
-    /*
-     * private static String[] __ids = { "IDL:omg.org/PortableServer/ServantActivator:1.0",
-     * "IDL:omg.org/PortableServer/ServantManager:1.0" };
-     *
-     * public String[] _ids () { return __ids; }
-     */
 
     /**
      * Creates the servant activator for the RecoveryCoordinator class.
      *
      * @param orb The ORB.
-     *
-     * @return
-     *
-     * @see
      */
     RecoveryCoordinatorServantActivator(ORB orb) {
         this.orb = orb;
@@ -502,8 +451,6 @@ class RecoveryCoordinatorServantActivator extends LocalObject implements Servant
      * @param adapter The POA.
      *
      * @return The servant.
-     *
-     * @see
      */
     @Override
     public Servant incarnate(byte[] oid, POA adapter) throws org.omg.PortableServer.ForwardRequest {
@@ -515,12 +462,6 @@ class RecoveryCoordinatorServantActivator extends LocalObject implements Servant
 
     /**
      * Does nothing.
-     *
-     * @param
-     *
-     * @return
-     *
-     * @see
      */
     @Override
     public void etherealize(byte[] oid, POA adapter, Servant servant, boolean cleanup_in_progress, boolean remaining_activations) {
@@ -535,7 +476,6 @@ class RecoveryCoordinatorServantActivator extends LocalObject implements Servant
  *
  * @author Simon Holdsworth, IBM Corporation
  *
- * @see
  */
 //----------------------------------------------------------------------------
 // CHANGE HISTORY
@@ -545,30 +485,12 @@ class RecoveryCoordinatorServantActivator extends LocalObject implements Servant
 //------------------------------------------------------------------------------
 
 class CoordinatorResourceServantActivator extends LocalObject implements ServantActivator {
-    private ORB orb = null;
-
-    /*
-     * COMMENT(Ram J) The _ids() method needs to be removed/modified (along with LocalObjectImpl) once OMG standardizes the
-     * local object interfaces.
-     *
-     * TN - removed ids after switching to LocalObject
-     */
-
-    /*
-     * // Type-specific CORBA::Object operations private static String[] __ids = {
-     * "IDL:omg.org/PortableServer/ServantActivator:1.0", "IDL:omg.org/PortableServer/ServantManager:1.0" };
-     *
-     * public String[] _ids () { return __ids; }
-     */
+    private ORB orb;
 
     /**
      * Creates the servant activator for the CoordinatorResource class.
      *
      * @param orb The ORB.
-     *
-     * @return
-     *
-     * @see
      */
     CoordinatorResourceServantActivator(ORB orb) {
         this.orb = orb;
@@ -581,8 +503,6 @@ class CoordinatorResourceServantActivator extends LocalObject implements Servant
      * @param adapter The POA.
      *
      * @return The servant.
-     *
-     * @see
      */
     @Override
     public Servant incarnate(byte[] oid, POA adapter) throws org.omg.PortableServer.ForwardRequest {
@@ -592,12 +512,6 @@ class CoordinatorResourceServantActivator extends LocalObject implements Servant
 
     /**
      * Does nothing.
-     *
-     * @param
-     *
-     * @return
-     *
-     * @see
      */
     @Override
     public void etherealize(byte[] oid, POA adapter, Servant servant, boolean cleanup_in_progress, boolean remaining_activations) {
@@ -606,20 +520,6 @@ class CoordinatorResourceServantActivator extends LocalObject implements Servant
 
 class JTSAdapterActivator extends LocalObject implements AdapterActivator {
     private ORB orb;
-
-    /*
-     * COMMENT(Ram J) The _ids() method needs to be removed/modified (along with LocalObjectImpl) once OMG standardizes the
-     * local object interfaces.
-     *
-     * TN - removed ids after switching to LocalObject
-     */
-
-    /*
-     * // Type-specific CORBA::Object operations private static String[] __ids = {
-     * "IDL:omg.org/PortableServer/AdapterActivator:1.0" };
-     *
-     * public String[] _ids() { return __ids; }
-     */
 
     JTSAdapterActivator(ORB orb) {
         this.orb = orb;

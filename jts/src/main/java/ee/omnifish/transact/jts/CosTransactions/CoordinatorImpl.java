@@ -62,6 +62,7 @@ import org.omg.CosTransactions.Unavailable;
 import org.omg.CosTransactions.Vote;
 import org.omg.CosTransactions.otid_t;
 import org.omg.PortableServer.POA;
+
 import ee.omnifish.transact.jts.codegen.otsidl.JCoordinator;
 import ee.omnifish.transact.jts.codegen.otsidl.JCoordinatorHelper;
 import ee.omnifish.transact.jts.codegen.otsidl.JCoordinatorPOA;
@@ -76,7 +77,6 @@ import ee.omnifish.transact.jts.utils.LogFormatter;
  *
  * @author Simon Holdsworth, IBM Corporation
  *
- * @see
  */
 //----------------------------------------------------------------------------
 // CHANGE HISTORY
@@ -219,15 +219,13 @@ abstract class CoordinatorImpl extends JCoordinatorPOA implements JCoordinator {
     /**
      * OMG Coordinator operation required of all subclasses.
      *
-     * @exception Inactive The Coordinator is completing the transaction.
+     * @exception Unavailable The Coordinator is completing the transaction.
      */
     @Override
     public abstract PropagationContext get_txcontext() throws Unavailable;
 
     /**
      * IDL JCoordinator operation required of all subclasses.
-     *
-     * @exception Unavailable The global transaction identifier is not available.
      */
     @Override
     public abstract otid_t getGlobalTID();

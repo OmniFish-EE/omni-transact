@@ -41,6 +41,7 @@ import java.util.logging.Level;
 import java.util.logging.Logger;
 
 import org.omg.CosTransactions.Status;
+
 import ee.omnifish.transact.jts.jtsxa.XID;
 
 /**
@@ -51,7 +52,6 @@ import ee.omnifish.transact.jts.jtsxa.XID;
  *
  * @author Simon Holdsworth, IBM Corporation
  *
- * @see
  */
 
 //----------------------------------------------------------------------------
@@ -90,12 +90,6 @@ class TimeoutManager {
 
     /**
      * Initialises the static state of the TimeoutManager class.
-     *
-     * @param
-     *
-     * @return
-     *
-     * @see
      */
     synchronized static void initialise() {
 
@@ -136,8 +130,6 @@ class TimeoutManager {
      * @param seconds The length of the timeout.
      *
      * @return Indicates success of the operation.
-     *
-     * @see
      */
     static boolean setTimeout(Long localTID, int timeoutType, int seconds) {
         boolean result = true;
@@ -207,17 +199,15 @@ class TimeoutManager {
 
     /**
      * Takes appropriate action for a timeout.
+     *
      * <p>
      * The type fo timeout is given, and the transaction represented by the Coordinator and its local identifier.
+     *
      * <p>
      * This method does not reference the TimeoutManager's state directly and so does not need to be synchronized.
      *
      * @param localTID The local identifier for the transaction.
      * @param timeoutType The type of timeout.
-     *
-     * @return
-     *
-     * @see
      */
     static void timeoutCoordinator(Long localTID, int timeoutType) {
 
@@ -325,11 +315,7 @@ class TimeoutManager {
      * Note that this method should not do anything that will cause a synchronized method in the RecoveryManager to be
      * called, as this could cause a deadlock when RecoveryManager methods on other threads call setTimeout.
      *
-     * @param
-     *
      * @return The information for transactions which have timed out.
-     *
-     * @see
      */
     static Enumeration checkTimeouts() {
         if (!isSetTimeout) {
@@ -449,8 +435,6 @@ class TimeoutManager {
      *
      * @return The time left. If there is no timeout for the transaction, this value will be negative. If the timeout period
      * has been exceeded, this value will be zero.
-     *
-     * @see
      */
     static long timeLeft(Long localTID) {
 
@@ -476,10 +460,6 @@ class TimeoutManager {
      * For quiesce, the timeout thread is stopped when there are no running transactions left.
      *
      * @param immediate Indicates whether to stop immediately.
-     *
-     * @return
-     *
-     * @see
      */
     static void shutdown(boolean immediate) {
 
@@ -505,30 +485,6 @@ class TimeoutManager {
         }
     }
 
-    /**
-     * Reports the contents of the TimeoutManager tables. $Only required for debug.
-     *
-     * @param immediate Indicates whether to stop immediately.
-     *
-     * @return
-     *
-     * @see
-     */
-    /*
-     * static void report() {
-     *
-     * // Report on pendingTimeouts.
-     *
-     * if (pendingTimeouts.size() > 0) { if(_logger.isLoggable(Level.FINER)) {
-     * _logger.logp(Level.FINER,"TimeoutManager","report()", "TimeoutManager.pendingTimeouts non-empty"); } Enumeration keys
-     * = pendingTimeouts.keys();
-     *
-     * while (keys.hasMoreElements()) { Long localTID = (Long) keys.nextElement(); TimeoutInfo timeInfo = (TimeoutInfo)
-     * pendingTimeouts.get(localTID); if(_logger.isLoggable(Level.FINER)) {
-     * _logger.logp(Level.FINER,"TimeoutManager","report()", "localTid :"+localTID+" -> " + timeInfo); } } } else {
-     * if(_logger.isLoggable(Level.FINER)) { _logger.logp(Level.FINER,"TimeoutManager","report()",
-     * "TimeoutManager.pendingTimeouts empty"); } } }
-     */
 }
 
 /**
@@ -538,7 +494,6 @@ class TimeoutManager {
  *
  * @author Simon Holdsworth, IBM Corporation
  *
- * @see
  */
 
 //----------------------------------------------------------------------------
@@ -561,7 +516,6 @@ class TimeoutInfo extends Object {
  *
  * @author Simon Holdsworth, IBM Corporation
  *
- * @see
  */
 
 //----------------------------------------------------------------------------
@@ -579,13 +533,10 @@ class TimeoutThread extends Thread {
 
     /**
      * TimeoutThread constructor.
+     *
      * <p>
      * This sets the thread name, and sets the thread to be a daemon thread so that it does not prevent the process from
      * terminating.
-     *
-     * @param
-     * @return
-     * @see
      */
     TimeoutThread() {
         setName("JTS Timeout Thread"/* #Frozen */);
@@ -607,12 +558,6 @@ class TimeoutThread extends Thread {
 
     /**
      * Performs timeout checking on a regular basis (every ten seconds or so).
-     *
-     * @param
-     *
-     * @return
-     *
-     * @see
      */
     @Override
     public void run() {

@@ -51,8 +51,8 @@ public interface TransactionServiceConfig {
      * Transaction service creates a sub directory 'tx' under tx-log-dir to
      * store the transaction logs. The default value of the tx-log-dir is
      * $INSTANCE-ROOT/logs. If this attribute is not explicitly specified in the
-     * <transaction-service> element, 'tx' sub directory will be created under
-     * the path specified in log-root attribute of <domain> element.
+     * <code>transaction-service</code> element, 'tx' sub directory will be created under
+     * the path specified in log-root attribute of <code>domain</code> element.
      *
      * @return possible object is
      *         {@link String }

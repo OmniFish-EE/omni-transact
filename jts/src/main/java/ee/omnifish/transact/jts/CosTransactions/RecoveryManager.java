@@ -56,6 +56,7 @@ import org.omg.CORBA.COMM_FAILURE;
 import org.omg.CORBA.SystemException;
 import org.omg.CORBA.TRANSIENT;
 import org.omg.CosTransactions.Status;
+
 import ee.omnifish.transact.jts.api.TransactionRecoveryFence;
 import ee.omnifish.transact.jts.codegen.jtsxa.OTSResource;
 import ee.omnifish.transact.jts.jtsxa.OTSResourceImpl;
@@ -68,7 +69,6 @@ import ee.omnifish.transact.jts.utils.LogFormatter;
  *
  * @author Simon Holdsworth, IBM Corporation
  *
- * @see
  */
 
 //----------------------------------------------------------------------------
@@ -212,8 +212,6 @@ public class RecoveryManager {
      * @param log The log object for the transaction.
      *
      * @return Indicates success of the operation.
-     *
-     * @see
      */
     static boolean addCoordinator(GlobalTID globalTID, Long localTID, CoordinatorImpl coord, int timeout) {
         boolean result = true;
@@ -249,8 +247,6 @@ public class RecoveryManager {
      * @param aborted The transaction aborted indicator.
      *
      * @return Indicates success of the operation.
-     *
-     * @see
      */
     static boolean removeCoordinator(GlobalTID globalTID, Long localTID, boolean aborted) {
         boolean result = false;
@@ -332,8 +328,6 @@ public class RecoveryManager {
      * @param globalTID The global identifier for the transaction.
      *
      * @return The Coordinator for the transaction.
-     *
-     * @see
      */
     static CoordinatorImpl getCoordinator(GlobalTID globalTID) {
         return (CoordinatorImpl) coordsByGlobalTID.get(globalTID);
@@ -385,11 +379,8 @@ public class RecoveryManager {
      * <p>
      * The method returns true if any transactions require resync.
      *
-     * @param
-     *
      * @return Indicates that there are Coordinators requiring resync.
      *
-     * @see
      */
     static boolean recover() {
 
@@ -466,11 +457,6 @@ public class RecoveryManager {
      * <p>
      * Once resync is complete, a keypoint is taken to indicate that the log information is no longer required.
      *
-     * @param
-     *
-     * @return
-     *
-     * @see
      */
     static void resync() {
 
@@ -598,11 +584,8 @@ public class RecoveryManager {
      * @param resynced Indicates whether any resync was done.
      * @param keypointRequired Indicates whether the log needs keypointing.
      *
-     * @return
-     *
      * @exception LogicErrorException An internal logic error occurred.
      *
-     * @see
      */
     static void resyncComplete(boolean resynced, boolean keypointRequired) throws LogicErrorException {
         // Inform JTSXA that resync is complete, and trace the fact
@@ -631,8 +614,6 @@ public class RecoveryManager {
      * @param localTID The local identifier for the transaction.
      *
      * @return The Coordinator object.
-     *
-     * @see
      */
     static CoordinatorImpl getLocalCoordinator(Long localTID) {
         return (CoordinatorImpl) coordsByLocalTID.get(localTID);
@@ -645,7 +626,6 @@ public class RecoveryManager {
      *
      * @return Indicates the local transaction identifier is valid.
      *
-     * @see
      */
     static boolean validLocalTID(Long localTID) {
         return coordsByLocalTID.containsKey(localTID);
@@ -660,9 +640,6 @@ public class RecoveryManager {
      *
      * @param immediate Indicates whether to stop immediately.
      *
-     * @return
-     *
-     * @see
      */
     static void shutdown(boolean immediate) {
 
@@ -1137,70 +1114,12 @@ public class RecoveryManager {
          **/
     }
 
-    /**
-     * Requests that the RecoveryManager proceed with recovery of XA resources via JTSXA.
-     * <p>
-     * JTSXA returns a list of OTSResource objects which require outcomes. These are registered with appropriate
-     * Coordinators or rolled back as appropriate.
-     *
-     *
-     *
-     * /** Requests that the RecoveryManager proceed with recovery of XA resources via JTSXA.
-     * <p>
-     * JTSXA returns a list of OTSResource objects which require outcomes. These are registered with appropriate
-     * Coordinators or rolled back as appropriate.
-     *
-     * @param
-     *
-     * @return
-     *
-     * @see
-     */
-    /*
-     * DISCARD(Ram J) - this method is not needed anymore. This has been replaced by proceedWithXARecovery method.
-     */
-    /*
-     * private static void recoverXA() {
-     *
-     * boolean result = false;
-     *
-     * // Get a list of OTSResource objects from JTSXA.
-     *
-     * Vector resources = new Vector(); JTSXA.recover(resources); Enumeration res = resources.elements();
-     *
-     * // For each OTSResource, determine whether the transaction is known, // and if so, register it, otherwise roll it
-     * back.
-     *
-     * while (res.hasMoreElements()) {
-     *
-     * TxOTSResource xares = (TxOTSResource) res.nextElement(); GlobalTID globalTID = new GlobalTID(xares.getGlobalTID());
-     * TopCoordinator coord = (TopCoordinator) coordsByGlobalTID.get(globalTID);
-     *
-     * // report();
-     *
-     * if (coord == null) {
-     *
-     * // Roll the OTSResource back if the transaction is not // recognised. This happens when the RM has recorded its //
-     * prepare vote, but the JTS has not recorded its prepare vote.
-     *
-     * try { xares.rollback(); } catch (Throwable exc) { _logger.log(Level.WARNING,"jts.exception_during_resync", new
-     * java.lang.Object[] { exc.toString(), "xa_rollback"});
-     *
-     *
-     * } } else {
-     *
-     * // Register the OTSResource with the Coordinator. // It will be called for commit or rollback during resync.
-     * coord.directRegisterResource(xares); } } }
-     */
+
 
     /**
      * Returns an array of Coordinator objects currently active.
      *
-     * @param
-     *
      * @return The array of Coordinators.
-     *
-     * @see
      */
     static CoordinatorImpl[] getCoordinators() {
 
@@ -1223,14 +1142,9 @@ public class RecoveryManager {
     /**
      * Gets the restart data for the process.
      *
-     * @param
-     *
      * @return The restart data.
-     *
-     * @see
      */
     public static byte[] getRestart() {
-
         byte[] result = null;
         LogFile logFile = Configuration.getLogFile();
         if (logFile != null)
@@ -1244,12 +1158,8 @@ public class RecoveryManager {
      *
      * @param bytes The restart data.
      *
-     * @return
-     *
-     * @see
      */
     public static void setRestart(byte[] bytes) {
-
         LogFile logFile = Configuration.getLogFile();
 
         if (logFile != null) {
@@ -1261,15 +1171,8 @@ public class RecoveryManager {
 
     /**
      * Waits for recovery to complete.
-     *
-     * @param
-     *
-     * @return
-     *
-     * @see
      */
     public static void waitForRecovery() {
-
         if (recoveryInProgress != null) {
             try {
                 recoveryInProgress.waitEvent();
@@ -1284,14 +1187,9 @@ public class RecoveryManager {
     /**
      * Waits for resync to complete with timeout.
      *
-     * @param cmtTimeout Container managed transaction timeout
-     *
-     * @return
-     *
-     * @see
+     * @param cmtTimeOut Container managed transaction timeout
      */
     public static void waitForResync(int cmtTimeOut) {
-
         if (resyncInProgress != null) {
             try {
                 resyncInProgress.waitTimeoutEvent(cmtTimeOut);
@@ -1305,15 +1203,8 @@ public class RecoveryManager {
 
     /**
      * Waits for resync to complete.
-     *
-     * @param
-     *
-     * @return
-     *
-     * @see
      */
     public static void waitForResync() {
-
         if (resyncInProgress != null) {
             try {
                 resyncInProgress.waitEvent();
@@ -1555,41 +1446,6 @@ public class RecoveryManager {
     }
 
     /**
-     * Reports the contents of the RecoveryManager tables. $Only required for debug.
-     *
-     * @param immediate Indicates whether to stop immediately.
-     *
-     * @return
-     *
-     * @see
-     */
-    /*
-     * static void report() {
-     *
-     * // Report on coordsByGlobalTID.
-     *
-     * if (coordsByGlobalTID.size() > 0) { if(_logger.isLoggable(Level.FINE)) {
-     * _logger.logp(Level.FINE,"RecoveryManager","report()", "RecoveryManager.coordsByGlobalTID non-empty"); } Enumeration
-     * keys = coordsByGlobalTID.keys();
-     *
-     * while (keys.hasMoreElements()) { GlobalTID globalTID = (GlobalTID) keys.nextElement(); CoordinatorImpl coordImpl =
-     * (CoordinatorImpl) coordsByGlobalTID.get(globalTID); if(_logger.isLoggable(Level.FINE)) {
-     * _logger.logp(Level.FINE,"RecoveryManager","report()", "GlobalTid :"+globalTID+" -> "+coordImpl); } } } else {
-     * if(_logger.isLoggable(Level.FINE)) { _logger.logp(Level.FINE,"RecoveryManager","report()",
-     * "RecoveryManager.coordsByGlobalTID empty"); } }
-     *
-     * // Report on coordsByLocalTID.
-     *
-     * if (coordsByLocalTID.size() > 0) { if(_logger.isLoggable(Level.FINE)) {
-     * _logger.logp(Level.FINE,"RecoveryManager","report()", "RecoveryManager.coordsByLocalTID non-empty"); } Enumeration
-     * keys = coordsByLocalTID.keys(); while (keys.hasMoreElements()) { Long localTID = (Long)keys.nextElement();
-     * CoordinatorImpl coordImpl = (CoordinatorImpl) coordsByLocalTID.get(localTID); if(_logger.isLoggable(Level.FINE)) {
-     * _logger.logp(Level.FINE,"RecoveryManager","report()", "LocalTid:"+localTID+" -> " + coordImpl); } } } else {
-     * if(_logger.isLoggable(Level.FINE)) { _logger.logp(Level.FINE,"RecoveryManager","report()",
-     * "RecoveryManager.coordsByLocalTID empty"); } } }
-     */
-
-    /**
      * A no-op class
      */
     static class TransactionRecoveryFenceSimple implements TransactionRecoveryFence {
@@ -1619,7 +1475,6 @@ public class RecoveryManager {
         public void lowerFence() {
             semaphore.release();
         }
-
     }
 }
 
@@ -1629,8 +1484,6 @@ public class RecoveryManager {
  * @version 0.01
  *
  * @author Simon Holdsworth, IBM Corporation
- *
- * @see
  */
 
 //----------------------------------------------------------------------------
@@ -1642,15 +1495,6 @@ public class RecoveryManager {
 
 class ResyncThread extends Thread {
 
-    /**
-     * ResyncThread constructor.
-     *
-     * @param
-     *
-     * @return
-     *
-     * @see
-     */
     static Logger _logger = Logger.getLogger(ResyncThread.class.getName());
 
     ResyncThread() {
@@ -1660,12 +1504,6 @@ class ResyncThread extends Thread {
 
     /**
      * Performs resync.
-     *
-     * @param
-     *
-     * @return
-     *
-     * @see
      */
     @Override
     public void run() {

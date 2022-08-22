@@ -140,7 +140,7 @@ public interface JavaEETransactionManagerDelegate {
     void setTransactionManager(JavaEETransactionManager eeTransactionManager);
 
     /**
-     * Returns <code>true</> if this delegate supports XA resources.
+     * Returns <code>true</code> if this delegate supports XA resources.
      */
     boolean supportsXAResource();
 

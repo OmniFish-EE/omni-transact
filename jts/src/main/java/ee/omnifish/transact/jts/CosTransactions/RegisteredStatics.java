@@ -43,7 +43,6 @@ import org.omg.CosTransactions.Unavailable;
  *
  * @author Simon Holdsworth, IBM Corporation
  *
- * @see
  */
 
 //---------------------------------------------------------------------------
@@ -59,12 +58,6 @@ class RegisteredStatics {
 
     /**
      * Default RegisteredStatics constructor.
-     *
-     * @param
-     *
-     * @return
-     *
-     * @see
      */
     RegisteredStatics() {
     }
@@ -78,10 +71,6 @@ class RegisteredStatics {
      *
      * @param control The transaction whose association has started.
      * @param begin Indicates if this is a begin rather than a resume.
-     *
-     * @return
-     *
-     * @see
      */
     void distributeStart(ControlImpl control, boolean begin) {
 
@@ -131,10 +120,6 @@ class RegisteredStatics {
      *
      * @param control The transaction whose association has ended.
      * @param complete Indicates that this is a commit/rollback rather than a suspend.
-     *
-     * @return
-     *
-     * @see
      */
     void distributeEnd(ControlImpl control, boolean complete) {
 
@@ -163,17 +148,13 @@ class RegisteredStatics {
 
     /**
      * Adds the given StaticResource object to the set of those informed of thread association changes.
+     *
      * <p>
      * If there is a current thread association, then the added StaticResource is called immediately so that it is aware of
      * the association.
      *
      * @param obj The StaticResource to be added.
-     *
-     * @return
-     *
-     * @see
      */
-
     void addStatic(StaticResource obj) {
 
         registered.addElement(obj);
@@ -201,12 +182,8 @@ class RegisteredStatics {
      * @param obj The StaticResource to be removed.
      *
      * @return Indicates success of the operation.
-     *
-     * @see
      */
     boolean removeStatic(StaticResource obj) {
-
-        boolean result = registered.removeElement(obj);
-        return result;
+        return registered.removeElement(obj);
     }
 }

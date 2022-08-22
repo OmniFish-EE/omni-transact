@@ -37,7 +37,6 @@ package ee.omnifish.transact.jts.CosTransactions;
  *
  * @author Simon Holdsworth, IBM Corporation
  *
- * @see
  */
 //----------------------------------------------------------------------------
 // CHANGE HISTORY
@@ -114,9 +113,6 @@ class LogException extends Exception {
      * @param err The error code.
      * @param point The throw point.
      *
-     * @return
-     *
-     * @see
      */
     LogException(Object dummy /* COMMENT(Ram J) - used to be trace object */, int err, int point) {
         super(getMessageFromErrorCode(null, err, point));
@@ -132,9 +128,6 @@ class LogException extends Exception {
      * @param point The throw point.
      * @param extra Extra information.
      *
-     * @return
-     *
-     * @see
      */
     LogException(Object dummy /* COMMENT(Ram J) - used to be trace object */, int err, int point, Object extra) {
         super(getMessageFromErrorCode(null, err, point));

@@ -97,7 +97,7 @@ public class BaseCache implements Cache {
      *
      * @param maxEntries maximum number of entries expected in the cache
      * @param props opaque list of properties for a given cache implementation
-     * @throws a generic Exception if the initialization failed
+     * @throws Exception a generic Exception if the initialization failed
      */
     @Override
     public void init(int maxEntries, Properties props) throws Exception {
@@ -110,7 +110,6 @@ public class BaseCache implements Cache {
      * @param maxEntries maximum number of entries expected in the cache
      * @param loadFactor the load factor
      * @param props opaque list of properties for a given cache implementation
-     * @throws a generic Exception if the initialization failed
      */
     @Override
     public void init(int maxEntries, float loadFactor, Properties props) {
@@ -173,7 +172,6 @@ public class BaseCache implements Cache {
     /**
      * Returns a hash code for non-null Object x.
      *
-     * @See also <code>HashMap</code>
      */
     protected int hash(Object x) {
         int h = x.hashCode();
@@ -249,7 +247,7 @@ public class BaseCache implements Cache {
      * @param key <code>Object</code> that is not found
      * @param hashCode <code>int</code> its hashCode
      *
-     * @returns the Object value associated with the item Cache bucket is already synchronized by the caller
+     * @return the Object value associated with the item Cache bucket is already synchronized by the caller
      */
     protected Object loadValue(Object key, int hashCode) {
         return null;
@@ -302,7 +300,7 @@ public class BaseCache implements Cache {
      * get the item stored at the key.
      *
      * @param key lookup key
-     * @returns the item stored at the key; null if not found.
+     * @return the item stored at the key; null if not found.
      */
     @Override
     public Object get(Object key) {
@@ -315,7 +313,7 @@ public class BaseCache implements Cache {
      * get the item stored at the given pre-computed hash code and the key.
      *
      * @param key lookup key
-     * @returns the item stored at the key; null if not found.
+     * @return the item stored at the key; null if not found.
      */
     public Object get(int hashCode, Object key) {
 
@@ -352,7 +350,7 @@ public class BaseCache implements Cache {
      * check if the cache contains the item at the key
      *
      * @param key lookup key
-     * @returns true if there is an item stored at the key; false if not.
+     * @return true if there is an item stored at the key; false if not.
      */
     @Override
     public boolean contains(Object key) {
@@ -363,7 +361,7 @@ public class BaseCache implements Cache {
      * get all the items stored at the key.
      *
      * @param key lookup key
-     * @returns an Iterator over the items with the given key.
+     * @return an Iterator over the items with the given key.
      */
     @Override
     public Iterator getAll(Object key) {
@@ -389,7 +387,7 @@ public class BaseCache implements Cache {
     /**
      * get an Iterator for the keys stored in the cache
      *
-     * @returns an Iterator
+     * @return an Iterator
      */
     @Override
     public Iterator keys() {
@@ -409,7 +407,7 @@ public class BaseCache implements Cache {
     /**
      * get an Enumeration for the keys stored in the cache
      *
-     * @returns an Enumeration XXX: should use Iterator which is based on Collections
+     * @return an Enumeration XXX: should use Iterator which is based on Collections
      */
     @Override
     public Enumeration elements() {
@@ -429,7 +427,7 @@ public class BaseCache implements Cache {
     /**
      * get an Iterator for the values stored in the cache
      *
-     * @returns an Iterator
+     * @return an Iterator
      */
     @Override
     public Iterator values() {
@@ -450,8 +448,8 @@ public class BaseCache implements Cache {
      * /** cache the given value at the specified key and return previous value
      *
      * @param key lookup key
-     * @param object item value to be stored
-     * @returns the previous item stored at the key; null if not found.
+     * @param value item value to be stored
+     * @return the previous item stored at the key; null if not found.
      */
     @Override
     public Object put(Object key, Object value) {
@@ -464,9 +462,9 @@ public class BaseCache implements Cache {
      * cache the given value at the specified key and return previous value
      *
      * @param key lookup key
-     * @param object item value to be stored
+     * @param value item value to be stored
      * @param size in bytes of the value being cached
-     * @returns the previous item stored at the key; null if not found.
+     * @return the previous item stored at the key; null if not found.
      */
     @Override
     public Object put(Object key, Object value, int size) {
@@ -479,7 +477,7 @@ public class BaseCache implements Cache {
      * add the given value to the cache at the specified key
      *
      * @param key lookup key
-     * @param object item value to be stored
+     * @param value item value to be stored
      */
     @Override
     public void add(Object key, Object value) {
@@ -492,7 +490,7 @@ public class BaseCache implements Cache {
      * add the given value with specified size to the cache at specified key
      *
      * @param key lookup key
-     * @param object item value to be stored
+     * @param value item value to be stored
      * @param size in bytes of the value being added
      *
      * This function is suitable for multi-valued keys.
@@ -509,10 +507,10 @@ public class BaseCache implements Cache {
      *
      * @param hashCode previously computed hashCode for the key
      * @param key lookup key
-     * @param object item value to be stored
+     * @param value item value to be stored
      * @param size in bytes of the value being cached
      * @param addValue treate this operation to add (default is to replace)
-     * @returns the previous item stored at the key; null if not found.
+     * @return the previous item stored at the key; null if not found.
      *
      * Note: This can be used just to refresh the cached item as well, altho it may call trimCache() if the cache reached
      * its threshold -- which is is probably not very intuitive.
@@ -568,7 +566,7 @@ public class BaseCache implements Cache {
      * remove the item stored at the key.
      *
      * @param key lookup key
-     * @returns the item stored at the key; null if not found.
+     * @return the item stored at the key; null if not found.
      */
     @Override
     public Object remove(Object key) {
@@ -587,7 +585,7 @@ public class BaseCache implements Cache {
      *
      * @param hashCode a precomputed hashCode
      * @param key lookup key
-     * @returns the item stored at the key; null if not found.
+     * @return the item stored at the key; null if not found.
      */
     public Object remove(int hashCode, Object key) {
         Object retVal = null;
@@ -603,7 +601,7 @@ public class BaseCache implements Cache {
      *
      * @param key lookup key
      * @param value to match (for a multi-valued keys)
-     * @returns the item stored at the key; null if not found.
+     * @return the item stored at the key; null if not found.
      */
     @Override
     public Object remove(Object key, Object value) {
@@ -623,7 +621,7 @@ public class BaseCache implements Cache {
      * @param hashCode a precomputed hashCode
      * @param key lookup key
      * @param value of the item to be matched
-     * @returns the item stored at the key; null if not found.
+     * @return the item stored at the key; null if not found.
      */
     protected CacheItem _remove(int hashCode, Object key, Object value) {
         int index = getIndex(hashCode);
@@ -665,7 +663,7 @@ public class BaseCache implements Cache {
     /**
      * remove the item stored at the key.
      *
-     * @param item CacheItem to be removed
+     * @param ritem CacheItem to be removed
      * @return the item stored at the key; null if not found.
      */
     protected CacheItem _removeItem(CacheItem ritem) {
@@ -753,8 +751,8 @@ public class BaseCache implements Cache {
     /**
      * wait for a refresh on the object associated with the key
      *
-     * @param key lookup key
-     * @returns true on successful notification, or false if there is no thread refreshing this entry.
+     * @param index lookup key
+     * @return true on successful notification, or false if there is no thread refreshing this entry.
      */
     @Override
     public boolean waitRefresh(int index) {
@@ -777,7 +775,7 @@ public class BaseCache implements Cache {
     /**
      * notify threads waiting for a refresh on the object associated with the key
      *
-     * @param key lookup key
+     * @param index lookup key
      */
     @Override
     public void notifyRefresh(int index) {
@@ -791,7 +789,7 @@ public class BaseCache implements Cache {
     /**
      * clear all the entries from the cache.
      *
-     * @returns the number of entries cleared from the cache
+     * @return the number of entries cleared from the cache
      */
     @Override
     public int clear() {
@@ -844,7 +842,7 @@ public class BaseCache implements Cache {
     /**
      * is this cache empty?
      *
-     * @returns true if the cache is empty; false otherwise.
+     * @return true if the cache is empty; false otherwise.
      */
     @Override
     public boolean isEmpty() {

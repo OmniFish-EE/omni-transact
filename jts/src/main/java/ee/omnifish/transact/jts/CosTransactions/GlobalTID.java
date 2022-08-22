@@ -46,7 +46,6 @@ import org.omg.CosTransactions.otid_t;
  *
  * @author Simon Holdsworth, IBM Corporation
  *
- * @see
  */
 //----------------------------------------------------------------------------
 // CHANGE HISTORY
@@ -55,11 +54,11 @@ import org.omg.CosTransactions.otid_t;
 //   0.01  SAJH   Initial implementation.
 //-----------------------------------------------------------------------------
 public class GlobalTID extends Object {
-    otid_t realTID = null;
+    otid_t realTID;
 
-    private String stringForm = null;
-    private int hashCode = 0;
-    private boolean hashed = false;
+    private String stringForm;
+    private int hashCode;
+    private boolean hashed;
 
     /*
      * Logger to log transaction messages
@@ -77,9 +76,6 @@ public class GlobalTID extends Object {
      *
      * @param otherTID The other global identifier.
      *
-     * @return
-     *
-     * @see
      */
     public GlobalTID(otid_t otherTID) {
         realTID = otherTID;
@@ -92,9 +88,6 @@ public class GlobalTID extends Object {
      * @param bqual_length The branch qualifier.
      * @param data The identifier data.
      *
-     * @return
-     *
-     * @see
      */
     GlobalTID(int formatID, int bqual_length, byte[] tid) {
         realTID = new otid_t(formatID, bqual_length, tid);
@@ -121,10 +114,6 @@ public class GlobalTID extends Object {
      * Creates a GlobalTID from the given stream.
      *
      * @param dataIn The DataInputStream for the operation.
-     *
-     * @return
-     *
-     * @see
      */
     GlobalTID(DataInputStream dataIn) {
         try {
@@ -143,10 +132,6 @@ public class GlobalTID extends Object {
      * Creates a global identifier from a byte array.
      *
      * @param The array of bytes.
-     *
-     * @return
-     *
-     * @see
      */
     GlobalTID(byte[] bytes) {
         int formatID = (bytes[0] & 255) + ((bytes[1] & 255) << 8) + ((bytes[2] & 255) << 16) + ((bytes[3] & 255) << 24);
@@ -160,11 +145,7 @@ public class GlobalTID extends Object {
     /**
      * Creates a new global identifier which is a copy of the target object.
      *
-     * @param
-     *
      * @return The copy.
-     *
-     * @see
      */
     final GlobalTID copy() {
         GlobalTID result = new GlobalTID(realTID);
@@ -178,11 +159,7 @@ public class GlobalTID extends Object {
     /**
      * Determines whether the global identifier represents the null transaction identifier.
      *
-     * @param
-     *
      * @return Indicates whether the global identifier is null.
-     *
-     * @see
      */
     final boolean isNullTID() {
         return realTID.formatID == -1;
@@ -195,8 +172,6 @@ public class GlobalTID extends Object {
      * @param other The other global identifier to compare.
      *
      * @return Indicates the two global identifiers are equal.
-     *
-     * @see
      */
     @Override
     public final boolean equals(Object other) {
@@ -257,16 +232,10 @@ public class GlobalTID extends Object {
     /**
      * Returns a hash value for the global identifier.
      *
-     * @param
-     *
      * @return The hash value.
-     *
-     * @see
      */
-
     @Override
     public final int hashCode() {
-
         // If the hash code has already been calculated, then return the value.
 
         if (hashed)
@@ -377,13 +346,8 @@ public class GlobalTID extends Object {
     /**
      * Converts the global identifier to a string.
      *
-     * @param
-     *
      * @return The string representation of the identifier.
-     *
-     * @see
      */
-
     @Override
     public final String toString() {
 
@@ -437,11 +401,7 @@ public class GlobalTID extends Object {
     /**
      * Converts the global identifier to a byte array.
      *
-     * @param
-     *
      * @return The byte array representation of the identifier.
-     *
-     * @see
      */
     final byte[] toBytes() {
         if (realTID.formatID == -1)
@@ -475,10 +435,6 @@ public class GlobalTID extends Object {
      * Writes the contents of the global identifier to the given stream.
      *
      * @param dataOut The DataOutputStream for the operation.
-     *
-     * @return
-     *
-     * @see
      */
     final void write(DataOutputStream dataOut) {
         try {

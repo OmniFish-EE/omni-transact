@@ -64,6 +64,7 @@ import org.omg.CosTransactions.TransIdentity;
 import org.omg.CosTransactions.Unavailable;
 import org.omg.CosTransactions.Vote;
 import org.omg.CosTransactions.otid_t;
+
 import ee.omnifish.transact.jts.codegen.otsidl.CoordinatorResource;
 import ee.omnifish.transact.jts.codegen.otsidl.JCoordinator;
 import ee.omnifish.transact.jts.codegen.otsidl.JCoordinatorHelper;
@@ -82,7 +83,6 @@ import ee.omnifish.transact.jts.utils.LogFormatter;
  *
  * @author Simon Holdsworth, IBM Corporation
  *
- * @see
  */
 
 //----------------------------------------------------------------------------
@@ -137,12 +137,6 @@ public class TopCoordinator extends CoordinatorImpl {
 
     /**
      * Default TopCoordinator constructor.
-     *
-     * @param
-     *
-     * @return
-     *
-     * @see
      */
     TopCoordinator() {
         // No persistent reference is created in this case.
@@ -155,11 +149,7 @@ public class TopCoordinator extends CoordinatorImpl {
      *
      * @param timeOut The time-out value for the transaction.
      *
-     * @return
-     *
      * @exception LogicErrorException An internal logic error occurred.
-     *
-     * @see
      */
     TopCoordinator(int timeOut) throws LogicErrorException {
 
@@ -237,11 +227,7 @@ public class TopCoordinator extends CoordinatorImpl {
      * @param superior The superior Coordinator.
      * @param temporary The temporary indicator.
      *
-     * @return
-     *
      * @exception LogicErrorException An internal logic error occurred.
-     *
-     * @see
      */
     TopCoordinator(int timeOut, GlobalTID globalTID, Coordinator superior, boolean temporary) throws LogicErrorException {
         // If this execution of the process is recoverable, then create a
@@ -308,12 +294,6 @@ public class TopCoordinator extends CoordinatorImpl {
 
     /**
      * Cleans up the objects state.
-     *
-     * @param
-     *
-     * @return
-     *
-     * @see
      */
     @Override
     synchronized public void doFinalize() {
@@ -383,9 +363,6 @@ public class TopCoordinator extends CoordinatorImpl {
      * the CoordinatorLog object.
      *
      * @param log The CoordinatorLog object which contains the Coordinators state.
-     * @return
-     *
-     * @see
      */
     synchronized void reconstruct(CoordinatorLog log) {
 
@@ -458,9 +435,6 @@ public class TopCoordinator extends CoordinatorImpl {
      * @param log The CoordinatorLog object which contains the Coordinators state.
      *
      * @param logPath Location of the log file
-     * @return
-     *
-     * @see
      */
     synchronized void delegated_reconstruct(CoordinatorLog log, String logPath) {
 
@@ -538,8 +512,6 @@ public class TopCoordinator extends CoordinatorImpl {
      * @param isRoot A 1-element array which will be filled in with the root flag.
      *
      * @return The state of the recovered transaction.
-     *
-     * @see
      */
     synchronized Status recover(boolean[/* 1 */] isRoot) {
 
@@ -742,11 +714,7 @@ public class TopCoordinator extends CoordinatorImpl {
     /**
      * Returns the local status of the target transaction.
      *
-     * @param
-     *
      * @return The status of the transaction.
-     *
-     * @see
      */
     @Override
     public Status get_status() {
@@ -823,11 +791,7 @@ public class TopCoordinator extends CoordinatorImpl {
      * Gets the local state of the transaction. For a top-level transaction this operation is equivalent to the get_status
      * method. This operation references no instance variables and so can be implemented locally in the proxy class.
      *
-     * @param
-     *
      * @return The status of the transaction.
-     *
-     * @see
      */
     @Override
     public Status get_parent_status() {
@@ -839,11 +803,7 @@ public class TopCoordinator extends CoordinatorImpl {
      * Gets the local state of the transaction. For a top-level transaction this operation is equivalent to the get_status
      * method. This operation references no instance variables and so can be implemented locally in a proxy class.
      *
-     * @param
-     *
      * @return The status of the transaction.
-     *
-     * @see
      */
     @Override
     public Status get_top_level_status() {
@@ -863,11 +823,6 @@ public class TopCoordinator extends CoordinatorImpl {
      * @return Indicates equality of the transactions the objects represent.
      *
      * @exception SystemException The other Coordinator could not be reached.
-     *
-     * @see
-     */
-    /**
-     * removed synchronization at method level since only tranState requires locking
      */
     @Override
     public boolean is_same_transaction(Coordinator other) throws SystemException {
@@ -900,8 +855,6 @@ public class TopCoordinator extends CoordinatorImpl {
      * @return Indicates the relationship.
      *
      * @exception SystemException The other Coordinator could not be reached.
-     *
-     * @see
      */
     @Override
     public boolean is_related_transaction(Coordinator other) throws SystemException {
@@ -923,14 +876,9 @@ public class TopCoordinator extends CoordinatorImpl {
      * same transaction family). For a root transaction, this method returns TRUE. Otherwise it returns FALSE.
      *
      * @return Indicates if this is the root TopCoordinator.
-     *
-     * @see
      */
     public boolean is_root_transaction() {
-
-        boolean result = root;
-
-        return result;
+        return root;
     }
 
     /**
@@ -944,12 +892,9 @@ public class TopCoordinator extends CoordinatorImpl {
      * @return Indicates the relationship.
      *
      * @exception SystemException The other Coordinator could not be reached.
-     *
-     * @see
      */
     @Override
     public boolean is_ancestor_transaction(Coordinator other) throws SystemException {
-
         boolean result = false;
         if (tranState != null) {
             result = other.is_descendant_transaction(this.object());
@@ -972,8 +917,6 @@ public class TopCoordinator extends CoordinatorImpl {
      * @return Indicates the relationship.
      *
      * @exception SystemException The other Coordinator could not be reached.
-     *
-     * @see
      */
     @Override
     public boolean is_descendant_transaction(Coordinator other) throws SystemException {
@@ -991,36 +934,25 @@ public class TopCoordinator extends CoordinatorImpl {
 
     /**
      * Determines whether the target TopCoordinator represents a top-level (non-nested) transaction.
+     *
      * <p>
      * For a top-level transaction returns TRUE.
+     *
      * <p>
      * This operation references no instance variables and so can be implemented locally in a proxy class.
      *
-     * @param
-     *
      * @return Indicates this is a top-level transaction.
-     *
-     * @see
      */
     @Override
     public boolean is_top_level_transaction() {
-
-        boolean result = true;
-        return result;
+        return true;
     }
 
     /**
      * Returns a hash value based on the transaction associated with the target object. This operation references only the
      * global TID, and so can be implemented locally in a proxy class.
      *
-     * @param
-     *
      * @return The hash value for the transaction.
-     *
-     * @see
-     */
-    /**
-     * removed synchronization at method level since only tranState requires locking
      */
     @Override
     public int hash_transaction() {
@@ -1039,15 +971,10 @@ public class TopCoordinator extends CoordinatorImpl {
      * Returns a hash value based on the top-level ancestor of the transaction associated with the target object. This
      * operation references only the global TID, and so can be implemented locally in a proxy class.
      *
-     * @param
-     *
      * @return The hash value for the transaction.
-     *
-     * @see
      */
     @Override
     synchronized public int hash_top_level_tran() {
-
         int result = hash;
 
         if (tranState == null) {
@@ -1071,8 +998,6 @@ public class TopCoordinator extends CoordinatorImpl {
      * @exception Inactive The Coordinator is completing the transaction and cannot accept this registration.
      * @exception TRANSACTION_ROLLEDBACK The transaction which the Coordinator represents has already been rolled back, or
      * has been marked rollback-only.
-     *
-     * @see
      */
     @Override
     synchronized public RecoveryCoordinator register_resource(Resource res) throws Inactive, TRANSACTION_ROLLEDBACK {
@@ -1223,11 +1148,7 @@ public class TopCoordinator extends CoordinatorImpl {
      *
      * @param sares The SubtransactionAwareResource to be registered.
      *
-     * @return
-     *
      * @exception NotSubtransaction The Coordinator represents a top-level transaction and cannot accept the registration.
-     *
-     * @see
      */
     @Override
     synchronized public void register_subtran_aware(SubtransactionAwareResource sares) throws NotSubtransaction {
@@ -1238,37 +1159,23 @@ public class TopCoordinator extends CoordinatorImpl {
     /**
      * Ensures that the transaction represented by the target TopCoordinator cannot be committed.
      *
-     * @param
-     *
-     * @return
-     *
      * @exception Inactive The Coordinator is already completing the transaction.
-     * @see
      */
     @Override
     public void rollback_only() throws Inactive {
-
         if (tranState == null || tranState.state != TransactionState.STATE_ACTIVE) {
-            Inactive exc = new Inactive();
-            throw exc;
-        } else {
-            // Set the rollback-only flag.
-            rollbackOnly = true;
+            throw new Inactive();
         }
+
+        // Set the rollback-only flag.
+        rollbackOnly = true;
     }
 
     /**
      * Returns a printable string that represents the TopCoordinator. This operation references only the global TID, and so
      * can be implemented locally in a proxy class.
      *
-     * @param
-     *
      * @return The transaction name.
-     *
-     * @see
-     */
-    /**
-     * removed synchronization at method level since only tranState requires locking
      */
     @Override
     public String get_transaction_name() {
@@ -1289,13 +1196,9 @@ public class TopCoordinator extends CoordinatorImpl {
     /**
      * Creates a subtransaction and returns a Control object that represents the child transaction.
      *
-     * @param
-     *
      * @return The Control object for the new child transaction.
      *
      * @exception Inactive The Coordinator is completing the subtransaction and cannot create a new child.
-     *
-     * @see
      */
     @Override
     synchronized public Control create_subtransaction() throws Inactive {
@@ -1360,23 +1263,19 @@ public class TopCoordinator extends CoordinatorImpl {
 
     /**
      * Returns a global identifier that represents the TopCoordinator's transaction.
+     *
      * <p>
      * This operation references only the global identifier, and so can be implemented locally in a proxy class.
+     *
      * <p>
      * This method is currently not synchronized because that causes a deadlock in resync. I don't think this is a problem
      * as the global identifier is allocated in the constructor and then never changes.
      *
-     * @param
-     *
      * @return The global transaction identifier.
-     *
-     * @see
      */
     @Override
     public otid_t getGlobalTID() {
-
-        otid_t result = superInfo.globalTID.realTID;
-        return result;
+        return superInfo.globalTID.realTID;
     }
 
     public GlobalTID getGlobalTid() {
@@ -1387,6 +1286,7 @@ public class TopCoordinator extends CoordinatorImpl {
         if (participants == null) {
             return 0;
         }
+
         return participants.numRegistered();
     }
 
@@ -1394,17 +1294,11 @@ public class TopCoordinator extends CoordinatorImpl {
      * Returns the internal identifier for the transaction. This method is currently not synchronized because that causes a
      * deadlock in resync.
      *
-     * @param
-     *
      * @return The local identifier.
-     *
-     * @see
      */
     @Override
     public long getLocalTID() {
-
-        long result = superInfo.localTID.longValue();
-        return result;
+        return superInfo.localTID.longValue();
     }
 
     /**
@@ -1418,8 +1312,6 @@ public class TopCoordinator extends CoordinatorImpl {
      * @return The parent coordinator if any.
      *
      * @exception SystemException An error occurred. The minor code indicates the reason for the exception.
-     *
-     * @see
      */
     @Override
     synchronized CoordinatorImpl replyAction(int[/* 1 */] action) throws SystemException {
@@ -1481,11 +1373,7 @@ public class TopCoordinator extends CoordinatorImpl {
     /**
      * Marks the TopCoordinator as permanent.
      *
-     * @param
-     *
      * @return The local transaction identifier.
-     *
-     * @see
      */
     @Override
     synchronized Long setPermanent() {
@@ -1498,59 +1386,37 @@ public class TopCoordinator extends CoordinatorImpl {
     /**
      * Checks whether the TopCoordinator is marked rollback-only.
      *
-     * @param
-     *
      * @return Indicates whether the transaction is rollback-only.
-     *
-     * @see
      */
     @Override
     synchronized public boolean isRollbackOnly() {
-
-        boolean result = rollbackOnly;
-        return result;
+        return rollbackOnly;
     }
 
     /**
      * Checks whether the TopCoordinator is active.
      *
-     * @param
-     *
      * @return Indicates the transaction is active.
-     *
-     * @see
      */
     @Override
     synchronized boolean isActive() {
-
-        boolean result = (tranState.state == TransactionState.STATE_ACTIVE);
-        return result;
+        return tranState.state == TransactionState.STATE_ACTIVE;
     }
 
     /**
      * Checks whether the TopCoordinator has registered with its superior.
      *
-     * @param
-     *
      * @return Indicates the registration status.
-     *
-     * @see
      */
     @Override
     synchronized boolean hasRegistered() {
-
-        boolean result = registered || registeredSync;
-        return result;
+        return registered || registeredSync;
     }
 
     /**
      * Returns the sequence of ancestors of the transaction.
      *
-     * @param
-     *
      * @return The sequence of ancestors.
-     *
-     * @see
      */
     @Override
     synchronized public TransIdentity[] getAncestors() {
@@ -1568,7 +1434,6 @@ public class TopCoordinator extends CoordinatorImpl {
      */
     @Override
     synchronized boolean addChild(CoordinatorImpl child) {
-
         boolean result;
 
         // Make sure the NestingInfo instance variables is set up
@@ -1590,8 +1455,6 @@ public class TopCoordinator extends CoordinatorImpl {
      * @param child The child Coordinator.
      *
      * @return Indicates success of the operation.
-     *
-     * @see
      */
     @Override
     synchronized boolean removeChild(CoordinatorImpl child) {
@@ -1633,7 +1496,6 @@ public class TopCoordinator extends CoordinatorImpl {
      * have already heuristically committed.
      * @exception HeuristicHazard Indicates that a participant voted to roll the transaction back, but one or more others
      * may have already heuristically committed.
-     * @see
      */
     @Override
     Vote prepare() throws INVALID_TRANSACTION, HeuristicMixed, HeuristicHazard {
@@ -1832,17 +1694,11 @@ public class TopCoordinator extends CoordinatorImpl {
      * If any Resources raise Heuristic exceptions, the information is recorded, and the Resources are directed to forget
      * the transaction before the Coordinator returns a heuristic exception to its caller.
      *
-     * @param
-     *
-     * @return
-     *
      * @exception HeuristicMixed A Resource has taken an heuristic decision which has resulted in part of the transaction
      * being rolled back.
      * @exception HeuristicHazard Indicates that heuristic decisions may have been taken which have resulted in part of the
      * transaction being rolled back.
      * @exception NotPrepared The transaction has not been prepared.
-     *
-     * @see
      */
     @Override
     void commit() throws HeuristicMixed, HeuristicHazard, NotPrepared {
@@ -1981,13 +1837,10 @@ public class TopCoordinator extends CoordinatorImpl {
      *
      * @param force Indicates that the transaction must rollback regardless.
      *
-     * @return
-     *
      * @exception HeuristicMixed A Resource has taken an heuristic decision which has resulted in part of the transaction
      * being committed.
      * @exception HeuristicHazard Indicates that heuristic decisions may have been taken which have resulted in part of the
      * transaction being rolled back.
-     * @see
      */
     @Override
     void rollback(boolean force) throws HeuristicMixed, HeuristicHazard {
@@ -2148,14 +2001,10 @@ public class TopCoordinator extends CoordinatorImpl {
      *
      * @param sync The Synchronization object to be registered.
      *
-     * @return
-     *
      * @exception Inactive The Coordinator is in the process of completing the transaction and cannot accept this
      * registration.
      * @exception SynchronizationUnavailable The transaction service cannot support synchronization.
      * @exception SystemException The operation failed.
-     *
-     * @see
      */
     @Override
     synchronized public void register_synchronization(Synchronization sync) throws SystemException, Inactive, SynchronizationUnavailable {
@@ -2258,13 +2107,7 @@ public class TopCoordinator extends CoordinatorImpl {
      * objects registered with it that the transaction is about to complete and waits for all of the replies before this
      * operation completes.
      *
-     * @param
-     *
-     * @return
-     *
      * @exception INVALID_TRANSACTION The transaction is not in a state to commit, due to outstanding work.
-     *
-     * @see
      */
     synchronized void beforeCompletion() throws INVALID_TRANSACTION {
 
@@ -2302,10 +2145,6 @@ public class TopCoordinator extends CoordinatorImpl {
      * registered with it that the transaction has completed. It does not need to wait for all responses before returning.
      *
      * @param status Indicates whether the transaction committed or aborted.
-     *
-     * @return
-     *
-     * @see
      */
     synchronized void afterCompletion(Status status) {
 
@@ -2367,9 +2206,6 @@ public class TopCoordinator extends CoordinatorImpl {
      * aborts so that they can cope with asynchronous aborts.
      *
      * @param term The object normally responsible for terminating the Coordinator.
-     * @return
-     *
-     * @see
      */
     @Override
     synchronized void setTerminator(CompletionHandler term) {
@@ -2380,17 +2216,11 @@ public class TopCoordinator extends CoordinatorImpl {
      * Gets the parent coordinator of the transaction. As this is a top level coordinator, a parent does not exist so NULL
      * is returned.
      *
-     * @param
-     *
      * @return The parent Coordinator, null.
-     *
-     * @see
      */
     @Override
     Coordinator getParent() {
-
-        Coordinator result = null;
-        return result;
+        return null;
     }
 
     /**
@@ -2404,30 +2234,8 @@ public class TopCoordinator extends CoordinatorImpl {
      */
     @Override
     Coordinator getSuperior() {
-
-        Coordinator result = superInfo.superior;
-        return result;
+        return superInfo.superior;
     }
-
-    /**
-     * Returns the Resource objects and their states.
-     *
-     * @param resources The object which will contain the Resources
-     * @param states The object which will contain the states.
-     *
-     * @return
-     *
-     * @see
-     */
-    /*
-     * COMMENT(Ram J) only Admin package needs this. public void getResources(ResourceSequenceHolder resources,
-     * ResourceStatusSequenceHolder states) { if (participants != null) { participants.getResources(resources,states);
-     *
-     * // Validate each of the Resource objects in the list // before returning it.
-     *
-     * for (int i = 0; i < resources.value.length; i++) { if (resources.value[i]._non_existent()) { resources.value[i] =
-     * null; } } } else { resources.value = new Resource[0]; states.value = new ResourceStatus[0]; } }
-     */
 
     /**
      * Gets the object normally responsible for terminating this Coordinator.
@@ -2440,9 +2248,7 @@ public class TopCoordinator extends CoordinatorImpl {
      */
     @Override
     CompletionHandler getTerminator() {
-
-        CompletionHandler result = terminator;
-        return result;
+        return terminator;
     }
 
     /**
@@ -2455,10 +2261,6 @@ public class TopCoordinator extends CoordinatorImpl {
      * The Resource object parameter should only refer to a local object.
      *
      * @param res The Resource to be directly registered.
-     *
-     * @return
-     *
-     * @see
      */
     void directRegisterResource(Resource res) {
 
@@ -2488,14 +2290,10 @@ public class TopCoordinator extends CoordinatorImpl {
      * Creates a PropagationContext which contains the information which would normally be passed implicitly via the
      * CosTSPropagation interfaces.
      *
-     * @param
-     *
      * @return The transaction context.
      *
-     * @exception Inactive The Coordinator is in the process of completing the transaction and cannot return the
+     * @exception Unavailable The Coordinator is in the process of completing the transaction and cannot return the
      * information.
-     *
-     * @see
      */
     @Override
     synchronized public PropagationContext get_txcontext() throws Unavailable {
@@ -2557,9 +2355,6 @@ public class TopCoordinator extends CoordinatorImpl {
      * Cleans up an empty Coordinator.
      *
      * @param parent The parent Coordinator (always null for a TopCoordinator).
-     * @return
-     *
-     * @see
      */
     @Override
     void cleanUpEmpty(CoordinatorImpl parent) {
@@ -2587,9 +2382,7 @@ public class TopCoordinator extends CoordinatorImpl {
     /**
      * commitOnePhase
      *
-     * @param none
      * @return boolean indicating success or whether two phase commit should be tried.
-     * @see
      */
     @Override
     boolean commitOnePhase() throws HeuristicMixed, HeuristicHazard {
@@ -2832,11 +2625,7 @@ public class TopCoordinator extends CoordinatorImpl {
      * <p>
      * This very basic method is used by the trace facility and should not call any method which is traced.
      *
-     * @param
-     *
      * @return The hash code for the object.
-     *
-     * @see
      */
     @Override
     public int hashCode() {
@@ -2853,8 +2642,6 @@ public class TopCoordinator extends CoordinatorImpl {
      * @param other The other object.
      *
      * @return Indicates equality.
-     *
-     * @see
      */
     @Override
     public boolean equals(java.lang.Object other) {

@@ -34,7 +34,6 @@ import javax.sql.DataSource;
  *
  * @author Sun Micro Systems, Inc
  */
-
 class LogDBHelper {
 
     private static Logger _logger = Logger.getLogger(LogDBHelper.class.getName());
@@ -74,7 +73,7 @@ class LogDBHelper {
         try {
             InitialContext ctx = new InitialContext();
             ds = (DataSource) ctx.lookup(resName);
-            Class cls = ds.getClass();
+            Class<?> cls = ds.getClass();
             getNonTxConnectionMethod = cls.getMethod("getNonTxConnection", null);
 
             createTable();
@@ -83,6 +82,7 @@ class LogDBHelper {
             _logger.log(Level.SEVERE, "jts.unconfigured_db_log_resource", resName);
             _logger.log(Level.SEVERE, "", t);
         }
+
         if (_logger.isLoggable(Level.FINE)) {
             _logger.fine("LogDBHelper.resName: " + resName);
             _logger.fine("LogDBHelper.ds: " + ds);

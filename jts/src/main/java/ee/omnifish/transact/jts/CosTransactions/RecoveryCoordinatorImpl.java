@@ -44,6 +44,7 @@ import org.omg.CosTransactions.RecoveryCoordinatorPOA;
 import org.omg.CosTransactions.Resource;
 import org.omg.CosTransactions.Status;
 import org.omg.PortableServer.POA;
+
 import ee.omnifish.transact.jts.utils.LogFormatter;
 
 /**
@@ -56,7 +57,6 @@ import ee.omnifish.transact.jts.utils.LogFormatter;
  *
  * @author Simon Holdsworth, IBM Corporation
  *
- * @see
  */
 
 //----------------------------------------------------------------------------
@@ -94,23 +94,10 @@ class RecoveryCoordinatorImpl extends RecoveryCoordinatorPOA {
      *
      * @param globalTID The global transaction identifier.
      * @param sequence An internal sequence number to differentiate objects.
-     *
-     * @return
-     *
-     * @see
      */
     RecoveryCoordinatorImpl(GlobalTID globalTID, int sequence) {
-
         this.globalTID = globalTID;
         internalSeq = sequence;
-
-        // MODIFICATION (Ram Jeyaraman) comment out the code
-        // below, as it does nothing.
-        /*
-         * byte[] tidBytes = globalTID.toBytes(); byte[] id = new byte[tidBytes.length + 4]; System.arraycopy(tidBytes, 0, id,
-         * 4, tidBytes.length); id[0] = (byte) internalSeq; id[1] = (byte)(internalSeq >> 8); id[2] = (byte)(internalSeq >> 16);
-         * id[3] = (byte)(internalSeq >> 24);
-         */
     }
 
     /**
@@ -124,9 +111,7 @@ class RecoveryCoordinatorImpl extends RecoveryCoordinatorPOA {
      *
      * @return The state of the transaction.
      *
-     * @exception NotPrepared The transaction for which the RecoveryCoordinator was created has not prepared.
-     *
-     * @see
+     * @throws NotPrepared The transaction for which the RecoveryCoordinator was created has not prepared.
      */
     @Override
     public Status replay_completion(Resource res) throws NotPrepared {
@@ -234,7 +219,6 @@ class RecoveryCoordinatorImpl extends RecoveryCoordinatorPOA {
 
     // same as replay_completion(res) : added for delegated recovery support
     public Status replay_completion(Resource res, String logPath) throws NotPrepared {
-
         if (_logger.isLoggable(Level.FINE)) {
             _logger.logp(Level.FINE, "RecoveryCoordinatorImpl", "replay_completion()", "replay_completion on Resource:" + res);
         }
@@ -383,10 +367,6 @@ class RecoveryCoordinatorImpl extends RecoveryCoordinatorPOA {
      * The rest of the key is the global transaction identifier.
      *
      * @param key The key for the object.
-     *
-     * @return
-     *
-     * @see
      */
     RecoveryCoordinatorImpl(byte[] key) {
 
@@ -412,14 +392,9 @@ class RecoveryCoordinatorImpl extends RecoveryCoordinatorPOA {
     /**
      * Returns the CORBA Object which represents this object.
      *
-     * @param
-     *
      * @return The CORBA object.
-     *
-     * @see
      */
     synchronized final RecoveryCoordinator object() {
-
         if (thisRef == null) {
             if (poa == null) {
                 poa = Configuration.getPOA("RecoveryCoordinator"/* #Frozen */);
@@ -465,12 +440,6 @@ class RecoveryCoordinatorImpl extends RecoveryCoordinatorPOA {
 
     /**
      * Destroys the RecoveryCoordinatorImpl object.
-     *
-     * @param
-     *
-     * @return
-     *
-     * @see
      */
     synchronized final void destroy() {
 
@@ -517,21 +486,16 @@ class RecoveryCoordinatorImpl extends RecoveryCoordinatorPOA {
  *
  * @author Simon Holdsworth, IBM Corporation
  *
- * @see
  */
 class OrphanRollbackThread extends Thread {
-    Resource resource = null;
-    RecoveryCoordinatorImpl recovery = null;
+    Resource resource;
+    RecoveryCoordinatorImpl recovery;
 
     /**
      * OrphanRollbackThread constructor.
      *
      * @param recovery
      * @param resource
-     *
-     * @return
-     *
-     * @see
      */
     OrphanRollbackThread(RecoveryCoordinatorImpl recovery, Resource resource) {
         this.resource = resource;
@@ -542,11 +506,6 @@ class OrphanRollbackThread extends Thread {
     /**
      * Calls the RecoveryCoordinator to rollback the Resource.
      *
-     * @param
-     *
-     * @return
-     *
-     * @see
      */
     @Override
     public void run() {

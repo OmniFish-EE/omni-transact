@@ -61,6 +61,7 @@ import org.omg.CosTransactions.NoTransaction;
 import org.omg.CosTransactions.Status;
 import org.omg.CosTransactions.SubtransactionsUnavailable;
 import org.omg.CosTransactions.Unavailable;
+
 import ee.omnifish.transact.api.Globals;
 import ee.omnifish.transact.jts.CosTransactions.Configuration;
 import ee.omnifish.transact.jts.CosTransactions.ControlImpl;
@@ -72,7 +73,6 @@ import ee.omnifish.transact.jts.CosTransactions.RecoveryManager;
 import ee.omnifish.transact.jts.CosTransactions.XATerminatorImpl;
 import ee.omnifish.transact.jts.codegen.otsidl.JControlHelper;
 import ee.omnifish.transact.jts.utils.LogFormatter;
-
 import jakarta.resource.spi.work.WorkCompletedException;
 import jakarta.resource.spi.work.WorkException;
 import jakarta.transaction.HeuristicMixedException;
@@ -209,10 +209,10 @@ public class TransactionManagerImpl implements TransactionManager {
     }
 
     /**
-     * extends props with the JTS-related properties based on the specified parameters. The properties will be used as part
+     * Extends props with the JTS-related properties based on the specified parameters. The properties will be used as part
      * of ORB.init() call.
      *
-     * @param prop the properties that will be extended
+     * @param props the properties that will be extended
      * @param logDir directory for the log, current directory if null
      * @param trace enable JTS tracing
      * @param traceDir directory for tracing, current directory if null

@@ -16,14 +16,15 @@
 
 package ee.omnifish.transact.jts.utils.RecoveryHooks;
 
+import static java.util.logging.Level.SEVERE;
 import static java.util.logging.Level.WARNING;
 
 import java.util.Hashtable;
 import java.util.ResourceBundle;
-import java.util.logging.Level;
 import java.util.logging.Logger;
 
 import org.omg.CosTransactions.Coordinator;
+
 import ee.omnifish.transact.jts.CosTransactions.ControlImpl;
 import ee.omnifish.transact.jts.CosTransactions.CurrentTransaction;
 import ee.omnifish.transact.jts.CosTransactions.GlobalTID;
@@ -116,7 +117,7 @@ public class FailureInducer {
     public static void setCrashPoint(Integer crashPoint) {
         // sanity check
         if (crashPoint == null) {
-            _logger.log(Level.SEVERE, "jts.invalid_crash_point");
+            _logger.log(SEVERE, "jts.invalid_crash_point");
             return;
         }
 
@@ -129,13 +130,13 @@ public class FailureInducer {
     /**
      * Setting a wait point will cause the TM to wait at the failure point, for the stipulated wait duration.
      *
-     * @param crashPoint pre-defined failure points (PREPARING, PREPARED, COMMITTING, COMMITTED).
+     * @param waitPoint pre-defined failure points (PREPARING, PREPARED, COMMITTING, COMMITTED).
      * @param waitDuration time duration (seconds) for RM failure to happen.
      */
     public static void setWaitPoint(Integer waitPoint, int waitDuration) {
         // sanity check
         if (waitPoint == null) {
-            _logger.log(Level.SEVERE, "jts.invalid_wait_point");
+            _logger.log(SEVERE, "jts.invalid_wait_point");
             return;
         }
 
@@ -172,7 +173,7 @@ public class FailureInducer {
      * the current transaction matches the current failure point, an appropriate action (crash or wait) is taken.
      * <em>Note:</em> Crash action takes precedence over wait actions for the same failure point.
      *
-     * @param coord the coordinator object (which represents the transaction.
+     * @param gtid the coordinator object (which represents the transaction.
      * @param failPoint indicates the current failure point in coordinator code.
      */
     public static void waitForFailure(GlobalTID gtid, Integer failPoint) {

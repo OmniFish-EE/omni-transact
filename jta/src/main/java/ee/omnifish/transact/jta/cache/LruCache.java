@@ -50,7 +50,7 @@ public class LruCache extends BaseCache {
     /**
      * constructor with specified max entries.
      *
-     * @param defaultMaxEntries specifies the default max entries to use when the maxEntries is <= 0.
+     * @param defaultMaxEntries specifies the default max entries to use when the maxEntries is LTE 0.
      */
     public LruCache(int defaultMaxEntries) {
         this.defaultMaxEntries = defaultMaxEntries;
@@ -63,7 +63,6 @@ public class LruCache extends BaseCache {
      * @param loadFactor the load factor
      * @param timeout to be used to trim the expired entries
      * @param props opaque list of properties for a given cache implementation
-     * @throws a generic Exception if the initialization failed
      */
     public void init(int maxEntries, long timeout, float loadFactor, Properties props) {
 

@@ -55,6 +55,7 @@ import org.omg.CosTransactions.StatusHolder;
 import org.omg.CosTransactions.TransIdentity;
 import org.omg.CosTransactions.Unavailable;
 import org.omg.CosTransactions.otid_t;
+
 import ee.omnifish.transact.jts.JavaEETransactionManagerJTSDelegate;
 import ee.omnifish.transact.jts.codegen.otsidl.JControlHelper;
 import ee.omnifish.transact.jts.utils.LogFormatter;
@@ -66,7 +67,6 @@ import ee.omnifish.transact.jts.utils.LogFormatter;
  *
  * @author Simon Holdsworth, IBM Corporation
  *
- * @see
  */
 //----------------------------------------------------------------------------
 // CHANGE HISTORY
@@ -457,12 +457,7 @@ public class CurrentTransaction {
      * That is, the Control object that corresponds to the thread under which the operation was invoked. If there is no such
      * association the null value is returned.
      *
-     * @param
-     *
      * @return The current Control object.
-     *
-     *
-     * @see
      */
     public static ControlImpl getCurrent() throws TRANSACTION_ROLLEDBACK {
 
@@ -481,14 +476,10 @@ public class CurrentTransaction {
      * Note that this operation can be optimised so that the Coordinator reference is stored along with the Control
      * reference when the thread association is set up.
      *
-     * @param
-     *
      * @return The current Coordinator.
      *
      * @exception TRANSACTION_ROLLEDBACK The Coordinator has already been rolled back.
      * @exception Unavailable The Coordinator object is not available.
-     *
-     * @see
      */
     static Coordinator getCurrentCoordinator() throws TRANSACTION_ROLLEDBACK, Unavailable {
 
@@ -517,7 +508,6 @@ public class CurrentTransaction {
         }
 
         return result;
-
     }
 
     /**
@@ -574,13 +564,8 @@ public class CurrentTransaction {
      * ended.
      *
      * @param obj The StaticResource being registered.
-     *
-     * @return
-     *
-     * @see
      */
     synchronized static void registerStatic(StaticResource obj) {
-
         // If the RegisteredStatics instance variable has not been created at this
         // point, create it.
 
@@ -595,14 +580,9 @@ public class CurrentTransaction {
     /**
      * Returns all the transactions in the system that are currently suspended in the form of a sequence of Control objects.
      *
-     * @param
-     *
      * @return The list of suspended Control objects.
-     *
-     * @see
      */
     static Control[] getSuspendedTransactions() {
-
         if (!statsOn) {
             throw new NO_IMPLEMENT("statistics not on");
         }
@@ -629,11 +609,7 @@ public class CurrentTransaction {
      * Returns all the transactions in the system that are currently running (i.e. not suspended) in the form of a sequence
      * of Control objects.
      *
-     * @param
-     *
      * @return The list of running Control objects.
-     *
-     * @see
      */
     static Control[] getRunningTransactions() {
         if (!statsOn) {
@@ -662,11 +638,7 @@ public class CurrentTransaction {
      * Returns all the transactions in the system that are currently running or suspended in the form of a sequence of
      * Control objects.
      *
-     * @param
-     *
      * @return The list of all Control objects.
-     *
-     * @see
      */
     static Control[] getAllTransactions() {
 
@@ -699,19 +671,16 @@ public class CurrentTransaction {
 
     /**
      * Informs the CurrentTransaction that a request is being sent.
+     *
      * <p>
      * Returns the transaction context that should be established for the object in the remote process.
      *
      * @param id The request identifier.
      * @param holder The completed context object.
      *
-     * @return
-     *
      * @exception TRANSACTION_ROLLEDBACK The current transaction has been rolled back. The message should not be sent and
      * TRANSACTION_ROLLEDBACK should be returned to the caller.
      * @exception TRANSACTION_REQUIRED There is no current transaction.
-     *
-     * @see
      */
     static void sendingRequest(int id, PropagationContextHolder holder) throws TRANSACTION_ROLLEDBACK, TRANSACTION_REQUIRED {
 
@@ -804,12 +773,8 @@ public class CurrentTransaction {
      * @param context The PropagationContext from the message.
      * @param ex The exception on the message.
      *
-     * @return
-     *
      * @exception WrongTransaction The context returned on the reply is for a different transaction from the current one on
      * the thread.
-     *
-     * @see
      */
     static void receivedReply(int id, PropagationContext context, org.omg.CORBA.Environment ex) throws org.omg.CORBA.WrongTransaction {
 
@@ -913,15 +878,12 @@ public class CurrentTransaction {
 
     /**
      * Informs the CurrentTransaction that a request has been received.
+     *
      * <p>
      * The request contains the transaction context that should be established for the object.
      *
      * @param id The request identifier.
      * @param context The PropagationContext from the message.
-     *
-     * @return
-     *
-     * @see
      */
     static void receivedRequest(int id, PropagationContext context) {
 
@@ -979,8 +941,6 @@ public class CurrentTransaction {
      * rollback-only, or the reply is returning when a different transaction is active from the one active when the request
      * was imported.
      * @exception TRANSACTION_ROLLEDBACK The current transaction has already been rolled back.
-     *
-     * @see
      */
     static void sendingReply(int id, PropagationContextHolder holder) throws INVALID_TRANSACTION, TRANSACTION_ROLLEDBACK {
 
@@ -1220,45 +1180,16 @@ public class CurrentTransaction {
         control.destroy();
     }
 
+    // not used anywhere
     /**
      * Ends all thread associations for the given transaction.
      *
      * @param globalTID The global transaction identifier.
      * @param aborted Indicates whether the transaction has aborted.
      *
-     * @return
-     *
-     * @see
      */
-    // not used anywhere
     synchronized static void endAll(GlobalTID globalTID, boolean aborted) {
         throw new NO_IMPLEMENT("not implemented");
-        // Modify any thread associations there may be for the transaction, to
-        // indicate that the transaction has ended.
-        /*
-         * StatusHolder outStatus = new StatusHolder();
-         *
-         * Enumeration controls = threadContexts.elements(); int cz = threadContexts.size(); // Arun 9/27/99 while (cz-- > 0) {
-         * ControlImpl control = (ControlImpl)controls.nextElement();
-         *
-         * // If the Control object corresponds to the transaction being removed, then // inform it that the transaction has
-         * completed.
-         *
-         * try { if( globalTID.equals(control.getGlobalTID(outStatus)) && outStatus.value == Status.StatusActive )
-         * control.setTranState(aborted ? Status.StatusRolledBack : Status.StatusCommitted); } catch( Throwable exc ) { } }
-         *
-         * // Modify any suspended Control objects there may be for the transaction, to // indicate that the transaction has
-         * ended.
-         *
-         * controls = suspended.elements(); cz = suspended.size(); // Arun 9/27/99 while(cz-- > 0) { try { ControlImpl control =
-         * (ControlImpl)controls.nextElement();
-         *
-         * // If the Control object corresponds to the transaction being removed, then // inform it that the transaction has
-         * completed.
-         *
-         * if( globalTID.equals(control.getGlobalTID(outStatus)) && outStatus.value == Status.StatusActive )
-         * control.setTranState(aborted ? Status.StatusRolledBack : Status.StatusCommitted); } catch( Throwable exc ) { } }
-         */
     }
 
     /**
@@ -1269,61 +1200,14 @@ public class CurrentTransaction {
      * For quiesce,
      *
      * @param immediate Indicates whether to stop immediately.
-     *
-     * @return
-     *
-     * @see
      */
     static void shutdown(boolean immediate) {
-
         // $Continue with shutdown/quiesce.
     }
 
     /**
      * Dumps the static state of the class.
-     *
-     * @param
-     *
-     * @return
-     *
-     * @see
      */
     static void dump() {
     }
-
-    /**
-     * Reports the contents of the CurrentTransaction tables. $Only required for debug.
-     *
-     * @param immediate Indicates whether to stop immediately.
-     *
-     * @return
-     *
-     * @see
-     */
-    /*
-     * static
-     *
-     * void report() {
-     *
-     * // Report on threadContexts.
-     *
-     * if( threadContexts.size() > 0 ) { _logger.log(Level.FINE,"CurrentTransaction.threadContexts non-empty"); Enumeration
-     * keys = threadContexts.keys(); while( keys.hasMoreElements() ) { Thread thread = (Thread)keys.nextElement();
-     * ControlImpl contImpl = (ControlImpl)threadContexts.get(thread); if(_logger.isLoggable(Level.FINE))
-     * _logger.log(Level.FINE,"Thread :"+thread+" -> "+contImpl) } } else
-     * _logger.log(Level.FINE,"CurrentTransaction.threadContexts empty");
-     *
-     * // Report on importedTransactions.
-     *
-     * if( importedTransactions.size() > 0 ) { _logger.log(Level.FINE,"CurrentTransaction.importedTransactions non-empty");
-     * Enumeration keys = importedTransactions.keys(); while( keys.hasMoreElements() ) { Thread thread =
-     * (Thread)keys.nextElement(); GlobalTID tid = (GlobalTID)importedTransactions.get(thread);
-     * if(_logger.isLoggable(Level.FINE)) _logger.log(Level.FINE,"Thread :"+thread+" -> "+tid) } } else
-     * _logger.log(Level.FINE,"CurrentTransaction.importedTransactions empty"); // Report on suspended
-     *
-     * if( suspended.size() > 0 ) { _logger.log(Level.FINE,"CurrentTransaction.suspended non-empty"); Enumeration keys =
-     * suspended.elements(); while( keys.hasMoreElements() ) { ControlImpl contImpl = (ControlImpl)keys.nextElement();
-     * _logger.log(Level.FINE,"ControlImpl:"+contImpl); } } else
-     * _logger.log(Level.FINE,"CurrentTransaction.suspended empty"); }
-     */
 }

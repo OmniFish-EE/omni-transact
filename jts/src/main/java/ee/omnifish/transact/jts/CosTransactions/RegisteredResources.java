@@ -56,6 +56,7 @@ import org.omg.CosTransactions.Resource;
 import org.omg.CosTransactions.ResourceHelper;
 import org.omg.CosTransactions.SubtransactionAwareResource;
 import org.omg.CosTransactions.Vote;
+
 import ee.omnifish.transact.jts.codegen.otsidl.ResourceStatus;
 import ee.omnifish.transact.jts.jtsxa.OTSResourceImpl;
 import ee.omnifish.transact.jts.utils.LogFormatter;
@@ -71,7 +72,6 @@ import ee.omnifish.transact.jts.utils.LogFormatter;
  *
  * @author Simon Holdsworth, IBM Corporation
  *
- * @see
  */
 
 //----------------------------------------------------------------------------
@@ -118,10 +118,6 @@ class RegisteredResources {
      * information at restart.
      *
      * @param log The CoordinatorLog object for the transaction.
-     *
-     * @return
-     *
-     * @see
      */
     RegisteredResources(CoordinatorLog log, CoordinatorImpl coord) {
         resourceObjects = new ArrayList();
@@ -135,12 +131,6 @@ class RegisteredResources {
 
     /**
      * Default RegisteredResources constructor.
-     *
-     * @param
-     *
-     * @return
-     *
-     * @see
      */
     RegisteredResources(CoordinatorImpl coord) {
         this.coord = coord;
@@ -306,8 +296,6 @@ class RegisteredResources {
      * @param obj The reference of the Resource object to be stored.
      *
      * @return The number of registered Resource objects.
-     *
-     * @see
      */
     int addRes(Resource obj) {
 
@@ -328,32 +316,12 @@ class RegisteredResources {
     }
 
     /**
-     * Empties the list of registered Resources.
-     *
-     * @param
-     *
-     * @return
-     *
-     * @see
-     */
-    /*
-     * void empty() {
-     *
-     * // Empty the list of all Resource references.
-     *
-     * resourceObjects.clear(); nRes=0; resourceStates.clear(); }
-     */
-
-    /**
      * Checks whether there are any Resource objects registered.
+     *
      * <p>
      * If there are, the operation returns true, otherwise false.
      *
-     * @param
-     *
      * @return Indicates whether any Resources registered.
-     *
-     * @see
      */
     boolean involved() {
         return nRes != 0;
@@ -362,11 +330,7 @@ class RegisteredResources {
     /**
      * Returns the number of Resources currently in the list.
      *
-     * @param
-     *
      * @return The number of registered Resources.
-     *
-     * @see
      */
     int numRegistered() {
         return nRes;
@@ -380,16 +344,12 @@ class RegisteredResources {
      * <p>
      * All Resources that return VoteReadOnly have their state set to completed. The consolidated result is returned.
      *
-     * @param
-     *
      * @return The vote for the transaction.
      *
-     * @exception HeuristicMixed Indicates that a participant voted to roll the transaction back, but one or more others
+     * @throws HeuristicMixed Indicates that a participant voted to roll the transaction back, but one or more others
      * have already heuristically committed.
-     * @exception HeuristicHazard Indicates that a participant voted to roll the transaction back, but one or more others
+     * @throws HeuristicHazard Indicates that a participant voted to roll the transaction back, but one or more others
      * may have already heuristically committed.
-     *
-     * @see
      */
     Vote distributePrepare() throws HeuristicMixed, HeuristicHazard {
         Vote result = Vote.VoteReadOnly;
@@ -598,8 +558,6 @@ class RegisteredResources {
      * transaction being rolled back.
      * @exception HeuristicHazard Indicates that heuristic decisions may have been taken which have resulted in part of the
      * transaction being rolled back.
-     *
-     * @see
      */
     void distributeCommit() throws HeuristicMixed, HeuristicHazard, NotPrepared {
         boolean infiniteRetry = true;
@@ -838,14 +796,11 @@ class RegisteredResources {
      * @param heuristicException Indicates that a heuristic exception has already been thrown for this transaction, and that
      * forget processing should proceed.
      *
-     * @return
-     *
      * @exception HeuristicMixed Indicates that heuristic decisions have been taken which have resulted in part of the
      * transaction being rolled back.
      * @exception HeuristicHazard Indicates that heuristic decisions may have been taken which have resulted in part of the
      * transaction being rolled back.
      *
-     * @see
      */
     void distributeRollback(boolean heuristicException) throws HeuristicMixed, HeuristicHazard {
 
@@ -1065,14 +1020,10 @@ class RegisteredResources {
      * @param retries The number of times to retry the forget operation.
      * @param infinite indicates infinite retry.
      *
-     * @return
-     *
      * @exception HeuristicMixed Indicates that heuristic decisions have been taken which have resulted in part of the
      * transaction being rolled back.
      * @exception HeuristicHazard Indicates that heuristic decisions may have been taken which have resulted in part of the
      * transaction being rolled back.
-     *
-     * @see
      */
     private void distributeForget(int retries, boolean infinite, boolean heuristicHazard, boolean heuristicMixed)
             throws HeuristicMixed, HeuristicHazard {
@@ -1184,12 +1135,8 @@ class RegisteredResources {
      *
      * @param parent The parent's Coordinator reference.
      *
-     * @return
-     *
      * @exception TRANSACTION_ROLLEDBACK The subtransaction could not be committed. Some participants may have committed and
      * some may have rolled back.
-     *
-     * @see
      */
     void distributeSubcommit(Coordinator parent) throws TRANSACTION_ROLLEDBACK {
 
@@ -1245,12 +1192,6 @@ class RegisteredResources {
 
     /**
      * Distributes rollbackSubtransaction messages to all registered SubtransactionAwareResources.
-     *
-     * @param
-     *
-     * @return
-     *
-     * @see
      */
     void distributeSubrollback() {
         // Browse through the participants, rolling them back. The following is
@@ -1286,32 +1227,7 @@ class RegisteredResources {
     }
 
     /**
-     * Fills in the given Vector objects with the currently registered Resource objects and their corresponding states.
-     *
-     * @param resources The object to hold the objects.
-     * @param states The object to hold the states.
-     *
-     * @return
-     *
-     * @see
-     */
-    /*
-     * COMMENT(Ram J) - we do not support Admin package anymore. void getResources(ResourceSequenceHolder resources,
-     * ResourceStatusSequenceHolder states) {
-     *
-     * resources.value = new Resource[resourceObjects.size()]; states.value = new ResourceStatus[resourceObjects.size()];
-     *
-     * resourceObjects.copyInto(resources.value); resourceStates.copyInto(states.value); }
-     */
-
-    /**
      * Distributes the one phase commit.
-     *
-     * @param none
-     *
-     * @return void
-     *
-     * @see
      */
     void commitOnePhase() throws HeuristicMixed, HeuristicHazard {
 
@@ -1558,10 +1474,4 @@ class RegisteredResources {
         // Otherwise just return normally.
     }
 
-    // START IASRI 4662745
-    /**
-     * public static void setCommitRetryVar(String commitRetryString) { if (commitRetries == -1 && commitRetryVar != null) {
-     * try { commitRetries = Integer.parseInt(commitRetryVar); } catch (Exception e) {} } }
-     **/
-    // END IASRI 4662745
 }

@@ -25,17 +25,15 @@ import java.util.logging.Level;
 import java.util.logging.Logger;
 
 import org.omg.CosTransactions.Status;
+
 import ee.omnifish.transact.jts.jtsxa.XID;
 
 /**
  * This class records state for timing out transactions, and runs a thread which performs occasional checks to time out
  * transactions. For each log location, which requires delegated recovery, an instance of this will be created. Done as
- * part of delegated recovery support. th
+ * part of delegated recovery support.
  *
  * @version 0.01
- *
- *
- * @see
  */
 class DelegatedTimeoutManager {
     /**
