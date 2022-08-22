@@ -17,19 +17,19 @@
 /**
  * @author Arjan Tijms
  */
-module org.omnifish.transact.jta {
+module ee.omnifish.transact.jta {
 
-    exports org.omnifish.transact.jta.cache;
-    opens org.omnifish.transact.jta.cache;
+    exports ee.omnifish.transact.jta.cache;
+    opens ee.omnifish.transact.jta.cache;
     
-    exports org.omnifish.transact.jta.cdi;
-    opens org.omnifish.transact.jta.cdi;
+    exports ee.omnifish.transact.jta.cdi;
+    opens ee.omnifish.transact.jta.cdi;
     
-    exports org.omnifish.transact.jta.transaction;
-    opens org.omnifish.transact.jta.transaction;
+    exports ee.omnifish.transact.jta.transaction;
+    opens ee.omnifish.transact.jta.transaction;
     requires jakarta.transaction;
     requires java.logging;
-    requires org.omnifish.transact.api;
+    requires ee.omnifish.transact.api;
     requires java.rmi;
     
 }

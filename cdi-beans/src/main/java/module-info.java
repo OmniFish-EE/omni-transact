@@ -13,22 +13,22 @@
  *
  * SPDX-License-Identifier: EPL-2.0 OR GPL-2.0 WITH Classpath-exception-2.0
  */
-import org.omnifish.transact.cdi.beans.TransactionalExtension;
+import ee.omnifish.transact.cdi.beans.TransactionalExtension;
 
 import jakarta.enterprise.inject.spi.Extension;
 
 /**
  * @author Arjan Tijms
  */
-module org.omnifish.transact.cdi.beans {
+module ee.omnifish.transact.cdi.beans {
 
     provides Extension with TransactionalExtension;
 
-    exports org.omnifish.transact.cdi.beans;
-    opens org.omnifish.transact.cdi.beans;
+    exports ee.omnifish.transact.cdi.beans;
+    opens ee.omnifish.transact.cdi.beans;
 
-    requires org.omnifish.transact.jta;
-    requires org.omnifish.transact.api;
-    requires org.omnifish.transact.jts;
+    requires ee.omnifish.transact.jta;
+    requires ee.omnifish.transact.api;
+    requires ee.omnifish.transact.jts;
 }
 

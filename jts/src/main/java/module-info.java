@@ -17,23 +17,23 @@
 /**
  * @author Arjan Tijms
  */
-module org.omnifish.transact.jts {
+module ee.omnifish.transact.jts {
 
-    exports org.omnifish.transact.jts;
-    exports org.omnifish.transact.jts.api;
-    exports org.omnifish.transact.jts.codegen.jtsxa;
-    exports org.omnifish.transact.jts.codegen.otsidl;
-    exports org.omnifish.transact.jts.CosTransactions;
-    exports org.omnifish.transact.jts.jta;
-    exports org.omnifish.transact.jts.jtsxa;
-    exports org.omnifish.transact.jts.pi;
-    exports org.omnifish.transact.jts.trace;
-    exports org.omnifish.transact.jts.utils;
-    exports org.omnifish.transact.jts.utils.RecoveryHooks;
+    exports ee.omnifish.transact.jts;
+    exports ee.omnifish.transact.jts.api;
+    exports ee.omnifish.transact.jts.codegen.jtsxa;
+    exports ee.omnifish.transact.jts.codegen.otsidl;
+    exports ee.omnifish.transact.jts.CosTransactions;
+    exports ee.omnifish.transact.jts.jta;
+    exports ee.omnifish.transact.jts.jtsxa;
+    exports ee.omnifish.transact.jts.pi;
+    exports ee.omnifish.transact.jts.trace;
+    exports ee.omnifish.transact.jts.utils;
+    exports ee.omnifish.transact.jts.utils.RecoveryHooks;
     requires java.logging;
     requires java.transaction.xa;
-    requires org.omnifish.transact.api;
-    requires org.omnifish.transact.jta;
+    requires ee.omnifish.transact.api;
+    requires ee.omnifish.transact.jta;
     requires glassfish.corba.omgapi;
     
 }

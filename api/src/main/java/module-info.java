@@ -2,16 +2,16 @@
 /**
  * @author Arjan Tijms
  */
-module org.omnifish.transact.api {
+module ee.omnifish.transact.api {
 
-    exports org.omnifish.transact.api;
-    opens org.omnifish.transact.api;
+    exports ee.omnifish.transact.api;
+    opens ee.omnifish.transact.api;
     
-    exports org.omnifish.transact.api.impl;
-    opens org.omnifish.transact.api.impl;
+    exports ee.omnifish.transact.api.impl;
+    opens ee.omnifish.transact.api.impl;
     
-    exports org.omnifish.transact.api.spi;
-    opens org.omnifish.transact.api.spi;
+    exports ee.omnifish.transact.api.spi;
+    opens ee.omnifish.transact.api.spi;
     
     requires transitive java.transaction.xa;
     requires transitive jakarta.transaction;

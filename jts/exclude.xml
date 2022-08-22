@@ -22,12 +22,12 @@
          Approval: Bill
      -->
     <Match>
-        <Class name="org.omnifish.transact.jts.CosTransactions.SubCoordinator"/>
+        <Class name="ee.omnifish.transact.jts.CosTransactions.SubCoordinator"/>
         <Bug pattern="EC_UNRELATED_TYPES"/>
         <Priority value="1"/>
     </Match>
     <Match>
-        <Class name="org.omnifish.transact.jts.recovery.OracleXAResource"/>
+        <Class name="ee.omnifish.transact.jts.recovery.OracleXAResource"/>
         <Bug pattern="SQL_NONCONSTANT_STRING_PASSED_TO_EXECUTE"/>
         <Priority value="1"/>
     </Match>

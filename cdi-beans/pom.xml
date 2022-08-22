@@ -21,9 +21,9 @@
     <modelVersion>4.0.0</modelVersion>
 
     <parent>
-        <groupId>org.omnifish.transact</groupId>
-        <artifactId>parent</artifactId>
-        <version>1.0.0-SNAPSHOT</version>
+        <groupId>ee.omnifish</groupId>
+        <artifactId>transact-parent</artifactId>
+        <version>1.0.0</version>
     </parent>
 
     <artifactId>transact-cdi-beans</artifactId>
@@ -69,19 +69,19 @@
         <!-- Transact dependencies -->
         
         <dependency>
-            <groupId>org.omnifish.transact</groupId>
+            <groupId>ee.omnifish</groupId>
             <artifactId>transact-api</artifactId>
-            <version>1.0.0-SNAPSHOT</version>
+            <version>${project.version}</version>
         </dependency>
         <dependency>
-            <groupId>org.omnifish.transact</groupId>
+            <groupId>ee.omnifish</groupId>
             <artifactId>transact-jta</artifactId>
-            <version>1.0.0-SNAPSHOT</version>
+            <version>${project.version}</version>
         </dependency>
         <dependency>
-            <groupId>org.omnifish.transact</groupId>
+            <groupId>ee.omnifish</groupId>
             <artifactId>transact-jts</artifactId>
-            <version>1.0.0-SNAPSHOT</version>
+            <version>${project.version}</version>
         </dependency>
     </dependencies>
 
