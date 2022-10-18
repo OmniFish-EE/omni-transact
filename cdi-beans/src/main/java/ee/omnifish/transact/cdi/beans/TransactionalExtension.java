@@ -33,8 +33,8 @@ import ee.omnifish.transact.jta.transaction.TransactionSynchronizationRegistryIm
 import ee.omnifish.transact.jta.transaction.UserTransactionImpl;
 import ee.omnifish.transact.jts.JavaEETransactionManagerJTSDelegate;
 import ee.omnifish.transact.jts.ResourceRecoveryManagerImpl;
-
 import jakarta.enterprise.context.ApplicationScoped;
+import jakarta.enterprise.context.RequestScoped;
 import jakarta.enterprise.event.Observes;
 import jakarta.enterprise.inject.spi.AfterBeanDiscovery;
 import jakarta.enterprise.inject.spi.BeanManager;
@@ -80,7 +80,7 @@ public class TransactionalExtension implements Extension {
 
         afterBeanDiscovery.addBean()
                           .scope(ApplicationScoped.class)
-                          .types(JavaEETransactionManagerDelegate.class)
+                          .types(Object.class, JavaEETransactionManagerDelegate.class, JavaEETransactionManagerSimplifiedDelegate.class)
                           .createWith(e -> createManaged(JavaEETransactionManagerSimplifiedDelegate.class, e));
 
         afterBeanDiscovery.addBean()
@@ -94,7 +94,7 @@ public class TransactionalExtension implements Extension {
 
         afterBeanDiscovery.addBean()
                           .scope(ApplicationScoped.class)
-                          .types(JavaEETransactionManagerDelegate.class)
+                          .types(Object.class, JavaEETransactionManagerDelegate.class, JavaEETransactionManagerJTSDelegate.class)
                           .createWith(e -> createManaged(JavaEETransactionManagerJTSDelegate.class, e));
 
         afterBeanDiscovery.addBean()
@@ -112,7 +112,7 @@ public class TransactionalExtension implements Extension {
                           .createWith(e -> createManaged(TransactionServiceConfigImpl.class, e));
 
         afterBeanDiscovery.addBean()
-                          .scope(ApplicationScoped.class)
+                          .scope(RequestScoped.class)
                           .types(InvocationManager.class)
                           .createWith(e -> createManaged(InvocationManagerImpl.class, e));
 
