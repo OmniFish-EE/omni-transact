@@ -21,7 +21,7 @@
   <modelVersion>4.0.0</modelVersion>
   <groupId>ee.omnifish</groupId>
   <artifactId>transact-jta</artifactId>
-  <version>1.0.0</version>
+  <version>1.0.1-SNAPSHOT</version>
   <name>Transact Jakarta Transactions implementation</name>
   <description>Implementation of Jakarta Transactions</description>
   <url>https://github.com/omnifish-ee/omni-transact/transact-jta</url>
@@ -86,7 +86,7 @@
     <dependency>
       <groupId>ee.omnifish</groupId>
       <artifactId>transact-api</artifactId>
-      <version>1.0.0</version>
+      <version>1.0.1-SNAPSHOT</version>
       <scope>compile</scope>
     </dependency>
   </dependencies>
