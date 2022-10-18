@@ -17,12 +17,12 @@
 package ee.omnifish.transact.jts.jta;
 
 import static java.util.logging.Level.FINE;
+import static java.util.logging.Level.INFO;
 import static java.util.logging.Level.WARNING;
 
 import java.io.File;
 import java.util.Map;
 import java.util.Properties;
-import java.util.logging.Level;
 import java.util.logging.Logger;
 
 import ee.omnifish.transact.api.ResourceRecoveryManager;
@@ -255,6 +255,7 @@ public class TransactionServiceProperties {
         if (_logger.isLoggable(FINE)) {
             _logger.log(FINE, "initRecovery:properties: " + properties);
         }
+
         if (properties == null) {
             if (force) {
                 _logger.log(WARNING, "", new IllegalStateException());
@@ -267,6 +268,7 @@ public class TransactionServiceProperties {
         if (_logger.isLoggable(FINE)) {
             _logger.log(FINE, "initRecovery:Configuration.MANUAL_RECOVERY: " + value);
         }
+
         if (force || (isValueSet(value) && "true".equals(value))) {
             recoveryInitialized = true;
 
@@ -295,17 +297,6 @@ public class TransactionServiceProperties {
         return (value != null && !value.equals("") && !value.equals(" "));
     }
 
-//    private static String getTXLogDir(SystemPropertyBag bag) {
-//        for (SystemProperty prop : bag.getSystemProperty()) {
-//            String name = prop.getName();
-//            if (name.equals("TX-LOG-DIR")) {
-//                return prop.getValue();
-//            }
-//        }
-//
-//        return null;
-//    }
-
     private static class RecoveryHelperThread extends Thread {
         private int interval;
         private ServiceLocator serviceLocator;
@@ -325,9 +316,10 @@ public class TransactionServiceProperties {
                 return;
             }
 
-            if (_logger.isLoggable(Level.INFO)) {
-                _logger.log(Level.INFO, "Asynchronous thread for incomplete " + "tx is enabled with interval " + interval);
+            if (_logger.isLoggable(INFO)) {
+                _logger.log(INFO, "Asynchronous thread for incomplete " + "tx is enabled with interval " + interval);
             }
+
             int prevSize = 0;
             try {
                 while (true) {
@@ -340,8 +332,7 @@ public class TransactionServiceProperties {
                     }
                     if (RecoveryManager.sizeOfInCompleteTx() <= prevSize) {
                         if (_logger.isLoggable(FINE))
-                            _logger.log(FINE,
-                                    "Incomplete transaction recovery is " + "not required,  waiting for the next interval SIZE");
+                            _logger.log(FINE, "Incomplete transaction recovery is " + "not required,  waiting for the next interval SIZE");
                         continue;
                     }
                     prevSize = RecoveryManager.sizeOfInCompleteTx();

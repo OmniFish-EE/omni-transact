@@ -16,10 +16,20 @@
 
 package ee.omnifish.transact.jts.jta;
 
+import static ee.omnifish.transact.jts.CosTransactions.Configuration.isLocalFactory;
+import static ee.omnifish.transact.jts.jtsxa.Utility.getXID;
+import static jakarta.transaction.Status.STATUS_ACTIVE;
+import static java.lang.System.arraycopy;
+import static java.util.Collections.enumeration;
+import static java.util.logging.Level.FINE;
 import static java.util.logging.Level.WARNING;
+import static javax.transaction.xa.XAResource.TMFAIL;
+import static javax.transaction.xa.XAResource.TMJOIN;
+import static javax.transaction.xa.XAResource.TMNOFLAGS;
+import static javax.transaction.xa.XAResource.TMRESUME;
+import static javax.transaction.xa.XAResource.TMSUCCESS;
 
 import java.util.ArrayList;
-import java.util.Collections;
 import java.util.Enumeration;
 import java.util.HashMap;
 import java.util.HashSet;
@@ -27,7 +37,6 @@ import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
-import java.util.logging.Level;
 import java.util.logging.Logger;
 
 import javax.transaction.xa.XAException;
@@ -38,14 +47,13 @@ import org.omg.CORBA.TRANSACTION_ROLLEDBACK;
 import org.omg.CosTransactions.Control;
 import org.omg.CosTransactions.Inactive;
 import org.omg.CosTransactions.Unavailable;
+
 import ee.omnifish.transact.jts.CosTransactions.Configuration;
 import ee.omnifish.transact.jts.CosTransactions.ControlImpl;
 import ee.omnifish.transact.jts.CosTransactions.GlobalTID;
 import ee.omnifish.transact.jts.codegen.jtsxa.OTSResource;
 import ee.omnifish.transact.jts.jtsxa.OTSResourceImpl;
-import ee.omnifish.transact.jts.jtsxa.Utility;
 import ee.omnifish.transact.jts.jtsxa.XID;
-
 import jakarta.transaction.RollbackException;
 import jakarta.transaction.Synchronization;
 import jakarta.transaction.SystemException;
@@ -57,9 +65,6 @@ import jakarta.transaction.SystemException;
  */
 public class TransactionState {
 
-    /*
-     * Logger to log transaction messages
-     */
     static Logger _logger = Logger.getLogger(TransactionState.class.getName());
 
     /**
@@ -75,41 +80,36 @@ public class TransactionState {
     /**
      * a mapping of XAResource -> Integer (state) possible states are listed above
      */
-    private Map resourceStates;
+    private Map<XAResource, Integer> resourceStates;
 
     /**
      * Map: XAResource -> Xid
      */
-    private Map resourceList;
+    private Map<XAResource, Xid> xaResources;
 
     /**
      * a set of Xid branches on which xa_start() has been called
      */
-    private Set seenXids;
+    private Set<Xid> seenXids;
 
     /**
-     * a list of unique resource factory (represented by XAResource) Vector of XAResource objects
+     * a list of unique resource factory (represented by XAResource)
      */
-    private List factories;
+    private List<XAResource> factories;
 
-    // the OTS synchronization object for this transaction
-    private SynchronizationImpl syncImpl;
+    // The OTS synchronization object for this transaction
+    private SynchronizationImpl synchronizationImpl;
 
-    // count of XAResources that are still in active state
-    // private int activeResources = 0;
-
-    private GlobalTID gtid;
-    private TransactionImpl tran;
-
-    // private static TransactionManagerImpl tm = TransactionManagerImpl.getTransactionManagerImpl();
+    private GlobalTID globalTID;
+    private TransactionImpl transactionImpl;
 
     public TransactionState(GlobalTID gtid, TransactionImpl tran) {
-        resourceStates = new HashMap();
-        resourceList = new HashMap();
-        seenXids = new HashSet();
-        factories = new ArrayList();
-        this.gtid = gtid;
-        this.tran = tran;
+        resourceStates = new HashMap<>();
+        xaResources = new HashMap<>();
+        seenXids = new HashSet<>();
+        factories = new ArrayList<>();
+        this.globalTID = gtid;
+        this.transactionImpl = tran;
     }
 
     /**
@@ -130,14 +130,14 @@ public class TransactionState {
                     break;
                 case ASSOCIATION_SUSPENDED:
                 case ASSOCIATED:
-                    Xid xid = (Xid) resourceList.get(res);
-                    res.end(xid, XAResource.TMSUCCESS);
+                    Xid xid = xaResources.get(res);
+                    res.end(xid, TMSUCCESS);
                     setXAState(res, NOT_ASSOCIATED);
                     break;
                 case ROLLING_BACK:
                 case NOT_EXIST:
                 default:
-                    throw new IllegalStateException("Wrong XA State: " + XAState/* #Frozen */);
+                    throw new IllegalStateException("Wrong XA State: " + XAState);
                 }
             } catch (Exception ex) {
                 setXAState(res, FAILED);
@@ -148,7 +148,7 @@ public class TransactionState {
 
         if (exceptionThrown) {
             try {
-                tran.setRollbackOnly();
+                transactionImpl.setRollbackOnly();
             } catch (Exception ex) {
             }
         }
@@ -172,185 +172,171 @@ public class TransactionState {
         }
     }
 
-    synchronized private void _rollback(XAResource res) throws IllegalStateException, XAException {
-        Xid xid = (Xid) resourceList.get(res);
+    synchronized private void _rollback(XAResource xaResource) throws IllegalStateException, XAException {
+        Xid xid = xaResources.get(xaResource);
 
         assert_prejdk14(xid != null);
-        int XAState = getXAState(res);
+
+        int XAState = getXAState(xaResource);
         switch (XAState) {
-        case NOT_ASSOCIATED:
-        case FAILED:
-            res.rollback(xid);
-            break;
-        case ASSOCIATION_SUSPENDED:
-        case ASSOCIATED:
-            try {
-                res.end(xid, XAResource.TMSUCCESS);
-            } catch (Exception ex) {
-                _logger.log(WARNING, "jts.delist_exception", ex);
-            }
-            setXAState(res, NOT_ASSOCIATED);
-            res.rollback(xid);
-            /**
-             * was in ASSOCIATED: // rollback is deferred until delistment setXAState(res, ROLLING_BACK); activeResources++;
-             **/
-            break;
-        case ROLLING_BACK:
-        case NOT_EXIST:
-        default:
-            throw new IllegalStateException("Wrong XAState: " + XAState/* #Frozen */);
+            case NOT_ASSOCIATED:
+            case FAILED:
+                xaResource.rollback(xid);
+                break;
+            case ASSOCIATION_SUSPENDED:
+            case ASSOCIATED:
+                try {
+                    xaResource.end(xid, TMSUCCESS);
+                } catch (Exception ex) {
+                    _logger.log(WARNING, "jts.delist_exception", ex);
+                }
+                setXAState(xaResource, NOT_ASSOCIATED);
+                xaResource.rollback(xid);
+                /**
+                 * was in ASSOCIATED: // rollback is deferred until delistment setXAState(res, ROLLING_BACK); activeResources++;
+                 **/
+                break;
+            case ROLLING_BACK:
+            case NOT_EXIST:
+            default:
+                throw new IllegalStateException("Wrong XAState: " + XAState);
         }
     }
 
-    synchronized private void _end(XAResource res) throws IllegalStateException, XAException {
+    synchronized private void _end(XAResource xaResource) throws IllegalStateException, XAException {
+        Xid xid = xaResources.get(xaResource);
 
-        Xid xid = (Xid) resourceList.get(res);
         assert_prejdk14(xid != null);
-        int XAState = getXAState(res);
+        int XAState = getXAState(xaResource);
         switch (XAState) {
-        case NOT_ASSOCIATED:
-        case FAILED:
-            // do nothing
-            break;
-        case ASSOCIATION_SUSPENDED:
-        case ASSOCIATED:
-            try {
-                res.end(xid, XAResource.TMSUCCESS);
-            } catch (Exception ex) {
-                _logger.log(WARNING, "jts.delist_exception", ex);
-            }
-            setXAState(res, NOT_ASSOCIATED);
-            break;
-        case ROLLING_BACK:
-        case NOT_EXIST:
-        default:
-            throw new IllegalStateException("Wrong XAState: " + XAState/* #Frozen */);
+            case NOT_ASSOCIATED:
+            case FAILED:
+                // do nothing
+                break;
+            case ASSOCIATION_SUSPENDED:
+            case ASSOCIATED:
+                try {
+                    xaResource.end(xid, TMSUCCESS);
+                } catch (Exception ex) {
+                    _logger.log(WARNING, "jts.delist_exception", ex);
+                }
+                setXAState(xaResource, NOT_ASSOCIATED);
+                break;
+            case ROLLING_BACK:
+            case NOT_EXIST:
+            default:
+                throw new IllegalStateException("Wrong XAState: " + XAState);
         }
     }
 
-    private Xid computeXid(XAResource res, Control control) throws Inactive, Unavailable, XAException {
-
-        // one branch id per RM
+    private Xid computeXid(XAResource xaResource, Control control) throws Inactive, Unavailable, XAException {
+        // One branch id per RM
         int size = factories.size();
         for (int i = 0; i < size; i++) {
-            XAResource fac = (XAResource) factories.get(i);
-            if (res.isSameRM(fac)) {
-                // use same branch
-                Xid xid = (Xid) resourceList.get(fac);
+            XAResource fac = factories.get(i);
+            if (xaResource.isSameRM(fac)) {
+                // Use same branch
+                Xid xid = xaResources.get(fac);
                 return xid;
             }
         }
 
-        // use a different branch
+        // Use a different branch
         // XXX ideally should call JTS layer to get the branch id
         XID xid;
 
-        if (Configuration.isLocalFactory()) {
-            xid = Utility.getXID(((ControlImpl) control).get_localCoordinator());
+        if (isLocalFactory()) {
+            xid = getXID(((ControlImpl) control).get_localCoordinator());
         } else {
-            xid = Utility.getXID(control.get_coordinator());
+            xid = getXID(control.get_coordinator());
         }
-        factories.add(res);
+        factories.add(xaResource);
 
         byte[] branchid = parseSize(size);
         byte[] sname = Configuration.getServerNameByteArray();
         byte[] branch = new byte[sname.length + 1 + branchid.length];
 
-        System.arraycopy(sname, 0, branch, 0, sname.length);
+        arraycopy(sname, 0, branch, 0, sname.length);
         branch[sname.length] = (byte) ',';
-        System.arraycopy(branchid, 0, branch, sname.length + 1, branchid.length);
+        arraycopy(branchid, 0, branch, sname.length + 1, branchid.length);
 
         xid.setBranchQualifier(branch);
 
         return xid;
     }
 
-    synchronized public void startAssociation(XAResource res, Control control, int status)
-            throws XAException, SystemException, IllegalStateException, RollbackException {
-        OTSResource ref;
+    synchronized public void startAssociation(XAResource xaResource, Control control, int status) throws XAException, SystemException, IllegalStateException, RollbackException {
+        _logger.log(FINE, () -> "startAssociation for " + xaResource);
 
-        if (_logger.isLoggable(Level.FINE)) {
-            _logger.log(Level.FINE, "startAssociation for " + res);
-        }
+        OTSResource otsResource;
 
         try {
-            // XXX should avoid using XID in JTA layer
+            // XXX should avoid using XID in JTA layer (but why?)
             Xid xid = null;
-            boolean newResource = false;
             boolean seenXid = false;
-            if (resourceList.get(res) == null) {
-                if (_logger.isLoggable(Level.FINE)) {
-                    _logger.log(Level.FINE, "startAssociation for unknown resource");
+            if (xaResources.get(xaResource) == null) {
+                if (_logger.isLoggable(FINE)) {
+                    _logger.log(FINE, "startAssociation for unknown resource");
                 }
 
-                // throw RollbackException if try to register
-                // a new resource when a transaction is marked rollback
-                if (status != jakarta.transaction.Status.STATUS_ACTIVE) {
+                // Throw RollbackException if try to register a new resource when a transaction is marked
+                // rollback
+                if (status != STATUS_ACTIVE) {
                     throw new RollbackException();
                 }
 
-                newResource = true;
-                xid = computeXid(res, control);
+                xid = computeXid(xaResource, control);
                 seenXid = seenXids.contains(xid);
 
-                // register with OTS
+                // Register with OTS
                 if (!seenXid) {
-                    // new branch
-                    // COMMENT(Ram J) no need to activate OTSResource object since its local.
-                    ref = new OTSResourceImpl(xid, res, this);
-                    if (Configuration.isLocalFactory()) {
-                        ((ControlImpl) control).get_localCoordinator().register_resource(ref);
+                    // New branch: no need to activate OTSResource object since its local.
+                    otsResource = new OTSResourceImpl(xid, xaResource, this);
+                    if (isLocalFactory()) {
+                        ((ControlImpl) control).get_localCoordinator().register_resource(otsResource);
                     } else {
-                        control.get_coordinator().register_resource(ref);
+                        control.get_coordinator().register_resource(otsResource);
                     }
                 }
-                resourceList.put(res, xid);
-            } else {
-                if (_logger.isLoggable(Level.FINE)) {
-                    _logger.log(Level.FINE, "startAssociation for known resource");
-                }
 
-                // use the previously computed branch id
-                xid = (Xid) resourceList.get(res);
+                xaResources.put(xaResource, xid);
+            } else {
+                _logger.log(FINE, "startAssociation for known resource");
+
+                // Use the previously computed branch id
+                xid = xaResources.get(xaResource);
                 seenXid = seenXids.contains(xid);
             }
 
-            int XAState = getXAState(res);
-            if (_logger.isLoggable(Level.FINE)) {
-                _logger.log(Level.FINE, "startAssociation in state: " + XAState);
-            }
+            int XAState = getXAState(xaResource);
+            _logger.log(FINE, () -> "startAssociation in state: " + XAState);
 
             if (!seenXid) {
-                // first time this branch is enlisted
+                // First time this branch is enlisted
                 seenXids.add(xid);
-                res.start(xid, XAResource.TMNOFLAGS);
-                setXAState(res, ASSOCIATED);
+                xaResource.start(xid, TMNOFLAGS);
+                setXAState(xaResource, ASSOCIATED);
             } else {
                 // have seen this branch before
                 switch (XAState) {
                 case NOT_ASSOCIATED:
                 case NOT_EXIST:
-                    res.start(xid, XAResource.TMJOIN);
-                    setXAState(res, ASSOCIATED);
+                    xaResource.start(xid, TMJOIN);
+                    setXAState(xaResource, ASSOCIATED);
                     break;
                 case ASSOCIATION_SUSPENDED:
-                    res.start(xid, XAResource.TMRESUME);
-                    setXAState(res, ASSOCIATED);
+                    xaResource.start(xid, TMRESUME);
+                    setXAState(xaResource, ASSOCIATED);
                     break;
                 case ASSOCIATED:
                 case FAILED:
                 case ROLLING_BACK:
                 default:
-                    throw new IllegalStateException("Wrong XAState: " + XAState/* #Frozen */);
+                    throw new IllegalStateException("Wrong XAState: " + XAState);
                 }
             }
-
-            /**
-             * // need to do connection enlistment for NativeXAResource if (res instanceof NativeXAResource) { if (newResource) {
-             * ((NativeXAResource) res).enlistConnectionInXA(); } }
-             **/
         } catch (XAException ex) {
-            setXAState(res, FAILED);
+            setXAState(xaResource, FAILED);
             throw ex;
         } catch (Inactive ex) {
             _logger.log(WARNING, "jts.transaction_inactive", ex);
@@ -361,60 +347,54 @@ public class TransactionState {
         }
     }
 
-    synchronized public void endAssociation(XAResource xares, int flags) throws XAException, IllegalStateException {
-        if (_logger.isLoggable(Level.FINE)) {
-            _logger.log(Level.FINE, "endAssociation for " + xares);
-        }
+    synchronized public void endAssociation(XAResource xaResource, int flags) throws XAException, IllegalStateException {
+        _logger.log(FINE, () -> "endAssociation for " + xaResource);
 
         try {
-            Xid xid = (Xid) resourceList.get(xares);
+            Xid xid = xaResources.get(xaResource);
             assert_prejdk14(xid != null);
-            int XAState = getXAState(xares);
-            if (_logger.isLoggable(Level.FINE)) {
-                _logger.log(Level.FINE, "endAssociation in state: " + XAState);
-            }
+            int XAState = getXAState(xaResource);
+            _logger.log(FINE, () -> "endAssociation in state: " + XAState);
 
             switch (XAState) {
             case ASSOCIATED:
-                if ((flags & XAResource.TMSUCCESS) != 0) {
-                    xares.end(xid, XAResource.TMSUCCESS);
-                    setXAState(xares, NOT_ASSOCIATED);
+                if ((flags & TMSUCCESS) != 0) {
+                    xaResource.end(xid, TMSUCCESS);
+                    setXAState(xaResource, NOT_ASSOCIATED);
                 } else if ((flags & XAResource.TMSUSPEND) != 0) {
-                    xares.end(xid, XAResource.TMSUSPEND);
-                    setXAState(xares, ASSOCIATION_SUSPENDED);
+                    xaResource.end(xid, XAResource.TMSUSPEND);
+                    setXAState(xaResource, ASSOCIATION_SUSPENDED);
                 } else {
-                    xares.end(xid, XAResource.TMFAIL);
-                    setXAState(xares, FAILED);
+                    xaResource.end(xid, TMFAIL);
+                    setXAState(xaResource, FAILED);
                 }
                 break;
             case ROLLING_BACK:
                 // rollback deferred XAResources
-                // activeResources--;
-                // cleanupTransactionStateMapping();
-                xares.end(xid, XAResource.TMSUCCESS);
-                setXAState(xares, NOT_ASSOCIATED);
-                xares.rollback(xid);
+                xaResource.end(xid, TMSUCCESS);
+                setXAState(xaResource, NOT_ASSOCIATED);
+                xaResource.rollback(xid);
 
                 break;
             case ASSOCIATION_SUSPENDED:
-                if ((flags & XAResource.TMSUCCESS) != 0) {
-                    xares.end(xid, XAResource.TMSUCCESS);
-                    setXAState(xares, NOT_ASSOCIATED);
+                if ((flags & TMSUCCESS) != 0) {
+                    xaResource.end(xid, TMSUCCESS);
+                    setXAState(xaResource, NOT_ASSOCIATED);
                 } else if ((flags & XAResource.TMSUSPEND) != 0) {
-                    throw new IllegalStateException("Wrong XAState: " + XAState/* #Frozen */);
+                    throw new IllegalStateException("Wrong XAState: " + XAState);
                 } else {
-                    xares.end(xid, XAResource.TMFAIL);
-                    setXAState(xares, FAILED);
+                    xaResource.end(xid, TMFAIL);
+                    setXAState(xaResource, FAILED);
                 }
                 break;
             case NOT_ASSOCIATED:
             case NOT_EXIST:
             case FAILED:
             default:
-                throw new IllegalStateException("Wrong XAState: " + XAState/* #Frozen */);
+                throw new IllegalStateException("Wrong XAState: " + XAState);
             }
         } catch (XAException ex) {
-            setXAState(xares, FAILED);
+            setXAState(xaResource, FAILED);
             throw ex;
         }
     }
@@ -422,32 +402,23 @@ public class TransactionState {
     // To be called by SynchronizationImpl, if there are any exception
     // in beforeCompletion() call backs
     void setRollbackOnly() throws IllegalStateException, SystemException {
-        tran.setRollbackOnly();
+        transactionImpl.setRollbackOnly();
     }
 
-    /**
-     * synchronized void cleanupTransactionStateMapping() { if (activeResources == 0) { TransactionManagerImpl tm =
-     * TransactionManagerImpl.getTransactionManagerImpl(); } }
-     **/
-
-    synchronized public void registerSynchronization(Synchronization sync, Control control, boolean interposed)
-            throws RollbackException, IllegalStateException, SystemException {
-
+    synchronized public void registerSynchronization(Synchronization sync, Control control, boolean interposed) throws RollbackException, IllegalStateException, SystemException {
         try {
             // One OTS Synchronization object per transaction
-            if (syncImpl == null) {
-                // syncImpl = new SynchronizationImpl();
-                syncImpl = new SynchronizationImpl(this);
+            if (synchronizationImpl == null) {
+                synchronizationImpl = new SynchronizationImpl(this);
 
-                // COMMENT(Ram J) syncImpl is a local object. No need to
-                // activate it.
-                if (Configuration.isLocalFactory()) {
-                    ((ControlImpl) control).get_localCoordinator().register_synchronization(syncImpl);
+                // SyncImpl is a local object. No need to activate it.
+                if (isLocalFactory()) {
+                    ((ControlImpl) control).get_localCoordinator().register_synchronization(synchronizationImpl);
                 } else {
-                    control.get_coordinator().register_synchronization(syncImpl);
+                    control.get_coordinator().register_synchronization(synchronizationImpl);
                 }
             }
-            syncImpl.addSynchronization(sync, interposed);
+            synchronizationImpl.addSynchronization(sync, interposed);
         } catch (TRANSACTION_ROLLEDBACK ex) {
             throw new RollbackException();
         } catch (Unavailable ex) {
@@ -462,36 +433,37 @@ public class TransactionState {
         }
     }
 
-    private void setXAState(XAResource res, Integer state) {
-        if (_logger.isLoggable(Level.FINE)) {
-            int oldValue = getXAState(res);
-            _logger.log(Level.FINE, "transaction id : " + gtid);
-            _logger.log(Level.FINE, "res: " + res + ", old state: " + oldValue + ", new state: " + state);
+    private void setXAState(XAResource xaResource, Integer state) {
+        if (_logger.isLoggable(FINE)) {
+            int oldValue = getXAState(xaResource);
+            _logger.log(FINE, "transaction id : " + globalTID);
+            _logger.log(FINE, "res: " + xaResource + ", old state: " + oldValue + ", new state: " + state);
         }
-        resourceStates.put(res, state);
+
+        resourceStates.put(xaResource, state);
     }
 
-    private int getXAState(XAResource res) {
-        Integer result = (Integer) resourceStates.get(res);
+    private int getXAState(XAResource xaResource) {
+        Integer result = resourceStates.get(xaResource);
         if (result == null) {
             return NOT_EXIST;
         }
-        return result.intValue();
+
+        return result;
     }
 
     /**
      * list all the XAResources that have been enlisted in this transaction.
      */
-    public Enumeration listXAResources() {
-        return Collections.enumeration(resourceList.keySet());
-        // return resourceList.keys();
+    public Enumeration<XAResource> listXAResources() {
+        return enumeration(xaResources.keySet());
     }
 
     /**
      * return true if res has been enlisted in this transaction; false otherwise.
      */
     public boolean containsXAResource(XAResource res) {
-        return resourceList.containsKey(res);
+        return xaResources.containsKey(res);
     }
 
     static private void assert_prejdk14(boolean value) {
@@ -502,7 +474,6 @@ public class TransactionState {
     }
 
     private static byte[] parseSize(int size) {
-
         switch (size) {
         case 0:
             return new byte[] { 0 };
@@ -525,6 +496,7 @@ public class TransactionState {
         case 9:
             return new byte[] { 9 };
         }
+
         int j = 9;
         byte[] res = new byte[10];
         while (size > 0) {

@@ -17,6 +17,13 @@
 
 package ee.omnifish.transact.jts.jta;
 
+import static ee.omnifish.transact.api.Globals.getDefaultServiceLocator;
+import static ee.omnifish.transact.jts.CosTransactions.Configuration.LOG_DIRECTORY;
+import static ee.omnifish.transact.jts.CosTransactions.Configuration.isFileLoggingDisabled;
+import static ee.omnifish.transact.jts.CosTransactions.Configuration.isLocalFactory;
+import static ee.omnifish.transact.jts.jta.TransactionServiceProperties.getJTSProperties;
+import static ee.omnifish.transact.jts.utils.LogFormatter.getLocalizedMessage;
+import static jakarta.resource.spi.work.WorkException.TX_RECREATE_FAILED;
 import static jakarta.transaction.Status.STATUS_ACTIVE;
 import static jakarta.transaction.Status.STATUS_COMMITTED;
 import static jakarta.transaction.Status.STATUS_COMMITTING;
@@ -28,6 +35,7 @@ import static jakarta.transaction.Status.STATUS_ROLLEDBACK;
 import static jakarta.transaction.Status.STATUS_ROLLING_BACK;
 import static jakarta.transaction.Status.STATUS_UNKNOWN;
 import static java.util.logging.Level.SEVERE;
+import static org.omg.CosTransactions.CurrentHelper.narrow;
 import static org.omg.CosTransactions.Status.StatusActive;
 import static org.omg.CosTransactions.Status.StatusCommitted;
 import static org.omg.CosTransactions.Status.StatusCommitting;
@@ -62,9 +70,9 @@ import org.omg.CosTransactions.Status;
 import org.omg.CosTransactions.SubtransactionsUnavailable;
 import org.omg.CosTransactions.Unavailable;
 
-import ee.omnifish.transact.api.Globals;
 import ee.omnifish.transact.jts.CosTransactions.Configuration;
 import ee.omnifish.transact.jts.CosTransactions.ControlImpl;
+import ee.omnifish.transact.jts.CosTransactions.CurrentImpl;
 import ee.omnifish.transact.jts.CosTransactions.CurrentTransaction;
 import ee.omnifish.transact.jts.CosTransactions.DefaultTransactionService;
 import ee.omnifish.transact.jts.CosTransactions.GlobalTID;
@@ -72,7 +80,7 @@ import ee.omnifish.transact.jts.CosTransactions.MinorCode;
 import ee.omnifish.transact.jts.CosTransactions.RecoveryManager;
 import ee.omnifish.transact.jts.CosTransactions.XATerminatorImpl;
 import ee.omnifish.transact.jts.codegen.otsidl.JControlHelper;
-import ee.omnifish.transact.jts.utils.LogFormatter;
+import jakarta.resource.spi.XATerminator;
 import jakarta.resource.spi.work.WorkCompletedException;
 import jakarta.resource.spi.work.WorkException;
 import jakarta.transaction.HeuristicMixedException;
@@ -99,12 +107,12 @@ public class TransactionManagerImpl implements TransactionManager {
     static Logger _logger = Logger.getLogger(TransactionManagerImpl.class.getName());
 
     /**
-     * the singleton object
+     * The singleton object
      */
-    static private TransactionManagerImpl tm;
+    static private TransactionManagerImpl transactionManagerImpl;
 
     /**
-     * store the current psuedo object
+     * Store the current pseudo object
      */
     private Current current;
 
@@ -112,7 +120,7 @@ public class TransactionManagerImpl implements TransactionManager {
     static final int maxStatus;
 
     /**
-     * store XAResource Timeout
+     * Store XAResource Timeout
      */
     static private int xaTimeOut = 0;
 
@@ -166,11 +174,11 @@ public class TransactionManagerImpl implements TransactionManager {
      * get the singleton TransactionManagerImpl
      */
     static synchronized public TransactionManagerImpl getTransactionManagerImpl() {
-        if (tm == null) {
-            tm = new TransactionManagerImpl();
+        if (transactionManagerImpl == null) {
+            transactionManagerImpl = new TransactionManagerImpl();
         }
 
-        return tm;
+        return transactionManagerImpl;
     }
 
     /**
@@ -180,20 +188,21 @@ public class TransactionManagerImpl implements TransactionManager {
         try {
             ORB orb = Configuration.getORB();
             if (orb != null) {
-                current = org.omg.CosTransactions.CurrentHelper.narrow(orb.resolve_initial_references("TransactionCurrent"/* #Frozen */));
+                current = narrow(orb.resolve_initial_references("TransactionCurrent"));
             } else {
-                DefaultTransactionService dts = new DefaultTransactionService();
-                Properties p = TransactionServiceProperties.getJTSProperties(Globals.getDefaultServiceLocator(), false);
-                if (!Configuration.isFileLoggingDisabled()) {
-                    String logdir = p.getProperty(Configuration.LOG_DIRECTORY);
+                DefaultTransactionService defaultTransactionService = new DefaultTransactionService();
+
+                Properties jtsProperties = getJTSProperties(getDefaultServiceLocator(), false);
+                if (!isFileLoggingDisabled()) {
+                    String logdir = jtsProperties.getProperty(LOG_DIRECTORY);
                     _logger.fine("======= logdir ======= " + logdir);
                     if (logdir != null) {
                         (new File(logdir)).mkdirs();
                     }
                 }
 
-                dts.identify_ORB(null, null, p);
-                current = dts.get_current();
+                defaultTransactionService.identify_ORB(null, null, jtsProperties);
+                current = defaultTransactionService.get_current();
             }
 
             // This will release locks in RecoveryManager which were created
@@ -226,12 +235,12 @@ public class TransactionManagerImpl implements TransactionManager {
             logDir = "."/* #Frozen */;
         }
 
-        props.put("com.sun.corba.se.CosTransactions.ORBJTSClass"/* #Frozen */,
-                "ee.omnifish.transact.jts.CosTransactions.DefaultTransactionService"/* #Frozen */);
-        props.put("ee.omnifish.transact.jts.traceDirectory"/* #Frozen */, traceDir);
-        props.put("ee.omnifish.transact.jts.logDirectory"/* #Frozen */, logDir);
+        props.put("com.sun.corba.se.CosTransactions.ORBJTSClass", "ee.omnifish.transact.jts.CosTransactions.DefaultTransactionService");
+        props.put("ee.omnifish.transact.jts.traceDirectory", traceDir);
+        props.put("ee.omnifish.transact.jts.logDirectory", logDir);
+
         if (trace) {
-            props.put("ee.omnifish.transact.jts.trace"/* #Frozen */, "true"/* #Frozen */);
+            props.put("ee.omnifish.transact.jts.trace", "true");
         }
     }
 
@@ -241,7 +250,7 @@ public class TransactionManagerImpl implements TransactionManager {
     static public int mapStatus(Status status) {
         int statusVal = status.value();
         if (statusVal < 0 || statusVal > maxStatus) {
-            return jakarta.transaction.Status.STATUS_UNKNOWN;
+            return STATUS_UNKNOWN;
         }
 
         return directLookup[statusVal];
@@ -254,7 +263,6 @@ public class TransactionManagerImpl implements TransactionManager {
      */
     @Override
     public void begin() throws NotSupportedException, SystemException {
-
         try {
             // does not support nested transaction
             if (current.get_control() != null) {
@@ -268,7 +276,6 @@ public class TransactionManagerImpl implements TransactionManager {
         }
     }
 
-    // START IASRI PERFIMPROVEMNT
     /**
      * Create a new transaction with the given timeout and associate it with the current thread.
      *
@@ -276,18 +283,18 @@ public class TransactionManagerImpl implements TransactionManager {
      */
     public void begin(int timeout) throws NotSupportedException, SystemException {
         try {
-            // does not support nested transaction
+            // Does not support nested transaction
             if (current.get_control() != null) {
                 throw new NotSupportedException();
             }
-            ((ee.omnifish.transact.jts.CosTransactions.CurrentImpl) current).begin(timeout);
+
+            ((CurrentImpl) current).begin(timeout);
         } catch (TRANSACTION_ROLLEDBACK ex) {
             throw new NotSupportedException();
         } catch (SubtransactionsUnavailable ex) {
             throw new SystemException();
         }
     }
-    // END IASRI PERFIMPROVEMNT
 
     /**
      * Complete the transaction associated with the current thread. When this method completes, the thread becomes
@@ -306,9 +313,7 @@ public class TransactionManagerImpl implements TransactionManager {
      * @exception IllegalStateException Thrown if the current thread is not associated with a transaction.
      */
     @Override
-    public void commit() throws RollbackException, HeuristicMixedException, HeuristicRollbackException, SecurityException,
-            IllegalStateException, SystemException {
-
+    public void commit() throws RollbackException, HeuristicMixedException, HeuristicRollbackException, SecurityException, IllegalStateException, SystemException {
         try {
             current.commit(true);
         } catch (TRANSACTION_ROLLEDBACK ex) {
@@ -327,12 +332,8 @@ public class TransactionManagerImpl implements TransactionManager {
         } catch (HeuristicHazard ex) {
             throw new HeuristicRollbackException();
         } catch (Exception ex) {
-            // ex.printStackTrace();
             throw new SystemException(ex.toString());
         }
-        /***
-         * Transaction tran = getTransaction(); if (tran == null) throw new IllegalStateException(); tran.commit();
-         ***/
     }
 
     /**
@@ -345,7 +346,6 @@ public class TransactionManagerImpl implements TransactionManager {
      */
     @Override
     public void rollback() throws IllegalStateException, SecurityException, SystemException {
-
         try {
             current.rollback();
         } catch (NoTransaction ex) {
@@ -355,10 +355,6 @@ public class TransactionManagerImpl implements TransactionManager {
         } catch (Exception ex) {
             throw new SystemException(ex.toString());
         }
-
-        /***
-         * Transaction tran = getTransaction(); if (tran == null) throw new IllegalStateException(); tran.rollback();
-         ***/
     }
 
     /**
@@ -369,7 +365,6 @@ public class TransactionManagerImpl implements TransactionManager {
      */
     @Override
     public void setRollbackOnly() throws IllegalStateException, SystemException {
-
         try {
             current.rollback_only();
         } catch (NoTransaction ex) {
@@ -388,8 +383,7 @@ public class TransactionManagerImpl implements TransactionManager {
     @Override
     public int getStatus() throws SystemException {
         try {
-            Status status = current.get_status();
-            return mapStatus(status);
+            return mapStatus(current.get_status());
         } catch (Exception ex) {
             throw new SystemException(ex.toString());
         }
@@ -410,11 +404,9 @@ public class TransactionManagerImpl implements TransactionManager {
      */
     @Override
     public synchronized void setTransactionTimeout(int seconds) throws SystemException {
-
         try {
             if (seconds < 0) {
-                String msg = LogFormatter.getLocalizedMessage(_logger, "jts.invalid_timeout");
-                throw new SystemException(msg);
+                throw new SystemException(getLocalizedMessage(_logger, "jts.invalid_timeout"));
             }
             current.set_timeout(seconds);
         } catch (Exception ex) {
@@ -427,14 +419,13 @@ public class TransactionManagerImpl implements TransactionManager {
      */
     @Override
     public Transaction getTransaction() throws SystemException {
-
         try {
             Control control = current.get_control();
             if (control == null) {
                 return null;
-            } else {
-                return createTransactionImpl(control);
             }
+
+            return createTransactionImpl(control);
         } catch (Unavailable uex) {
             throw new SystemException(uex.toString());
         } catch (Exception ex) {
@@ -449,19 +440,20 @@ public class TransactionManagerImpl implements TransactionManager {
      */
     @Override
     public void resume(Transaction suspended) throws InvalidTransactionException, IllegalStateException, SystemException {
-        // thread is already associated with a transaction?
+        // Thread is already associated with a transaction?
         if (getTransaction() != null) {
             throw new IllegalStateException();
         }
-        // check for invalid Transaction object
-        if ((suspended == null) || !(suspended instanceof TransactionImpl)) {
+
+        // Check for invalid Transaction object
+        if (suspended == null || !(suspended instanceof TransactionImpl)) {
             throw new InvalidTransactionException();
         }
+
         Control control = ((TransactionImpl) suspended).getControl();
         try {
             current.resume(control);
         } catch (InvalidControl ex) {
-            // _logger.log(Level.FINE,"Invalid Control Exception in resume",ex);
             throw new InvalidTransactionException();
         } catch (Exception ex) {
             throw new SystemException(ex.toString());
@@ -480,6 +472,7 @@ public class TransactionManagerImpl implements TransactionManager {
             if (control == null) {
                 return null;
             }
+
             return createTransactionImpl(control);
         } catch (Unavailable uex) {
             throw new SystemException(uex.toString());
@@ -488,32 +481,16 @@ public class TransactionManagerImpl implements TransactionManager {
         }
     }
 
-    /**
-     * TransactionState getOrCreateTransactionState(GlobalTID gtid, Transaction tran) throws SystemException {
-     *
-     * synchronized (transactionStates) { TransactionState result = (TransactionState) transactionStates.get(gtid); if
-     * (result == null) { result = new TransactionState(gtid); transactionStates.put(gtid, result); try { // remove
-     * Transaction State on transaction completion Synchronization sync = new SynchronizationListener(gtid, result);
-     * tran.registerSynchronization(sync); } catch (Exception ex) { _logger.log(Level.WARNING,
-     * "jts.unexpected_error_in_get_or_create_transaction_state",ex); throw new SystemException(); } } return result; } }
-     *
-     * TransactionState getTransactionState(GlobalTID gtid, Transaction tran) throws SystemException {
-     *
-     * synchronized (transactionStates) { return (TransactionState) transactionStates.get(gtid); } }
-     *
-     **/
-
     private Transaction createTransactionImpl(Control control) throws Unavailable, SystemException {
-        GlobalTID gtid = null;
-        if (Configuration.isLocalFactory()) {
-            gtid = ((ControlImpl) control).getGlobalTID();
+        GlobalTID globalTID = null;
+        if (isLocalFactory()) {
+            globalTID = ((ControlImpl) control).getGlobalTID();
         } else {
             ControlImpl cntrlImpl = ControlImpl.servant(JControlHelper.narrow(control));
-            gtid = cntrlImpl.getGlobalTID();
+            globalTID = cntrlImpl.getGlobalTID();
         }
 
-        // return new TransactionImpl(this, control, gtid);
-        return new TransactionImpl(control, gtid);
+        return new TransactionImpl(control, globalTID);
     }
 
     /**
@@ -533,27 +510,26 @@ public class TransactionManagerImpl implements TransactionManager {
      * @param timeout positive, non-zero value for transaction timeout.
      */
     public static void recreate(Xid xid, long timeout) throws WorkException {
-
-        // check if xid is valid
+        // Check if xid is valid
         if (xid == null || xid.getFormatId() == 0 || xid.getBranchQualifier() == null || xid.getGlobalTransactionId() == null) {
             WorkException workExc = new WorkCompletedException("Invalid Xid");
-            workExc.setErrorCode(WorkException.TX_RECREATE_FAILED);
+            workExc.setErrorCode(TX_RECREATE_FAILED);
             throw workExc;
         }
 
-        // has TransactionService been initialized?
+        // Has TransactionService been initialized?
         if (!DefaultTransactionService.isActive()) {
             WorkException workExc = new WorkCompletedException("Transaction Manager unavailable");
-            workExc.setErrorCode(WorkException.TX_RECREATE_FAILED);
+            workExc.setErrorCode(TX_RECREATE_FAILED);
             throw workExc;
         }
 
-        // recreate the transaction
+        // Recreate the transaction
         GlobalTID tid = new GlobalTID(xid);
         try {
             CurrentTransaction.recreate(tid, (int) ((timeout <= 0) ? 0 : timeout));
         } catch (Throwable exc) {
-            String errorCode = WorkException.TX_RECREATE_FAILED;
+            String errorCode = TX_RECREATE_FAILED;
             if (exc instanceof INVALID_TRANSACTION && (((INVALID_TRANSACTION) exc).minor == MinorCode.TX_CONCURRENT_WORK_DISALLOWED)) {
                 errorCode = WorkException.TX_CONCURRENT_WORK_DISALLOWED;
             }
@@ -569,7 +545,6 @@ public class TransactionManagerImpl implements TransactionManager {
      * @param xid the Xid object representing a transaction.
      */
     public static void release(Xid xid) throws WorkException {
-
         GlobalTID tid = new GlobalTID(xid);
         try {
             CurrentTransaction.release(tid);
@@ -590,11 +565,10 @@ public class TransactionManagerImpl implements TransactionManager {
      *
      * @return a <code>XATerminator</code> instance.
      */
-    public static jakarta.resource.spi.XATerminator getXATerminator() {
+    public static XATerminator getXATerminator() {
         return new XATerminatorImpl();
     }
 
-    // START IASRI 4706150
     /**
      * used to set XAResource timeout
      */
@@ -605,23 +579,4 @@ public class TransactionManagerImpl implements TransactionManager {
     public static int getXAResourceTimeOut() {
         return xaTimeOut;
     }
-    // END IASRI 4706150
-    /**
-     * class SynchronizationListener implements Synchronization {
-     *
-     * private GlobalTID gtid; private TransactionState tranState;
-     *
-     * SynchronizationListener(GlobalTID gtid, TransactionState tranState) { this.gtid = gtid; this.tranState = tranState; }
-     *
-     * public void afterCompletion(int status) { tranState.cleanupTransactionStateMapping(); }
-     *
-     * public void beforeCompletion() { try { tranState.beforeCompletion(); }catch(XAException xaex){
-     * _logger.log(Level.WARNING,"jts.unexpected_xa_error_in_beforecompletion", new java.lang.Object[] {xaex.errorCode,
-     * xaex.getMessage()}); _logger.log(Level.WARNING,"",xaex); } catch (Exception ex) {
-     * _logger.log(Level.WARNING,"jts.unexpected_error_in_beforecompletion",ex); } } }
-     **/
-
-    /**
-     * void cleanupTransactionState(GlobalTID gtid) { transactionStates.remove(gtid); }
-     **/
 }

@@ -30,7 +30,6 @@
 
 package ee.omnifish.transact.jts.jtsxa;
 
-import java.util.logging.Level;
 import java.util.logging.Logger;
 
 import javax.transaction.xa.Xid;
@@ -95,7 +94,7 @@ public class XID implements Xid {
      */
     static public final int MAXBQUALSIZE = 64; // Maximum size (in bytes) of bqual
 
-    static private final String hextab = "0123456789ABCDEF"/* #Frozen */;
+    static private final String hextab = "0123456789ABCDEF";
 
     static Logger _logger = Logger.getLogger(XID.class.getName());
 
@@ -247,38 +246,35 @@ public class XID implements Xid {
      */
     @Override
     public String toString() {
+
         /*
          * toString() method is slightly expensive and this needs to be done because some of the drivers XAResource methods have
          * the "trace("some thing " + xid)" kind of code which is executing this method resulting in performance degradation.
          */
-        if (_logger.isLoggable(Level.FINE)) {
-            StringBuffer d; // Data String, in Hexidecimal
-            String s; // Resultant String
+        StringBuffer d; // Data String, in Hexidecimal
+        String s; // Resultant String
 
-            int i;
-            int v;
-            int L;
+        int i;
+        int v;
+        int L;
 
-            L = gtrid_length + bqual_length;
-            d = new StringBuffer(L + L);
+        L = gtrid_length + bqual_length;
+        d = new StringBuffer(L + L);
 
-            // Convert data string to hex
-            for (i = 0; i < L; i++) {
-                v = data[i] & 0xff;
-                d.append(hextab.charAt(v / 16));
-                d.append(hextab.charAt(v & 15));
-                if ((i + 1) % 4 == 0 && (i + 1) < L) {
-                    d.append(" ");
-                }
+        // Convert data string to hex
+        for (i = 0; i < L; i++) {
+            v = data[i] & 0xff;
+            d.append(hextab.charAt(v / 16));
+            d.append(hextab.charAt(v & 15));
+            if ((i + 1) % 4 == 0 && (i + 1) < L) {
+                d.append(" ");
             }
-
-            s = "{XID: " + "formatID(" + formatID + "), " + "gtrid_length(" + gtrid_length + "), " + "bqual_length(" + bqual_length + "), "
-                    + "data(" + d + ")" + "}"/* #Frozen */;
-
-            return s;
-        } else {
-            return "(Available at FINE log level)"; /* #Frozen */
         }
+
+        s = "{XID: " + "formatID(" + formatID + "), " + "gtrid_length(" + gtrid_length + "), " + "bqual_length(" + bqual_length + "), "
+                + "data(" + d + ")" + "}";
+
+        return s;
     }
 
     /*

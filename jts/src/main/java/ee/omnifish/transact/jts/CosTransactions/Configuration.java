@@ -30,13 +30,15 @@
 
 package ee.omnifish.transact.jts.CosTransactions;
 
+import static java.util.logging.Level.FINE;
+
 // Import required classes.
 import java.io.File;
 import java.util.Hashtable;
 import java.util.Properties;
-import java.util.logging.Level;
 import java.util.logging.Logger;
 
+import org.omg.CORBA.ORB;
 import org.omg.CosTransactions.TransactionFactory;
 import org.omg.PortableServer.POA;
 
@@ -57,7 +59,7 @@ import ee.omnifish.transact.jts.utils.LogFormatter;
 //   0.01  SAJH   Initial implementation.
 //------------------------------------------------------------------------------
 
-public class Configuration extends Object {
+public class Configuration {
 
     /*
      * Logger to log transaction messages
@@ -73,7 +75,7 @@ public class Configuration extends Object {
     private static boolean recoverable;
     private static ProxyChecker checker;
     private static LogFile logFile;
-    private static Hashtable poas = new Hashtable();
+    private static Hashtable poas = new Hashtable(); //  Portable Object Adapters
     private static String dbLogResource;
     private static boolean disableFileLogging;
 
@@ -100,7 +102,7 @@ public class Configuration extends Object {
      * <p>
      * The default value used for this property is the current directory.
      */
-    public final static String TRACE_DIRECTORY = "ee.omnifish.transact.jts.traceDirectory"/* #Frozen */;
+    public final static String TRACE_DIRECTORY = "ee.omnifish.transact.jts.traceDirectory";
 
     /**
      * The property key used to specify the directory to which transaction log files should be written.
@@ -110,29 +112,29 @@ public class Configuration extends Object {
      * The default value used for this property is the "jts" subdirectory from the current directory, if that exists,
      * otherwise the current directory.
      */
-    public final static String LOG_DIRECTORY = "ee.omnifish.transact.jts.logDirectory"/* #Frozen */;
+    public final static String LOG_DIRECTORY = "ee.omnifish.transact.jts.logDirectory";
 
     /**
-     * The property key used to specify the resource which will be used to wirte transaction logs.
+     * The property key used to specify the resource which will be used to write transaction logs.
      * <p>
      * The value is <em><b>ee.omnifish.transact.jts.logResource</b></em>.
      * <p>
      */
-    public final static String DB_LOG_RESOURCE = "ee.omnifish.transact.jts.logResource"/* #Frozen */;
+    public final static String DB_LOG_RESOURCE = "ee.omnifish.transact.jts.logResource";
 
     /**
      * Whether to write warnings and errors to jts.log file if this property has any value, it is active, otherwise it is
      * inactive
      *
      */
-    public final static String ERR_LOGGING = "ee.omnifish.transact.jts.errorLogging"/* #Frozen */;
+    public final static String ERR_LOGGING = "ee.omnifish.transact.jts.errorLogging";
 
     /**
      * This property indicates that XA Resources would be passed in via the TM.recover() method, and that the recovery
      * thread would have to wait until the resources are passed in. If not set, the recovery thread would not wait for the
      * XA Resources to be passed in.
      */
-    public final static String MANUAL_RECOVERY = "ee.omnifish.transact.jts.ManualRecovery"/* #Frozen */;
+    public final static String MANUAL_RECOVERY = "ee.omnifish.transact.jts.ManualRecovery";
 
     /**
      * The property key used to specify the number of times the JTS should retry a commit or resync operation before giving
@@ -143,7 +145,7 @@ public class Configuration extends Object {
      * If this property has no value, retries continue indefinitely. A value of zero indicates that no retries should be
      * made.
      */
-    public final static String COMMIT_RETRY = "ee.omnifish.transact.jts.commitRetry"/* #Frozen */;
+    public final static String COMMIT_RETRY = "ee.omnifish.transact.jts.commitRetry";
 
     /**
      * The property key used to specify whether the JTS should assume a transaction is to be committed or rolled back if an
@@ -155,7 +157,7 @@ public class Configuration extends Object {
      * The default is to assume that the transaction should be rolled back. If the value is '1', the transaction should be
      * committed.
      */
-    public final static String HEURISTIC_DIRECTION = "ee.omnifish.transact.jts.heuristicDirection"/* #Frozen */;
+    public final static String HEURISTIC_DIRECTION = "ee.omnifish.transact.jts.heuristicDirection";
 
     /**
      * The property key used to specify the number of transactions between keypoint operations on the log. Keypoint
@@ -168,10 +170,10 @@ public class Configuration extends Object {
      * <p>
      * The default value for this property is 100. If the value is specified as zero, then no keypoints are taken.
      */
-    public final static String KEYPOINT_COUNT = "ee.omnifish.transact.jts.keypointCount"/* #Frozen */;
+    public final static String KEYPOINT_COUNT = "ee.omnifish.transact.jts.keypointCount";
 
     // Property to specify the instance name
-    public final static String INSTANCE_NAME = "ee.omnifish.transact.jts.instancename"/* #Frozen */;
+    public final static String INSTANCE_NAME = "ee.omnifish.transact.jts.instancename";
 
     /**
      * The property is used to specify the time interval in seconds for which the timeout manager would scan for timedout
@@ -188,7 +190,7 @@ public class Configuration extends Object {
     /**
      * The default subdirectory in which log and repository files are stored.
      */
-    public final static String JTS_SUBDIRECTORY = "jts"/* #Frozen */;
+    public final static String JTS_SUBDIRECTORY = "jts";
 
     /**
      * getDirectory return value which indicates that the required directory was specified and is OK.
@@ -233,8 +235,9 @@ public class Configuration extends Object {
         // Get the environment variable value.
 
         String envValue = null;
-        if (prop != null)
+        if (prop != null) {
             envValue = prop.getProperty(envDir);
+        }
 
         // If the environment variable is not set, or does not refer to a valid
         // directory, then try to use a default.
@@ -251,23 +254,24 @@ public class Configuration extends Object {
                 result[0] = DEFAULT_INVALID;
             }
         }
-        if (_logger.isLoggable(Level.FINE)) {
+
+        if (_logger.isLoggable(FINE)) {
             String dirType = "";
             switch (result[0]) {
-            case DEFAULT_INVALID:
-                dirType = "used default, but is invalid";
-                break;
-            case DEFAULT_USED:
-                dirType = "used default";
-                break;
-            case DIRECTORY_OK:
-                dirType = "provided in configuration";
-                break;
-            default:
-                dirType = "invalid type";
-                break;
-            }
-            _logger.logp(Level.FINE, "Configuration", "getDirectory()", "Using directory = " + envValue + " : " + dirType);
+                case DEFAULT_INVALID:
+                    dirType = "used default, but is invalid";
+                    break;
+                case DEFAULT_USED:
+                    dirType = "used default";
+                    break;
+                case DIRECTORY_OK:
+                    dirType = "provided in configuration";
+                    break;
+                default:
+                    dirType = "invalid type";
+                    break;
+                }
+            _logger.logp(FINE, "Configuration", "getDirectory()", "Using directory = " + envValue + " : " + dirType);
         }
 
         return envValue;
@@ -289,8 +293,8 @@ public class Configuration extends Object {
             RecoveryManager.createRecoveryFile(serverName);
         }
 
-        if (_logger.isLoggable(Level.FINE)) {
-            _logger.logp(Level.FINE, "Configuration", "setServerName()",
+        if (_logger.isLoggable(FINE)) {
+            _logger.logp(FINE, "Configuration", "setServerName()",
                     " serverName = " + serverName + "; isRecoverable = " + recoverable);
         }
     }
@@ -303,7 +307,6 @@ public class Configuration extends Object {
      * @return The server name.
      */
     public static final String getServerName() {
-        // Determine the server name.
         return serverName;
     }
 
@@ -335,9 +338,7 @@ public class Configuration extends Object {
      * @return The server name (byte array).
      */
     public static final byte[] getServerNameByteArray() {
-        // Determine the server name.
-        byte[] result = serverNameByteArray;
-        return result;
+        return serverNameByteArray;
     }
 
     /**
@@ -353,10 +354,11 @@ public class Configuration extends Object {
             prop.putAll(newProp);
         }
 
-        if (_logger.isLoggable(Level.FINE)) {
+        if (_logger.isLoggable(FINE)) {
             String propertiesList = LogFormatter.convertPropsToString(prop);
-            _logger.logp(Level.FINE, "Configuration", "setProperties()", " Properties set are :" + propertiesList);
+            _logger.logp(FINE, "Configuration", "setProperties()", " Properties set are :" + propertiesList);
         }
+
         if (prop != null) {
             dbLogResource = prop.getProperty(DB_LOG_RESOURCE);
             String retryLimit = prop.getProperty(COMMIT_RETRY);
@@ -381,12 +383,11 @@ public class Configuration extends Object {
      */
     public static final String getPropertyValue(String envValue) {
         // Get the environment variable value.
-
         String result = null;
         if (prop != null) {
             result = prop.getProperty(envValue);
-            if (_logger.isLoggable(Level.FINE)) {
-                _logger.log(Level.FINE, "Property :" + envValue + " has the value : " + result);
+            if (_logger.isLoggable(FINE)) {
+                _logger.log(FINE, "Property :" + envValue + " has the value : " + result);
 
             }
         }
@@ -399,11 +400,8 @@ public class Configuration extends Object {
      *
      * @param newORB The ORB.
      */
-    public static final void setORB(org.omg.CORBA.ORB newORB) {
-        // Store the ORB identity.
-
+    public static final void setORB(ORB newORB) {
         orb = newORB;
-
     }
 
     /**
@@ -411,9 +409,7 @@ public class Configuration extends Object {
      *
      * @return The ORB.
      */
-    public static final org.omg.CORBA.ORB getORB() {
-        // Return the ORB identity.
-
+    public static final ORB getORB() {
         return orb;
     }
 
@@ -425,7 +421,6 @@ public class Configuration extends Object {
      */
     public static final void setFactory(TransactionFactory newFactory, boolean localTxFactory) {
         // Store the factory identity and if it is local or not.
-
         factory = newFactory;
         localFactory = localTxFactory;
     }
@@ -436,7 +431,6 @@ public class Configuration extends Object {
      * @return The TransactionFactory.
      */
     public static final TransactionFactory getFactory() {
-        // Return the TransactionFactory identity.
         return factory;
     }
 
@@ -466,7 +460,6 @@ public class Configuration extends Object {
      * @param newChecker The new ProxyChecker.
      */
     public static final void setProxyChecker(ProxyChecker newChecker) {
-        // Store the checker identity.
         checker = newChecker;
     }
 
@@ -485,7 +478,6 @@ public class Configuration extends Object {
      * @param newLogFile The new LogFile object.
      */
     public static final void setLogFile(LogFile newLogFile) {
-        // Store the logFile identity.
         logFile = newLogFile;
     }
 
@@ -515,8 +507,10 @@ public class Configuration extends Object {
      * @return The LogFile.
      */
     public static final LogFile getLogFile(String logPath) {
-        if (logPath == null)
+        if (logPath == null) {
             return null;
+        }
+
         return (LogFile) logPathToFiletable.get(logPath);
     }
 
@@ -567,7 +561,6 @@ public class Configuration extends Object {
             } else {
                 retries = ((int) (retriesInMinutes / (COMMIT_RETRY_WAIT / 1000))) + 1;
             }
-
         }
     }
 
@@ -584,7 +577,7 @@ public class Configuration extends Object {
     }
 
     public static boolean isDBLoggingEnabled() {
-        return (dbLogResource != null);
+        return dbLogResource != null;
     }
 
     public static void disableFileLogging() {
