@@ -13,8 +13,7 @@ public class TransactionServiceConfigImpl implements TransactionServiceConfig {
 
     @Override
     public String getAutomaticRecovery() {
-        // TODO Auto-generated method stub
-        return null;
+        return "false";
     }
 
     @Override
@@ -48,8 +47,7 @@ public class TransactionServiceConfigImpl implements TransactionServiceConfig {
 
     @Override
     public String getHeuristicDecision() {
-        // TODO Auto-generated method stub
-        return null;
+        return "rollback";
     }
 
     @Override
@@ -60,8 +58,7 @@ public class TransactionServiceConfigImpl implements TransactionServiceConfig {
 
     @Override
     public String getRetryTimeoutInSeconds() {
-        // TODO Auto-generated method stub
-        return null;
+        return "600";
     }
 
     @Override
@@ -72,8 +69,7 @@ public class TransactionServiceConfigImpl implements TransactionServiceConfig {
 
     @Override
     public String getKeypointInterval() {
-        // TODO Auto-generated method stub
-        return null;
+        return "65536";
     }
 
     @Override

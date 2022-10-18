@@ -149,7 +149,6 @@ public interface TransactionServiceConfig {
             "pending-txn-cleanup-interval", "60",
             "use-last-agent-optimization", "true",
             "wait-time-before-recovery-insec", "60",
-            "db-logging-resource", "java:comp/DefaultDataSource",
             "orb-port", "0"
         ).entrySet());
     }
